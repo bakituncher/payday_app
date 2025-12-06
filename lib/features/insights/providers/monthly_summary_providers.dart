@@ -3,7 +3,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:payday_flutter/core/models/monthly_summary.dart';
 import 'package:payday_flutter/core/models/budget_goal.dart';
-import 'package:payday_flutter/core/models/transaction.dart';
 import 'package:payday_flutter/core/providers/repository_providers.dart';
 import 'package:payday_flutter/core/repositories/monthly_summary_repository.dart';
 import 'package:payday_flutter/core/services/financial_insights_service.dart';
@@ -27,35 +26,45 @@ final savingsGoalsProvider = FutureProvider<List<dynamic>>((ref) async {
   return repository.getSavingsGoals(userId);
 });
 
-/// Current month summary provider
+/// Current month summary provider - Always calculates from current data
 final currentMonthlySummaryProvider = FutureProvider<MonthlySummary?>((ref) async {
   final userId = ref.watch(currentUserIdProvider);
   final repository = ref.watch(monthlySummaryRepositoryProvider);
   final now = DateTime.now();
 
-  // Try to get existing summary
-  var summary = await repository.getMonthlySummary(userId, now.year, now.month);
+  // Always generate fresh summary from current data
+  final userSettings = await ref.watch(userSettingsProvider.future);
+  final transactions = await ref.watch(currentCycleTransactionsProvider.future);
+  final subscriptions = await ref.watch(activeSubscriptionsProvider.future);
 
-  // If no summary exists, generate one from current data
-  if (summary == null) {
-    final userSettings = await ref.watch(userSettingsProvider.future);
-    final transactions = await ref.watch(currentCycleTransactionsProvider.future);
-    final subscriptions = await ref.watch(activeSubscriptionsProvider.future);
-
-    if (userSettings != null) {
-      summary = FinancialInsightsService.generateMonthlySummary(
-        userId: userId,
-        year: now.year,
-        month: now.month,
-        totalIncome: userSettings.incomeAmount,
-        transactions: transactions,
-        subscriptions: subscriptions,
-      );
-
-      // Save the generated summary
-      await repository.saveMonthlySummary(summary);
-    }
+  if (userSettings == null) {
+    return null;
   }
+
+  // Get previous month's expenses for trend comparison
+  double? previousMonthExpenses;
+  final prevSummary = await repository.getMonthlySummary(
+    userId,
+    now.month == 1 ? now.year - 1 : now.year,
+    now.month == 1 ? 12 : now.month - 1,
+  );
+  if (prevSummary != null) {
+    previousMonthExpenses = prevSummary.totalExpenses;
+  }
+
+  // Generate fresh summary with current data
+  final summary = FinancialInsightsService.generateMonthlySummary(
+    userId: userId,
+    year: now.year,
+    month: now.month,
+    totalIncome: userSettings.incomeAmount,
+    transactions: transactions,
+    subscriptions: subscriptions,
+    previousMonthExpenses: previousMonthExpenses,
+  );
+
+  // Save the generated summary for historical tracking
+  await repository.saveMonthlySummary(summary);
 
   return summary;
 });

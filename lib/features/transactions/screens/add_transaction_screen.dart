@@ -7,6 +7,7 @@ import 'package:payday_flutter/core/constants/app_constants.dart';
 import 'package:payday_flutter/core/models/transaction.dart';
 import 'package:payday_flutter/core/providers/repository_providers.dart';
 import 'package:payday_flutter/features/home/providers/home_providers.dart';
+import 'package:payday_flutter/features/insights/providers/monthly_summary_providers.dart';
 import 'package:payday_flutter/shared/widgets/payday_button.dart';
 import 'package:uuid/uuid.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -428,6 +429,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
       ref.invalidate(totalExpensesProvider);
       ref.invalidate(dailyAllowableSpendProvider);
       ref.invalidate(budgetHealthProvider);
+      ref.invalidate(currentMonthlySummaryProvider); // Update monthly summary
 
       if (mounted) {
         Navigator.pop(context);

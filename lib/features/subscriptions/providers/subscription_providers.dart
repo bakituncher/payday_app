@@ -5,6 +5,7 @@ import 'package:payday_flutter/core/models/subscription.dart';
 import 'package:payday_flutter/core/models/subscription_analysis.dart';
 import 'package:payday_flutter/core/models/bill_reminder.dart';
 import 'package:payday_flutter/core/providers/repository_providers.dart';
+import 'package:payday_flutter/features/insights/providers/monthly_summary_providers.dart';
 
 /// All subscriptions for current user
 final subscriptionsProvider = FutureProvider<List<Subscription>>((ref) async {
@@ -117,6 +118,7 @@ class SubscriptionNotifier extends StateNotifier<AsyncValue<void>> {
       _ref.invalidate(activeSubscriptionsProvider);
       _ref.invalidate(totalMonthlyCostProvider);
       _ref.invalidate(subscriptionsDueSoonProvider);
+      _ref.invalidate(currentMonthlySummaryProvider); // Update monthly summary
 
       state = const AsyncValue.data(null);
     } catch (e, st) {
@@ -135,6 +137,7 @@ class SubscriptionNotifier extends StateNotifier<AsyncValue<void>> {
       _ref.invalidate(activeSubscriptionsProvider);
       _ref.invalidate(totalMonthlyCostProvider);
       _ref.invalidate(selectedSubscriptionProvider);
+      _ref.invalidate(currentMonthlySummaryProvider); // Update monthly summary
 
       state = const AsyncValue.data(null);
     } catch (e, st) {
@@ -157,6 +160,7 @@ class SubscriptionNotifier extends StateNotifier<AsyncValue<void>> {
       _ref.invalidate(activeSubscriptionsProvider);
       _ref.invalidate(totalMonthlyCostProvider);
       _ref.invalidate(subscriptionsDueSoonProvider);
+      _ref.invalidate(currentMonthlySummaryProvider); // Update monthly summary
 
       state = const AsyncValue.data(null);
     } catch (e, st) {
@@ -179,6 +183,7 @@ class SubscriptionNotifier extends StateNotifier<AsyncValue<void>> {
       _ref.invalidate(activeSubscriptionsProvider);
       _ref.invalidate(totalMonthlyCostProvider);
       _ref.invalidate(subscriptionAnalysisProvider);
+      _ref.invalidate(currentMonthlySummaryProvider); // Update monthly summary
 
       state = const AsyncValue.data(null);
     } catch (e, st) {

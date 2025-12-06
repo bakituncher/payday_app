@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:payday_flutter/core/theme/app_theme.dart';
 import 'package:payday_flutter/features/home/providers/home_providers.dart';
+import 'package:payday_flutter/features/insights/providers/monthly_summary_providers.dart';
 import 'package:payday_flutter/features/home/widgets/countdown_card.dart';
 import 'package:payday_flutter/features/home/widgets/daily_spend_card.dart';
 import 'package:payday_flutter/features/home/widgets/budget_progress_card.dart';
@@ -16,6 +17,19 @@ import 'package:flutter_animate/flutter_animate.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
+
+  Future<void> _onRefresh(WidgetRef ref) async {
+    // Refresh all data providers
+    ref.invalidate(userSettingsProvider);
+    ref.invalidate(currentCycleTransactionsProvider);
+    ref.invalidate(totalExpensesProvider);
+    ref.invalidate(dailyAllowableSpendProvider);
+    ref.invalidate(budgetHealthProvider);
+    ref.invalidate(currentMonthlySummaryProvider);
+
+    // Wait a bit for visual feedback
+    await Future.delayed(const Duration(milliseconds: 500));
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -71,9 +85,14 @@ class HomeScreen extends ConsumerWidget {
                   ),
                 ),
                 // Main content
-                CustomScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  slivers: [
+                RefreshIndicator(
+                  onRefresh: () => _onRefresh(ref),
+                  color: AppColors.primaryPink,
+                  child: CustomScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(
+                      parent: BouncingScrollPhysics(),
+                    ),
+                    slivers: [
                     // Premium App Bar
                     SliverAppBar(
                       expandedHeight: 0,
@@ -228,6 +247,7 @@ class HomeScreen extends ConsumerWidget {
                     ),
                   ],
                 ),
+                ), // RefreshIndicator end
               ],
             );
           },
