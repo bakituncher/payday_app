@@ -43,7 +43,6 @@ class _GlassCardState extends State<GlassCard> with SingleTickerProviderStateMix
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
   late Animation<double> _elevationAnimation;
-  bool _isPressed = false; // Used for tap state management
 
   @override
   void initState() {
@@ -68,21 +67,18 @@ class _GlassCardState extends State<GlassCard> with SingleTickerProviderStateMix
 
   void _handleTapDown(TapDownDetails details) {
     if (widget.onTap != null) {
-      setState(() => _isPressed = true);
       _controller.forward();
     }
   }
 
   void _handleTapUp(TapUpDetails details) {
     if (widget.onTap != null) {
-      setState(() => _isPressed = false);
       _controller.reverse();
     }
   }
 
   void _handleTapCancel() {
     if (widget.onTap != null) {
-      setState(() => _isPressed = false);
       _controller.reverse();
     }
   }

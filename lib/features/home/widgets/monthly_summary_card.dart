@@ -15,7 +15,6 @@ class MonthlySummaryCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final summaryAsync = ref.watch(currentMonthlySummaryProvider);
-    final theme = Theme.of(context);
     final currencyFormat = NumberFormat.currency(symbol: '\$');
 
     return GestureDetector(

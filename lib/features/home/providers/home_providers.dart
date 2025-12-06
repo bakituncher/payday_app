@@ -62,7 +62,14 @@ final currentCycleTransactionsProvider = FutureProvider<List<Transaction>>((ref)
         cycleStart = _calculatePreviousMonth(payday);
     }
   } else {
+    // Payday is today or has passed - use payday as cycle start
+    // This means user is at the beginning of a new cycle
     cycleStart = payday;
+  }
+
+  // Ensure cycleStart is not in the future
+  if (cycleStart.isAfter(today)) {
+    cycleStart = today;
   }
 
   return repository.getTransactionsForCurrentCycle(userId, cycleStart);
@@ -107,14 +114,22 @@ final dailyAllowableSpendProvider = FutureProvider<double>((ref) async {
 
   if (settings == null) return 0.0;
 
+  // Protect against invalid income
+  if (settings.incomeAmount <= 0) return 0.0;
+
   final now = DateTime.now();
   final payday = settings.nextPayday;
   final daysRemaining = app_date_utils.DateUtils.daysBetween(now, payday);
 
-  // Avoid division by zero
-  if (daysRemaining <= 0) return 0.0;
+  // If payday is today or has passed, return remaining budget as today's allowance
+  if (daysRemaining <= 0) {
+    final remainingBudget = settings.incomeAmount - totalExpenses;
+    return remainingBudget > 0 ? remainingBudget : 0.0;
+  }
 
   final remainingBudget = settings.incomeAmount - totalExpenses;
+
+  // If over budget, return negative value to indicate overspending
   return remainingBudget / daysRemaining;
 });
 
@@ -124,6 +139,11 @@ final budgetHealthProvider = FutureProvider<BudgetHealth>((ref) async {
   final totalExpenses = await ref.watch(totalExpensesProvider.future);
 
   if (settings == null) {
+    return BudgetHealth.unknown;
+  }
+
+  // Protect against division by zero
+  if (settings.incomeAmount <= 0) {
     return BudgetHealth.unknown;
   }
 

@@ -25,7 +25,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   String _selectedPayCycle = 'Monthly';
   DateTime _nextPayday = DateTime.now().add(const Duration(days: 30));
   bool _isLoading = false;
-  bool _hasChanges = false;
 
   @override
   void initState() {
@@ -75,7 +74,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     if (picked != null) {
       setState(() {
         _nextPayday = picked;
-        _hasChanges = true;
       });
     }
   }
@@ -94,7 +92,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final userId = ref.read(currentUserIdProvider);
       final repository = ref.read(userSettingsRepositoryProvider);
       final currentSettings = await ref.read(userSettingsProvider.future);
 
@@ -303,7 +300,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 vertical: AppSpacing.sm,
               ),
             ),
-            onChanged: (_) => setState(() => _hasChanges = true),
+            onChanged: (_) {},
           ),
         ],
       ),
@@ -338,7 +335,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   HapticFeedback.lightImpact();
                   setState(() {
                     _selectedPayCycle = cycle;
-                    _hasChanges = true;
                   });
                 },
                 child: AnimatedContainer(
@@ -463,7 +459,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   HapticFeedback.lightImpact();
                   setState(() {
                     _selectedCurrency = currency['code'] as String;
-                    _hasChanges = true;
                   });
                 },
                 child: AnimatedContainer(

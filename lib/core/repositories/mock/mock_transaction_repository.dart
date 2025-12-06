@@ -59,5 +59,21 @@ class MockTransactionRepository implements TransactionRepository {
         .where((t) => t.isExpense)
         .fold<double>(0.0, (sum, t) => sum + t.amount);
   }
+
+  @override
+  Future<int> deleteTransactionsOlderThan(String userId, DateTime date) async {
+    await Future.delayed(const Duration(milliseconds: 200));
+    final initialCount = _transactions.length;
+    _transactions.removeWhere(
+      (t) => t.userId == userId && t.date.isBefore(date),
+    );
+    return initialCount - _transactions.length;
+  }
+
+  @override
+  Future<int> getTransactionCount(String userId) async {
+    await Future.delayed(const Duration(milliseconds: 100));
+    return _transactions.where((t) => t.userId == userId).length;
+  }
 }
 

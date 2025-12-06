@@ -99,6 +99,26 @@ class LocalTransactionRepository implements TransactionRepository {
         .fold<double>(0.0, (sum, t) => sum + t.amount);
   }
 
+  @override
+  Future<int> deleteTransactionsOlderThan(String userId, DateTime date) async {
+    await _loadTransactions();
+    final initialCount = _cachedTransactions!.length;
+    _cachedTransactions!.removeWhere(
+      (t) => t.userId == userId && t.date.isBefore(date),
+    );
+    final deletedCount = initialCount - _cachedTransactions!.length;
+    if (deletedCount > 0) {
+      await _saveTransactions();
+    }
+    return deletedCount;
+  }
+
+  @override
+  Future<int> getTransactionCount(String userId) async {
+    final transactions = await _loadTransactions();
+    return transactions.where((t) => t.userId == userId).length;
+  }
+
   /// Clear cache to force reload from storage
   void clearCache() {
     _cachedTransactions = null;

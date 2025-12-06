@@ -15,7 +15,12 @@ class DateCycleService {
     // Payday has passed, calculate next one
     DateTime nextPayday = currentPayday;
 
-    while (nextPayday.isBefore(now) || _isSameDay(nextPayday, now)) {
+    // Safety limit to prevent infinite loops (max 520 iterations = 10 years of weekly pay)
+    int iterations = 0;
+    const maxIterations = 520;
+
+    while ((nextPayday.isBefore(now) || _isSameDay(nextPayday, now)) && iterations < maxIterations) {
+      iterations++;
       switch (payCycle) {
         case 'Weekly':
           nextPayday = nextPayday.add(const Duration(days: 7));
@@ -30,6 +35,11 @@ class DateCycleService {
         default:
           nextPayday = _addMonth(nextPayday, 1);
       }
+    }
+
+    // If we hit the limit, just set payday to next month from now
+    if (iterations >= maxIterations) {
+      nextPayday = _addMonth(now, 1);
     }
 
     return nextPayday;
@@ -50,7 +60,12 @@ class DateCycleService {
     // Billing date has passed, calculate next one
     DateTime nextBilling = currentBillingDate;
 
-    while (nextBilling.isBefore(now) || _isSameDay(nextBilling, now)) {
+    // Safety limit to prevent infinite loops
+    int iterations = 0;
+    const maxIterations = 3650; // 10 years of daily billing
+
+    while ((nextBilling.isBefore(now) || _isSameDay(nextBilling, now)) && iterations < maxIterations) {
+      iterations++;
       switch (frequency) {
         case RecurrenceFrequency.daily:
           nextBilling = nextBilling.add(const Duration(days: 1));
@@ -71,6 +86,11 @@ class DateCycleService {
           nextBilling = _addMonth(nextBilling, 12);
           break;
       }
+    }
+
+    // If we hit the limit, set to next occurrence from now
+    if (iterations >= maxIterations) {
+      nextBilling = _addMonth(now, 1);
     }
 
     return nextBilling;

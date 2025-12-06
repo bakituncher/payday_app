@@ -3,7 +3,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:payday_flutter/core/theme/app_theme.dart';
 import 'package:payday_flutter/core/utils/currency_formatter.dart';
 import 'package:payday_flutter/core/providers/repository_providers.dart';

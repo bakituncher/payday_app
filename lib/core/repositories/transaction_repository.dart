@@ -25,5 +25,11 @@ abstract class TransactionRepository {
     String userId,
     DateTime payCycleStart,
   );
+
+  /// Delete transactions older than specified date (for storage optimization)
+  Future<int> deleteTransactionsOlderThan(String userId, DateTime date);
+
+  /// Get transaction count for a user
+  Future<int> getTransactionCount(String userId);
 }
 

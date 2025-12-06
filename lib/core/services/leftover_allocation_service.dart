@@ -8,6 +8,7 @@ import 'package:payday_flutter/core/repositories/user_settings_repository.dart';
 
 class LeftoverAllocationService {
   final SavingsGoalRepository _savingsGoalRepository;
+  // ignore: unused_field - Will be used for monthly summary finalization in future
   final MonthlySummaryRepository _monthlySummaryRepository;
   final UserSettingsRepository _userSettingsRepository;
 
