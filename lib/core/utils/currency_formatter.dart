@@ -27,9 +27,26 @@ class CurrencyFormatter {
         return '\$';
       case 'AUD':
         return 'A\$';
+      case 'EUR':
+        return '€';
+      case 'GBP':
+        return '£';
+      case 'TRY':
+        return '₺';
+      case 'CAD':
+        return 'C\$';
+      case 'JPY':
+        return '¥';
+      case 'INR':
+        return '₹';
       default:
         return '\$';
     }
+  }
+
+  /// Get currency symbol publicly
+  static String getSymbol(String currencyCode) {
+    return _getCurrencySymbol(currencyCode);
   }
 
   /// Parse currency string to double

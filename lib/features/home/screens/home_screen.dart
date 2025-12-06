@@ -12,6 +12,7 @@ import 'package:payday_flutter/features/home/widgets/recent_transactions_card.da
 import 'package:payday_flutter/features/home/widgets/active_subscriptions_card.dart';
 import 'package:payday_flutter/features/home/widgets/monthly_summary_card.dart';
 import 'package:payday_flutter/features/transactions/screens/add_transaction_screen.dart';
+import 'package:payday_flutter/features/settings/screens/settings_screen.dart';
 import 'package:payday_flutter/shared/widgets/payday_button.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
@@ -159,7 +160,12 @@ class HomeScreen extends ConsumerWidget {
                             icon: const Icon(Icons.settings_outlined),
                             onPressed: () {
                               HapticFeedback.lightImpact();
-                              // TODO: Navigate to settings
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const SettingsScreen(),
+                                ),
+                              );
                             },
                             color: AppColors.darkCharcoal,
                           ),
@@ -307,48 +313,50 @@ class HomeScreen extends ConsumerWidget {
 
   Widget _buildErrorState(BuildContext context, Object error) {
     final theme = Theme.of(context);
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.xl),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(AppSpacing.lg),
-              decoration: BoxDecoration(
-                color: AppColors.errorLight,
-                shape: BoxShape.circle,
+    return Consumer(
+      builder: (context, ref, child) => Center(
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.xl),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(AppSpacing.lg),
+                decoration: BoxDecoration(
+                  color: AppColors.errorLight,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.error_outline_rounded,
+                  size: 48,
+                  color: AppColors.error,
+                ),
               ),
-              child: Icon(
-                Icons.error_outline_rounded,
-                size: 48,
-                color: AppColors.error,
+              const SizedBox(height: AppSpacing.lg),
+              Text(
+                'Something went wrong',
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            Text(
-              'Something went wrong',
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w600,
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                error.toString(),
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: AppColors.mediumGray,
+                ),
+                textAlign: TextAlign.center,
               ),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            Text(
-              error.toString(),
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: AppColors.mediumGray,
+              const SizedBox(height: AppSpacing.xl),
+              PaydayButton(
+                text: 'Try Again',
+                icon: Icons.refresh_rounded,
+                onPressed: () {
+                  ref.invalidate(userSettingsProvider);
+                },
               ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: AppSpacing.xl),
-            PaydayButton(
-              text: 'Try Again',
-              icon: Icons.refresh_rounded,
-              onPressed: () {
-                // TODO: Refresh
-              },
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

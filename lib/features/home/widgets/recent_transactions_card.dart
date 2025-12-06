@@ -1,9 +1,14 @@
 /// Recent Transactions Card - Premium Industry-Grade Design
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:payday_flutter/core/theme/app_theme.dart';
 import 'package:payday_flutter/core/utils/currency_formatter.dart';
+import 'package:payday_flutter/core/providers/repository_providers.dart';
 import 'package:payday_flutter/features/home/providers/home_providers.dart';
+import 'package:payday_flutter/features/insights/providers/monthly_summary_providers.dart';
+import 'package:payday_flutter/features/transactions/screens/all_transactions_screen.dart';
+import 'package:payday_flutter/core/models/transaction.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
@@ -69,7 +74,13 @@ class RecentTransactionsCard extends ConsumerWidget {
                 ),
                 GestureDetector(
                   onTap: () {
-                    // TODO: Navigate to all transactions
+                    HapticFeedback.lightImpact();
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => AllTransactionsScreen(currency: currency),
+                      ),
+                    );
                   },
                   child: Text(
                     'See All',
@@ -104,12 +115,9 @@ class RecentTransactionsCard extends ConsumerWidget {
                   itemBuilder: (context, index) {
                     final transaction = recentTransactions[index];
                     return _TransactionTile(
-                      emoji: transaction.categoryEmoji,
-                      category: transaction.categoryName,
-                      note: transaction.note,
-                      amount: transaction.amount,
-                      date: transaction.date,
+                      transaction: transaction,
                       currency: currency,
+                      onDelete: () => _deleteTransaction(context, ref, transaction),
                     );
                   },
                 );
@@ -214,83 +222,199 @@ class RecentTransactionsCard extends ConsumerWidget {
       ),
     );
   }
+
+  Future<void> _deleteTransaction(
+    BuildContext context,
+    WidgetRef ref,
+    Transaction transaction,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+        ),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.error.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+              ),
+              child: const Icon(
+                Icons.delete_outline_rounded,
+                color: AppColors.error,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            const Text('Delete Transaction?'),
+          ],
+        ),
+        content: Text(
+          'Are you sure you want to delete this ${transaction.categoryName} expense of ${CurrencyFormatter.format(transaction.amount, currency)}?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: AppColors.mediumGray),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(
+              backgroundColor: AppColors.error,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+              ),
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      try {
+        final repository = ref.read(transactionRepositoryProvider);
+        await repository.deleteTransaction(transaction.id);
+
+        // Refresh data
+        ref.invalidate(currentCycleTransactionsProvider);
+        ref.invalidate(totalExpensesProvider);
+        ref.invalidate(dailyAllowableSpendProvider);
+        ref.invalidate(budgetHealthProvider);
+        ref.invalidate(currentMonthlySummaryProvider);
+
+        if (context.mounted) {
+          HapticFeedback.mediumImpact();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.check_circle, color: Colors.white, size: 18),
+                  const SizedBox(width: 8),
+                  Text('${transaction.categoryEmoji} Transaction deleted'),
+                ],
+              ),
+              backgroundColor: AppColors.success,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error deleting transaction: $e'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+      }
+    }
+  }
 }
 
 class _TransactionTile extends StatelessWidget {
-  final String emoji;
-  final String category;
-  final String note;
-  final double amount;
-  final DateTime date;
+  final Transaction transaction;
   final String currency;
+  final VoidCallback onDelete;
 
   const _TransactionTile({
-    required this.emoji,
-    required this.category,
-    required this.note,
-    required this.amount,
-    required this.date,
+    required this.transaction,
     required this.currency,
+    required this.onDelete,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        children: [
-          // Emoji Icon - Compact
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: AppColors.lightPink.withOpacity(0.6),
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-            ),
-            child: Center(
-              child: Text(
-                emoji,
-                style: const TextStyle(fontSize: 16),
+    return Dismissible(
+      key: Key(transaction.id),
+      direction: DismissDirection.endToStart,
+      confirmDismiss: (_) async {
+        onDelete();
+        return false; // Let onDelete handle the actual deletion
+      },
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: AppSpacing.md),
+        decoration: BoxDecoration(
+          color: AppColors.error.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+        ),
+        child: const Icon(
+          Icons.delete_outline_rounded,
+          color: AppColors.error,
+        ),
+      ),
+      child: GestureDetector(
+        onLongPress: onDelete,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          child: Row(
+            children: [
+              // Emoji Icon - Compact
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: AppColors.lightPink.withOpacity(0.6),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                ),
+                child: Center(
+                  child: Text(
+                    transaction.categoryEmoji,
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                ),
               ),
-            ),
-          ),
 
-          const SizedBox(width: AppSpacing.sm),
+              const SizedBox(width: AppSpacing.sm),
 
-          // Details - Compact
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  category,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.darkCharcoal,
-                  ),
+              // Details - Compact
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      transaction.categoryName,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.darkCharcoal,
+                      ),
+                    ),
+                    Text(
+                      _formatDate(transaction.date),
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: AppColors.mediumGray,
+                      ),
+                    ),
+                  ],
                 ),
-                Text(
-                  _formatDate(date),
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: AppColors.mediumGray,
-                  ),
-                ),
-              ],
-            ),
-          ),
+              ),
 
-          // Amount - Compact
-          Text(
-            '-${CurrencyFormatter.format(amount, currency)}',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-              color: AppColors.error,
-            ),
+              // Amount - Compact
+              Text(
+                '-${CurrencyFormatter.format(transaction.amount, currency)}',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.error,
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

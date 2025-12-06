@@ -1,0 +1,513 @@
+/// Settings Screen
+/// Allows users to update their financial settings
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:payday_flutter/core/theme/app_theme.dart';
+import 'package:payday_flutter/core/constants/app_constants.dart';
+import 'package:payday_flutter/core/providers/repository_providers.dart';
+import 'package:payday_flutter/features/home/providers/home_providers.dart';
+import 'package:payday_flutter/features/insights/providers/monthly_summary_providers.dart';
+import 'package:payday_flutter/shared/widgets/payday_button.dart';
+import 'package:intl/intl.dart';
+
+class SettingsScreen extends ConsumerStatefulWidget {
+  const SettingsScreen({super.key});
+
+  @override
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+  final _incomeController = TextEditingController();
+  String _selectedCurrency = 'USD';
+  String _selectedPayCycle = 'Monthly';
+  DateTime _nextPayday = DateTime.now().add(const Duration(days: 30));
+  bool _isLoading = false;
+  bool _hasChanges = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCurrentSettings();
+  }
+
+  Future<void> _loadCurrentSettings() async {
+    final settings = await ref.read(userSettingsProvider.future);
+    if (settings != null && mounted) {
+      setState(() {
+        _incomeController.text = settings.incomeAmount.toStringAsFixed(2);
+        _selectedCurrency = settings.currency;
+        _selectedPayCycle = settings.payCycle;
+        _nextPayday = settings.nextPayday;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _incomeController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _selectPayday() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _nextPayday,
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: AppColors.primaryPink,
+              onPrimary: Colors.white,
+              surface: Colors.white,
+              onSurface: AppColors.darkCharcoal,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      setState(() {
+        _nextPayday = picked;
+        _hasChanges = true;
+      });
+    }
+  }
+
+  Future<void> _saveSettings() async {
+    if (_incomeController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter your income amount'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final userId = ref.read(currentUserIdProvider);
+      final repository = ref.read(userSettingsRepositoryProvider);
+      final currentSettings = await ref.read(userSettingsProvider.future);
+
+      if (currentSettings != null) {
+        final updatedSettings = currentSettings.copyWith(
+          currency: _selectedCurrency,
+          payCycle: _selectedPayCycle,
+          nextPayday: _nextPayday,
+          incomeAmount: double.parse(_incomeController.text),
+          updatedAt: DateTime.now(),
+        );
+
+        await repository.saveUserSettings(updatedSettings);
+
+        // Refresh all related providers
+        ref.invalidate(userSettingsProvider);
+        ref.invalidate(currentCycleTransactionsProvider);
+        ref.invalidate(totalExpensesProvider);
+        ref.invalidate(dailyAllowableSpendProvider);
+        ref.invalidate(budgetHealthProvider);
+        ref.invalidate(currentMonthlySummaryProvider);
+
+        if (mounted) {
+          HapticFeedback.mediumImpact();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Row(
+                children: [
+                  Icon(Icons.check_circle, color: Colors.white),
+                  SizedBox(width: 8),
+                  Text('Settings saved successfully!'),
+                ],
+              ),
+              backgroundColor: AppColors.success,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          );
+          Navigator.pop(context);
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error saving settings: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Scaffold(
+      backgroundColor: AppColors.backgroundWhite,
+      appBar: AppBar(
+        backgroundColor: AppColors.backgroundWhite,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+          onPressed: () => Navigator.pop(context),
+          color: AppColors.darkCharcoal,
+        ),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                gradient: AppColors.premiumGradient,
+                borderRadius: BorderRadius.circular(AppRadius.md),
+              ),
+              child: const Icon(
+                Icons.settings_rounded,
+                color: Colors.white,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Text(
+              'Settings',
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: AppColors.darkCharcoal,
+              ),
+            ),
+          ],
+        ),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Income Section
+            _buildSectionTitle(theme, 'Income', Icons.attach_money_rounded),
+            const SizedBox(height: AppSpacing.sm),
+            _buildIncomeCard(theme),
+
+            const SizedBox(height: AppSpacing.lg),
+
+            // Pay Cycle Section
+            _buildSectionTitle(theme, 'Pay Cycle', Icons.calendar_today_rounded),
+            const SizedBox(height: AppSpacing.sm),
+            _buildPayCycleCard(theme),
+
+            const SizedBox(height: AppSpacing.lg),
+
+            // Next Payday Section
+            _buildSectionTitle(theme, 'Next Payday', Icons.event_rounded),
+            const SizedBox(height: AppSpacing.sm),
+            _buildPaydayCard(theme),
+
+            const SizedBox(height: AppSpacing.lg),
+
+            // Currency Section
+            _buildSectionTitle(theme, 'Currency', Icons.currency_exchange_rounded),
+            const SizedBox(height: AppSpacing.sm),
+            _buildCurrencyCard(theme),
+
+            const SizedBox(height: AppSpacing.xxl),
+
+            // Save Button
+            PaydayButton(
+              text: 'Save Settings',
+              icon: Icons.check_rounded,
+              isLoading: _isLoading,
+              width: double.infinity,
+              onPressed: _saveSettings,
+            ).animate().fadeIn(duration: 300.ms).slideY(begin: 0.1, end: 0),
+
+            const SizedBox(height: AppSpacing.xl),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(ThemeData theme, String title, IconData icon) {
+    return Row(
+      children: [
+        Icon(icon, size: 20, color: AppColors.primaryPink),
+        const SizedBox(width: AppSpacing.xs),
+        Text(
+          title,
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w600,
+            color: AppColors.darkCharcoal,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildIncomeCard(ThemeData theme) {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.cardWhite,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        boxShadow: AppColors.cardShadow,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Monthly Income',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: AppColors.mediumGray,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          TextField(
+            controller: _incomeController,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: AppColors.darkCharcoal,
+            ),
+            decoration: InputDecoration(
+              prefixText: AppConstants.currencySymbols[_selectedCurrency] ?? '\$',
+              prefixStyle: theme.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: AppColors.primaryPink,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                borderSide: BorderSide(color: AppColors.lightGray),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                borderSide: const BorderSide(color: AppColors.primaryPink, width: 2),
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md,
+                vertical: AppSpacing.sm,
+              ),
+            ),
+            onChanged: (_) => setState(() => _hasChanges = true),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPayCycleCard(ThemeData theme) {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.cardWhite,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        boxShadow: AppColors.cardShadow,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'How often do you get paid?',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: AppColors.mediumGray,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
+            children: AppConstants.payCycleOptions.map((cycle) {
+              final isSelected = _selectedPayCycle == cycle;
+              return GestureDetector(
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  setState(() {
+                    _selectedPayCycle = cycle;
+                    _hasChanges = true;
+                  });
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                    vertical: AppSpacing.sm,
+                  ),
+                  decoration: BoxDecoration(
+                    gradient: isSelected ? AppColors.pinkGradient : null,
+                    color: isSelected ? null : AppColors.subtleGray,
+                    borderRadius: BorderRadius.circular(AppRadius.round),
+                    border: Border.all(
+                      color: isSelected ? AppColors.primaryPink : Colors.transparent,
+                      width: 2,
+                    ),
+                  ),
+                  child: Text(
+                    cycle,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: isSelected ? Colors.white : AppColors.darkCharcoal,
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPaydayCard(ThemeData theme) {
+    final dateFormat = DateFormat('EEEE, MMMM d, yyyy');
+    final daysUntil = _nextPayday.difference(DateTime.now()).inDays;
+
+    return GestureDetector(
+      onTap: _selectPayday,
+      child: Container(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        decoration: BoxDecoration(
+          color: AppColors.cardWhite,
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          boxShadow: AppColors.cardShadow,
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              decoration: BoxDecoration(
+                color: AppColors.primaryPink.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(AppRadius.md),
+              ),
+              child: const Icon(
+                Icons.calendar_month_rounded,
+                color: AppColors.primaryPink,
+                size: 28,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    dateFormat.format(_nextPayday),
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.darkCharcoal,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    daysUntil > 0
+                        ? '$daysUntil days away'
+                        : daysUntil == 0
+                            ? 'Today! 🎉'
+                            : 'Date has passed - tap to update',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: daysUntil < 0 ? AppColors.error : AppColors.mediumGray,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(
+              Icons.chevron_right_rounded,
+              color: AppColors.mediumGray,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCurrencyCard(ThemeData theme) {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.cardWhite,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        boxShadow: AppColors.cardShadow,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Select your currency',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: AppColors.mediumGray,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
+            children: AppConstants.currencies.map((currency) {
+              final isSelected = _selectedCurrency == currency['code'];
+              return GestureDetector(
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  setState(() {
+                    _selectedCurrency = currency['code'] as String;
+                    _hasChanges = true;
+                  });
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                    vertical: AppSpacing.sm,
+                  ),
+                  decoration: BoxDecoration(
+                    gradient: isSelected ? AppColors.pinkGradient : null,
+                    color: isSelected ? null : AppColors.subtleGray,
+                    borderRadius: BorderRadius.circular(AppRadius.round),
+                    border: Border.all(
+                      color: isSelected ? AppColors.primaryPink : Colors.transparent,
+                      width: 2,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        currency['symbol'] as String,
+                        style: TextStyle(
+                          fontSize: 18,
+                          color: isSelected ? Colors.white : AppColors.darkCharcoal,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        currency['code'] as String,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: isSelected ? Colors.white : AppColors.darkCharcoal,
+                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+}
+

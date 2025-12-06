@@ -5,6 +5,7 @@ import 'package:payday_flutter/core/models/subscription.dart';
 import 'package:payday_flutter/core/models/subscription_analysis.dart';
 import 'package:payday_flutter/core/models/bill_reminder.dart';
 import 'package:payday_flutter/core/providers/repository_providers.dart';
+import 'package:payday_flutter/core/services/date_cycle_service.dart';
 import 'package:payday_flutter/features/insights/providers/monthly_summary_providers.dart';
 
 /// All subscriptions for current user
@@ -14,11 +15,31 @@ final subscriptionsProvider = FutureProvider<List<Subscription>>((ref) async {
   return repository.getSubscriptions(userId);
 });
 
-/// Active subscriptions only
+/// Active subscriptions only - Auto-updates billing dates if passed
 final activeSubscriptionsProvider = FutureProvider<List<Subscription>>((ref) async {
   final userId = ref.watch(currentUserIdProvider);
   final repository = ref.watch(subscriptionRepositoryProvider);
-  return repository.getActiveSubscriptions(userId);
+  final subscriptions = await repository.getActiveSubscriptions(userId);
+
+  // Check and update any subscriptions with passed billing dates
+  final updatedSubscriptions = <Subscription>[];
+  for (final sub in subscriptions) {
+    final calculatedNextBilling = DateCycleService.calculateNextBillingDate(
+      sub.nextBillingDate,
+      sub.frequency,
+    );
+
+    if (calculatedNextBilling != sub.nextBillingDate) {
+      // Billing date passed, update it
+      final updatedSub = sub.copyWith(nextBillingDate: calculatedNextBilling);
+      await repository.updateSubscription(updatedSub);
+      updatedSubscriptions.add(updatedSub);
+    } else {
+      updatedSubscriptions.add(sub);
+    }
+  }
+
+  return updatedSubscriptions;
 });
 
 /// Subscriptions due within 7 days

@@ -11,18 +11,40 @@ class AppConstants {
   // Currencies
   static const String currencyUSD = 'USD';
   static const String currencyAUD = 'AUD';
+  static const String currencyEUR = 'EUR';
+  static const String currencyGBP = 'GBP';
+  static const String currencyTRY = 'TRY';
 
   // Currency Symbols
   static const Map<String, String> currencySymbols = {
     currencyUSD: '\$',
     currencyAUD: 'A\$',
+    currencyEUR: '€',
+    currencyGBP: '£',
+    currencyTRY: '₺',
   };
+
+  // Currencies List for UI
+  static const List<Map<String, String>> currencies = [
+    {'code': 'USD', 'symbol': '\$', 'name': 'US Dollar'},
+    {'code': 'EUR', 'symbol': '€', 'name': 'Euro'},
+    {'code': 'GBP', 'symbol': '£', 'name': 'British Pound'},
+    {'code': 'AUD', 'symbol': 'A\$', 'name': 'Australian Dollar'},
+    {'code': 'TRY', 'symbol': '₺', 'name': 'Turkish Lira'},
+  ];
 
   // Pay Cycles
   static const String payCycleWeekly = 'Weekly';
   static const String payCycleBiWeekly = 'Bi-Weekly';
   static const String payCycleFortnightly = 'Fortnightly';
   static const String payCycleMonthly = 'Monthly';
+
+  // Pay Cycle Options for UI
+  static const List<String> payCycleOptions = [
+    payCycleWeekly,
+    payCycleBiWeekly,
+    payCycleMonthly,
+  ];
 
   // Pay Cycle Days
   static const Map<String, int> payCycleDays = {

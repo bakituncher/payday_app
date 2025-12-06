@@ -4,12 +4,29 @@ import 'package:payday_flutter/core/models/user_settings.dart';
 import 'package:payday_flutter/core/models/transaction.dart';
 import 'package:payday_flutter/core/providers/repository_providers.dart';
 import 'package:payday_flutter/core/utils/date_utils.dart' as app_date_utils;
+import 'package:payday_flutter/core/services/date_cycle_service.dart';
 
-/// User Settings Provider
+/// User Settings Provider - Auto-updates payday if it has passed
 final userSettingsProvider = FutureProvider<UserSettings?>((ref) async {
   final repository = ref.watch(userSettingsRepositoryProvider);
   final userId = ref.watch(currentUserIdProvider);
-  return repository.getUserSettings(userId);
+  var settings = await repository.getUserSettings(userId);
+
+  if (settings != null) {
+    // Check if payday has passed and needs updating
+    final calculatedNextPayday = DateCycleService.calculateNextPayday(
+      settings.nextPayday,
+      settings.payCycle,
+    );
+
+    // If payday was updated, save the new date
+    if (calculatedNextPayday != settings.nextPayday) {
+      await repository.updateNextPayday(userId, calculatedNextPayday);
+      settings = settings.copyWith(nextPayday: calculatedNextPayday);
+    }
+  }
+
+  return settings;
 });
 
 /// Current Pay Cycle Transactions Provider
