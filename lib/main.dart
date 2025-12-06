@@ -14,6 +14,7 @@ import 'package:payday_flutter/core/theme/app_theme.dart';
 import 'package:payday_flutter/features/home/screens/home_screen.dart';
 import 'package:payday_flutter/features/onboarding/screens/onboarding_screen.dart';
 import 'package:payday_flutter/features/subscriptions/screens/subscriptions_screen.dart';
+import 'package:payday_flutter/features/insights/screens/monthly_summary_screen.dart';
 import 'package:payday_flutter/core/providers/repository_providers.dart';
 
 void main() async {
@@ -67,6 +68,7 @@ class PaydayApp extends ConsumerWidget {
         '/onboarding': (context) => const OnboardingScreen(),
         '/home': (context) => const HomeScreen(),
         '/subscriptions': (context) => const SubscriptionsScreen(),
+        '/monthly-summary': (context) => const MonthlySummaryScreen(),
       },
     );
   }

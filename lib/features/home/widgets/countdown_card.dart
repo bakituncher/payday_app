@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:payday_flutter/core/theme/app_theme.dart';
 import 'package:payday_flutter/core/utils/currency_formatter.dart';
 import 'package:payday_flutter/shared/widgets/countdown_timer.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 
 class CountdownCard extends StatelessWidget {
   final DateTime nextPayday;

@@ -4,10 +4,12 @@ import 'package:payday_flutter/core/repositories/user_settings_repository.dart';
 import 'package:payday_flutter/core/repositories/transaction_repository.dart';
 import 'package:payday_flutter/core/repositories/savings_goal_repository.dart';
 import 'package:payday_flutter/core/repositories/subscription_repository.dart';
+import 'package:payday_flutter/core/repositories/monthly_summary_repository.dart';
 import 'package:payday_flutter/core/repositories/mock/mock_user_settings_repository.dart';
 import 'package:payday_flutter/core/repositories/mock/mock_transaction_repository.dart';
 import 'package:payday_flutter/core/repositories/mock/mock_savings_goal_repository.dart';
 import 'package:payday_flutter/core/repositories/mock/mock_subscription_repository.dart';
+import 'package:payday_flutter/core/repositories/mock/mock_monthly_summary_repository.dart';
 import 'package:payday_flutter/core/services/notification_service.dart';
 
 /// Repository Providers - Using mock implementations for now
@@ -25,6 +27,10 @@ final savingsGoalRepositoryProvider = Provider<SavingsGoalRepository>((ref) {
 
 final subscriptionRepositoryProvider = Provider<SubscriptionRepository>((ref) {
   return MockSubscriptionRepository();
+});
+
+final monthlySummaryRepositoryProvider = Provider<MonthlySummaryRepository>((ref) {
+  return MockMonthlySummaryRepository();
 });
 
 /// Notification Service Provider
