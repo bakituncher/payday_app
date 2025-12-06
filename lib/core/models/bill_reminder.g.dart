@@ -13,6 +13,7 @@ _$BillReminderImpl _$$BillReminderImplFromJson(Map<String, dynamic> json) =>
       subscriptionId: json['subscriptionId'] as String,
       subscriptionName: json['subscriptionName'] as String,
       amount: (json['amount'] as num).toDouble(),
+      currency: json['currency'] as String? ?? 'USD',
       dueDate: DateTime.parse(json['dueDate'] as String),
       reminderDate: DateTime.parse(json['reminderDate'] as String),
       status:
@@ -29,9 +30,9 @@ _$BillReminderImpl _$$BillReminderImplFromJson(Map<String, dynamic> json) =>
       dismissedAt: json['dismissedAt'] == null
           ? null
           : DateTime.parse(json['dismissedAt'] as String),
-      snoozedUntil: json['snoozedUntil'] == null
+      snoozeUntil: json['snoozeUntil'] == null
           ? null
-          : DateTime.parse(json['snoozedUntil'] as String),
+          : DateTime.parse(json['snoozeUntil'] as String),
       createdAt: json['createdAt'] == null
           ? null
           : DateTime.parse(json['createdAt'] as String),
@@ -44,6 +45,7 @@ Map<String, dynamic> _$$BillReminderImplToJson(_$BillReminderImpl instance) =>
       'subscriptionId': instance.subscriptionId,
       'subscriptionName': instance.subscriptionName,
       'amount': instance.amount,
+      'currency': instance.currency,
       'dueDate': instance.dueDate.toIso8601String(),
       'reminderDate': instance.reminderDate.toIso8601String(),
       'status': _$ReminderStatusEnumMap[instance.status]!,
@@ -52,7 +54,7 @@ Map<String, dynamic> _$$BillReminderImplToJson(_$BillReminderImpl instance) =>
       'emoji': instance.emoji,
       'sentAt': instance.sentAt?.toIso8601String(),
       'dismissedAt': instance.dismissedAt?.toIso8601String(),
-      'snoozedUntil': instance.snoozedUntil?.toIso8601String(),
+      'snoozeUntil': instance.snoozeUntil?.toIso8601String(),
       'createdAt': instance.createdAt?.toIso8601String(),
     };
 

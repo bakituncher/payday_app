@@ -212,7 +212,7 @@ class MockSubscriptionRepository implements SubscriptionRepository {
     if (index != -1) {
       _reminders[index] = _reminders[index].copyWith(
         status: ReminderStatus.snoozed,
-        snoozedUntil: DateTime.now().add(snoozeDuration),
+        snoozeUntil: DateTime.now().add(snoozeDuration),
       );
     }
   }

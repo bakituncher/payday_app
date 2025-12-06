@@ -1,0 +1,107 @@
+/// Local implementation of TransactionRepository using SharedPreferences
+/// Data persists across app restarts
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:payday_flutter/core/models/transaction.dart';
+import 'package:payday_flutter/core/repositories/transaction_repository.dart';
+
+class LocalTransactionRepository implements TransactionRepository {
+  static const String _storageKey = 'local_transactions';
+
+  List<Transaction>? _cachedTransactions;
+
+  Future<List<Transaction>> _loadTransactions() async {
+    if (_cachedTransactions != null) return _cachedTransactions!;
+
+    final prefs = await SharedPreferences.getInstance();
+    final jsonString = prefs.getString(_storageKey);
+
+    if (jsonString == null || jsonString.isEmpty) {
+      _cachedTransactions = [];
+      return _cachedTransactions!;
+    }
+
+    try {
+      final List<dynamic> jsonList = json.decode(jsonString);
+      _cachedTransactions = jsonList
+          .map((json) => Transaction.fromJson(json as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      _cachedTransactions = [];
+    }
+
+    return _cachedTransactions!;
+  }
+
+  Future<void> _saveTransactions() async {
+    if (_cachedTransactions == null) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    final jsonList = _cachedTransactions!.map((t) => t.toJson()).toList();
+    await prefs.setString(_storageKey, json.encode(jsonList));
+  }
+
+  @override
+  Future<List<Transaction>> getTransactions(String userId) async {
+    final transactions = await _loadTransactions();
+    return transactions.where((t) => t.userId == userId).toList()
+      ..sort((a, b) => b.date.compareTo(a.date));
+  }
+
+  @override
+  Future<List<Transaction>> getTransactionsForCurrentCycle(
+    String userId,
+    DateTime payCycleStart,
+  ) async {
+    final transactions = await _loadTransactions();
+    return transactions
+        .where((t) =>
+            t.userId == userId &&
+            (t.date.isAfter(payCycleStart) ||
+             t.date.isAtSameMomentAs(payCycleStart)) &&
+            t.date.isBefore(DateTime.now().add(const Duration(days: 1))))
+        .toList()
+      ..sort((a, b) => b.date.compareTo(a.date));
+  }
+
+  @override
+  Future<void> addTransaction(Transaction transaction) async {
+    await _loadTransactions();
+    _cachedTransactions!.add(transaction);
+    await _saveTransactions();
+  }
+
+  @override
+  Future<void> updateTransaction(Transaction transaction) async {
+    await _loadTransactions();
+    final index = _cachedTransactions!.indexWhere((t) => t.id == transaction.id);
+    if (index != -1) {
+      _cachedTransactions![index] = transaction;
+      await _saveTransactions();
+    }
+  }
+
+  @override
+  Future<void> deleteTransaction(String transactionId) async {
+    await _loadTransactions();
+    _cachedTransactions!.removeWhere((t) => t.id == transactionId);
+    await _saveTransactions();
+  }
+
+  @override
+  Future<double> getTotalExpensesForCycle(
+    String userId,
+    DateTime payCycleStart,
+  ) async {
+    final transactions = await getTransactionsForCurrentCycle(userId, payCycleStart);
+    return transactions
+        .where((t) => t.isExpense)
+        .fold<double>(0.0, (sum, t) => sum + t.amount);
+  }
+
+  /// Clear cache to force reload from storage
+  void clearCache() {
+    _cachedTransactions = null;
+  }
+}
+

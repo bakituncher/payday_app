@@ -37,10 +37,12 @@ final currentCycleTransactionsProvider = FutureProvider<List<Transaction>>((ref)
         cycleStart = payday.subtract(const Duration(days: 14));
         break;
       case 'Monthly':
-        cycleStart = DateTime(payday.year, payday.month - 1, payday.day);
+        // Use proper month calculation instead of 30 days
+        cycleStart = _calculatePreviousMonth(payday);
         break;
       default:
-        cycleStart = payday.subtract(const Duration(days: 30));
+        // For any other cycle, use proper month calculation
+        cycleStart = _calculatePreviousMonth(payday);
     }
   } else {
     cycleStart = payday;
@@ -48,6 +50,30 @@ final currentCycleTransactionsProvider = FutureProvider<List<Transaction>>((ref)
 
   return repository.getTransactionsForCurrentCycle(userId, cycleStart);
 });
+
+/// Calculate the same day in the previous month
+/// Handles edge cases like Feb 28/29, months with 30/31 days
+DateTime _calculatePreviousMonth(DateTime date) {
+  int year = date.year;
+  int month = date.month - 1;
+  int day = date.day;
+
+  // Handle year rollover
+  if (month < 1) {
+    month = 12;
+    year--;
+  }
+
+  // Get the last day of the previous month
+  final lastDayOfPrevMonth = DateTime(year, month + 1, 0).day;
+
+  // If the day doesn't exist in previous month, use the last day
+  if (day > lastDayOfPrevMonth) {
+    day = lastDayOfPrevMonth;
+  }
+
+  return DateTime(year, month, day);
+}
 
 /// Total Expenses for Current Cycle Provider
 final totalExpensesProvider = FutureProvider<double>((ref) async {

@@ -26,6 +26,7 @@ mixin _$BillReminder {
   String get subscriptionId => throw _privateConstructorUsedError;
   String get subscriptionName => throw _privateConstructorUsedError;
   double get amount => throw _privateConstructorUsedError;
+  String get currency => throw _privateConstructorUsedError;
   DateTime get dueDate => throw _privateConstructorUsedError;
   DateTime get reminderDate => throw _privateConstructorUsedError;
   ReminderStatus get status => throw _privateConstructorUsedError;
@@ -34,7 +35,7 @@ mixin _$BillReminder {
   String get emoji => throw _privateConstructorUsedError;
   DateTime? get sentAt => throw _privateConstructorUsedError;
   DateTime? get dismissedAt => throw _privateConstructorUsedError;
-  DateTime? get snoozedUntil => throw _privateConstructorUsedError;
+  DateTime? get snoozeUntil => throw _privateConstructorUsedError;
   DateTime? get createdAt => throw _privateConstructorUsedError;
 
   /// Serializes this BillReminder to a JSON map.
@@ -60,6 +61,7 @@ abstract class $BillReminderCopyWith<$Res> {
     String subscriptionId,
     String subscriptionName,
     double amount,
+    String currency,
     DateTime dueDate,
     DateTime reminderDate,
     ReminderStatus status,
@@ -68,7 +70,7 @@ abstract class $BillReminderCopyWith<$Res> {
     String emoji,
     DateTime? sentAt,
     DateTime? dismissedAt,
-    DateTime? snoozedUntil,
+    DateTime? snoozeUntil,
     DateTime? createdAt,
   });
 }
@@ -93,6 +95,7 @@ class _$BillReminderCopyWithImpl<$Res, $Val extends BillReminder>
     Object? subscriptionId = null,
     Object? subscriptionName = null,
     Object? amount = null,
+    Object? currency = null,
     Object? dueDate = null,
     Object? reminderDate = null,
     Object? status = null,
@@ -101,7 +104,7 @@ class _$BillReminderCopyWithImpl<$Res, $Val extends BillReminder>
     Object? emoji = null,
     Object? sentAt = freezed,
     Object? dismissedAt = freezed,
-    Object? snoozedUntil = freezed,
+    Object? snoozeUntil = freezed,
     Object? createdAt = freezed,
   }) {
     return _then(
@@ -126,6 +129,10 @@ class _$BillReminderCopyWithImpl<$Res, $Val extends BillReminder>
                 ? _value.amount
                 : amount // ignore: cast_nullable_to_non_nullable
                       as double,
+            currency: null == currency
+                ? _value.currency
+                : currency // ignore: cast_nullable_to_non_nullable
+                      as String,
             dueDate: null == dueDate
                 ? _value.dueDate
                 : dueDate // ignore: cast_nullable_to_non_nullable
@@ -158,9 +165,9 @@ class _$BillReminderCopyWithImpl<$Res, $Val extends BillReminder>
                 ? _value.dismissedAt
                 : dismissedAt // ignore: cast_nullable_to_non_nullable
                       as DateTime?,
-            snoozedUntil: freezed == snoozedUntil
-                ? _value.snoozedUntil
-                : snoozedUntil // ignore: cast_nullable_to_non_nullable
+            snoozeUntil: freezed == snoozeUntil
+                ? _value.snoozeUntil
+                : snoozeUntil // ignore: cast_nullable_to_non_nullable
                       as DateTime?,
             createdAt: freezed == createdAt
                 ? _value.createdAt
@@ -187,6 +194,7 @@ abstract class _$$BillReminderImplCopyWith<$Res>
     String subscriptionId,
     String subscriptionName,
     double amount,
+    String currency,
     DateTime dueDate,
     DateTime reminderDate,
     ReminderStatus status,
@@ -195,7 +203,7 @@ abstract class _$$BillReminderImplCopyWith<$Res>
     String emoji,
     DateTime? sentAt,
     DateTime? dismissedAt,
-    DateTime? snoozedUntil,
+    DateTime? snoozeUntil,
     DateTime? createdAt,
   });
 }
@@ -219,6 +227,7 @@ class __$$BillReminderImplCopyWithImpl<$Res>
     Object? subscriptionId = null,
     Object? subscriptionName = null,
     Object? amount = null,
+    Object? currency = null,
     Object? dueDate = null,
     Object? reminderDate = null,
     Object? status = null,
@@ -227,7 +236,7 @@ class __$$BillReminderImplCopyWithImpl<$Res>
     Object? emoji = null,
     Object? sentAt = freezed,
     Object? dismissedAt = freezed,
-    Object? snoozedUntil = freezed,
+    Object? snoozeUntil = freezed,
     Object? createdAt = freezed,
   }) {
     return _then(
@@ -252,6 +261,10 @@ class __$$BillReminderImplCopyWithImpl<$Res>
             ? _value.amount
             : amount // ignore: cast_nullable_to_non_nullable
                   as double,
+        currency: null == currency
+            ? _value.currency
+            : currency // ignore: cast_nullable_to_non_nullable
+                  as String,
         dueDate: null == dueDate
             ? _value.dueDate
             : dueDate // ignore: cast_nullable_to_non_nullable
@@ -284,9 +297,9 @@ class __$$BillReminderImplCopyWithImpl<$Res>
             ? _value.dismissedAt
             : dismissedAt // ignore: cast_nullable_to_non_nullable
                   as DateTime?,
-        snoozedUntil: freezed == snoozedUntil
-            ? _value.snoozedUntil
-            : snoozedUntil // ignore: cast_nullable_to_non_nullable
+        snoozeUntil: freezed == snoozeUntil
+            ? _value.snoozeUntil
+            : snoozeUntil // ignore: cast_nullable_to_non_nullable
                   as DateTime?,
         createdAt: freezed == createdAt
             ? _value.createdAt
@@ -306,6 +319,7 @@ class _$BillReminderImpl extends _BillReminder {
     required this.subscriptionId,
     required this.subscriptionName,
     required this.amount,
+    this.currency = 'USD',
     required this.dueDate,
     required this.reminderDate,
     this.status = ReminderStatus.pending,
@@ -314,7 +328,7 @@ class _$BillReminderImpl extends _BillReminder {
     this.emoji = '💳',
     this.sentAt,
     this.dismissedAt,
-    this.snoozedUntil,
+    this.snoozeUntil,
     this.createdAt,
   }) : super._();
 
@@ -331,6 +345,9 @@ class _$BillReminderImpl extends _BillReminder {
   final String subscriptionName;
   @override
   final double amount;
+  @override
+  @JsonKey()
+  final String currency;
   @override
   final DateTime dueDate;
   @override
@@ -352,13 +369,13 @@ class _$BillReminderImpl extends _BillReminder {
   @override
   final DateTime? dismissedAt;
   @override
-  final DateTime? snoozedUntil;
+  final DateTime? snoozeUntil;
   @override
   final DateTime? createdAt;
 
   @override
   String toString() {
-    return 'BillReminder(id: $id, userId: $userId, subscriptionId: $subscriptionId, subscriptionName: $subscriptionName, amount: $amount, dueDate: $dueDate, reminderDate: $reminderDate, status: $status, priority: $priority, note: $note, emoji: $emoji, sentAt: $sentAt, dismissedAt: $dismissedAt, snoozedUntil: $snoozedUntil, createdAt: $createdAt)';
+    return 'BillReminder(id: $id, userId: $userId, subscriptionId: $subscriptionId, subscriptionName: $subscriptionName, amount: $amount, currency: $currency, dueDate: $dueDate, reminderDate: $reminderDate, status: $status, priority: $priority, note: $note, emoji: $emoji, sentAt: $sentAt, dismissedAt: $dismissedAt, snoozeUntil: $snoozeUntil, createdAt: $createdAt)';
   }
 
   @override
@@ -373,6 +390,8 @@ class _$BillReminderImpl extends _BillReminder {
             (identical(other.subscriptionName, subscriptionName) ||
                 other.subscriptionName == subscriptionName) &&
             (identical(other.amount, amount) || other.amount == amount) &&
+            (identical(other.currency, currency) ||
+                other.currency == currency) &&
             (identical(other.dueDate, dueDate) || other.dueDate == dueDate) &&
             (identical(other.reminderDate, reminderDate) ||
                 other.reminderDate == reminderDate) &&
@@ -384,8 +403,8 @@ class _$BillReminderImpl extends _BillReminder {
             (identical(other.sentAt, sentAt) || other.sentAt == sentAt) &&
             (identical(other.dismissedAt, dismissedAt) ||
                 other.dismissedAt == dismissedAt) &&
-            (identical(other.snoozedUntil, snoozedUntil) ||
-                other.snoozedUntil == snoozedUntil) &&
+            (identical(other.snoozeUntil, snoozeUntil) ||
+                other.snoozeUntil == snoozeUntil) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt));
   }
@@ -399,6 +418,7 @@ class _$BillReminderImpl extends _BillReminder {
     subscriptionId,
     subscriptionName,
     amount,
+    currency,
     dueDate,
     reminderDate,
     status,
@@ -407,7 +427,7 @@ class _$BillReminderImpl extends _BillReminder {
     emoji,
     sentAt,
     dismissedAt,
-    snoozedUntil,
+    snoozeUntil,
     createdAt,
   );
 
@@ -432,6 +452,7 @@ abstract class _BillReminder extends BillReminder {
     required final String subscriptionId,
     required final String subscriptionName,
     required final double amount,
+    final String currency,
     required final DateTime dueDate,
     required final DateTime reminderDate,
     final ReminderStatus status,
@@ -440,7 +461,7 @@ abstract class _BillReminder extends BillReminder {
     final String emoji,
     final DateTime? sentAt,
     final DateTime? dismissedAt,
-    final DateTime? snoozedUntil,
+    final DateTime? snoozeUntil,
     final DateTime? createdAt,
   }) = _$BillReminderImpl;
   const _BillReminder._() : super._();
@@ -459,6 +480,8 @@ abstract class _BillReminder extends BillReminder {
   @override
   double get amount;
   @override
+  String get currency;
+  @override
   DateTime get dueDate;
   @override
   DateTime get reminderDate;
@@ -475,7 +498,7 @@ abstract class _BillReminder extends BillReminder {
   @override
   DateTime? get dismissedAt;
   @override
-  DateTime? get snoozedUntil;
+  DateTime? get snoozeUntil;
   @override
   DateTime? get createdAt;
 

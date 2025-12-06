@@ -39,6 +39,7 @@ class BillReminder with _$BillReminder {
     required String subscriptionId,
     required String subscriptionName,
     required double amount,
+    @Default('USD') String currency,
     required DateTime dueDate,
     required DateTime reminderDate,
     @Default(ReminderStatus.pending) ReminderStatus status,
@@ -47,7 +48,7 @@ class BillReminder with _$BillReminder {
     @Default('💳') String emoji,
     DateTime? sentAt,
     DateTime? dismissedAt,
-    DateTime? snoozedUntil,
+    DateTime? snoozeUntil,
     DateTime? createdAt,
   }) = _BillReminder;
 
