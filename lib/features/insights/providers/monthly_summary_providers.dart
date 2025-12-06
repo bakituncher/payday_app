@@ -7,8 +7,25 @@ import 'package:payday_flutter/core/models/transaction.dart';
 import 'package:payday_flutter/core/providers/repository_providers.dart';
 import 'package:payday_flutter/core/repositories/monthly_summary_repository.dart';
 import 'package:payday_flutter/core/services/financial_insights_service.dart';
+import 'package:payday_flutter/core/services/leftover_allocation_service.dart';
 import 'package:payday_flutter/features/home/providers/home_providers.dart';
 import 'package:payday_flutter/features/subscriptions/providers/subscription_providers.dart';
+
+/// Leftover Allocation Service Provider
+final leftoverAllocationServiceProvider = Provider<LeftoverAllocationService>((ref) {
+  return LeftoverAllocationService(
+    savingsGoalRepository: ref.watch(savingsGoalRepositoryProvider),
+    monthlySummaryRepository: ref.watch(monthlySummaryRepositoryProvider),
+    userSettingsRepository: ref.watch(userSettingsRepositoryProvider),
+  );
+});
+
+/// Savings Goals Provider
+final savingsGoalsProvider = FutureProvider<List<dynamic>>((ref) async {
+  final userId = ref.watch(currentUserIdProvider);
+  final repository = ref.watch(savingsGoalRepositoryProvider);
+  return repository.getSavingsGoals(userId);
+});
 
 /// Current month summary provider
 final currentMonthlySummaryProvider = FutureProvider<MonthlySummary?>((ref) async {
@@ -73,42 +90,75 @@ final budgetGoalsProvider = FutureProvider<List<BudgetGoal>>((ref) async {
 /// Selected leftover action provider
 final selectedLeftoverActionProvider = StateProvider<LeftoverAction?>((ref) => null);
 
+/// Allocation loading state
+final allocationLoadingProvider = StateProvider<bool>((ref) => false);
+
 /// Monthly Summary Notifier for mutations
 class MonthlySummaryNotifier extends StateNotifier<AsyncValue<void>> {
   final Ref _ref;
 
   MonthlySummaryNotifier(this._ref) : super(const AsyncValue.data(null));
 
-  /// Allocate leftover money
-  Future<void> allocateLeftover({
+  /// Allocate leftover money - ACTUALLY PROCESSES THE ALLOCATION
+  Future<AllocationResult> allocateLeftover({
     required String summaryId,
     required LeftoverAction action,
     required double amount,
+    String? targetGoalId,
     String? note,
   }) async {
     state = const AsyncValue.loading();
+    _ref.read(allocationLoadingProvider.notifier).state = true;
+
     try {
       final userId = _ref.read(currentUserIdProvider);
+      final allocationService = _ref.read(leftoverAllocationServiceProvider);
       final repository = _ref.read(monthlySummaryRepositoryProvider);
 
-      final allocation = LeftoverAllocation(
-        id: '${summaryId}_${action.name}_${DateTime.now().millisecondsSinceEpoch}',
+      // Process the actual allocation (creates/updates savings goals)
+      final result = await allocationService.processAllocation(
         userId: userId,
         summaryId: summaryId,
         action: action,
         amount: amount,
-        allocatedAt: DateTime.now(),
-        note: note ?? '',
+        targetGoalId: targetGoalId,
+        note: note,
       );
 
-      await repository.recordLeftoverAllocation(allocation);
+      if (result.success) {
+        // Record the allocation in summary repository
+        final allocation = LeftoverAllocation(
+          id: '${summaryId}_${action.name}_${DateTime.now().millisecondsSinceEpoch}',
+          userId: userId,
+          summaryId: summaryId,
+          action: action,
+          amount: amount,
+          allocatedAt: DateTime.now(),
+          note: note ?? result.message,
+        );
 
-      // Invalidate to refresh
-      _ref.invalidate(currentMonthlySummaryProvider);
+        await repository.recordLeftoverAllocation(allocation);
+
+        // Refresh all related data
+        _ref.invalidate(currentMonthlySummaryProvider);
+        _ref.invalidate(savingsGoalsProvider);
+      }
 
       state = const AsyncValue.data(null);
+      _ref.read(allocationLoadingProvider.notifier).state = false;
+
+      return result;
     } catch (e, st) {
       state = AsyncValue.error(e, st);
+      _ref.read(allocationLoadingProvider.notifier).state = false;
+
+      return AllocationResult(
+        success: false,
+        message: 'Error: ${e.toString()}',
+        action: action,
+        amount: amount,
+        error: e.toString(),
+      );
     }
   }
 

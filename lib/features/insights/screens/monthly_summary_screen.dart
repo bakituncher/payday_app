@@ -624,46 +624,138 @@ class MonthlySummaryScreen extends ConsumerWidget {
   ) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Allocate to ${suggestion.title}'),
-        content: Text(
-          'Are you sure you want to allocate \$${suggestion.suggestedAmount.toStringAsFixed(2)} to ${suggestion.title.toLowerCase()}?',
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              await ref.read(monthlySummaryNotifierProvider.notifier).allocateLeftover(
-                summaryId: summaryId,
-                action: suggestion.action,
-                amount: suggestion.suggestedAmount,
-              );
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Allocated to ${suggestion.title}'),
-                    backgroundColor: AppColors.success,
-                    behavior: SnackBarBehavior.floating,
+      barrierDismissible: false,
+      builder: (dialogContext) => Consumer(
+        builder: (context, ref, child) {
+          final isLoading = ref.watch(allocationLoadingProvider);
+
+          return AlertDialog(
+            title: Row(
+              children: [
+                Text(suggestion.emoji, style: const TextStyle(fontSize: 24)),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Allocate to ${suggestion.title}',
+                    style: const TextStyle(fontSize: 18),
                   ),
-                );
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primaryPink,
-              foregroundColor: Colors.white,
+                ),
+              ],
             ),
-            child: const Text('Confirm'),
-          ),
-        ],
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'This will ${_getActionDescription(suggestion.action)}',
+                  style: TextStyle(color: AppColors.mediumGray),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryPink.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        '\$${suggestion.suggestedAmount.toStringAsFixed(2)}',
+                        style: const TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.primaryPink,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+            ),
+            actions: [
+              TextButton(
+                onPressed: isLoading ? null : () => Navigator.pop(dialogContext),
+                child: Text(
+                  'Cancel',
+                  style: TextStyle(
+                    color: isLoading ? AppColors.lightGray : AppColors.mediumGray,
+                  ),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: isLoading ? null : () async {
+                  final result = await ref.read(monthlySummaryNotifierProvider.notifier).allocateLeftover(
+                    summaryId: summaryId,
+                    action: suggestion.action,
+                    amount: suggestion.suggestedAmount,
+                  );
+
+                  if (dialogContext.mounted) {
+                    Navigator.pop(dialogContext);
+                  }
+
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Row(
+                          children: [
+                            Icon(
+                              result.success ? Icons.check_circle : Icons.error,
+                              color: Colors.white,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(child: Text(result.message)),
+                          ],
+                        ),
+                        backgroundColor: result.success ? AppColors.success : AppColors.error,
+                        behavior: SnackBarBehavior.floating,
+                        duration: const Duration(seconds: 3),
+                      ),
+                    );
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryPink,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                ),
+                child: isLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
+                    : const Text('Confirm'),
+              ),
+            ],
+          );
+        },
       ),
     );
+  }
+
+  String _getActionDescription(LeftoverAction action) {
+    switch (action) {
+      case LeftoverAction.save:
+        return 'add this amount to your savings goal.';
+      case LeftoverAction.invest:
+        return 'create or add to your investment fund.';
+      case LeftoverAction.emergency:
+        return 'build your emergency fund for unexpected expenses.';
+      case LeftoverAction.debt:
+        return 'help you pay down your debt faster.';
+      case LeftoverAction.rollover:
+        return 'increase your budget flexibility next month.';
+      case LeftoverAction.treat:
+        return 'reward yourself for good financial habits!';
+    }
   }
 
   LinearGradient _getHealthGradient(FinancialHealth health) {
