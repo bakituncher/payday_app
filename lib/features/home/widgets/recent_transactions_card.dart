@@ -1,0 +1,313 @@
+/// Recent Transactions Card - Premium Industry-Grade Design
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:payday_flutter/core/theme/app_theme.dart';
+import 'package:payday_flutter/core/utils/currency_formatter.dart';
+import 'package:payday_flutter/features/home/providers/home_providers.dart';
+import 'package:intl/intl.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+
+class RecentTransactionsCard extends ConsumerWidget {
+  final String currency;
+
+  const RecentTransactionsCard({
+    super.key,
+    required this.currency,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final transactionsAsync = ref.watch(currentCycleTransactionsProvider);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.cardWhite,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        boxShadow: AppColors.cardShadow,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Header
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            AppColors.secondaryPurple.withOpacity(0.15),
+                            AppColors.primaryPink.withOpacity(0.1),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                      ),
+                      child: Icon(
+                        Icons.receipt_long_rounded,
+                        color: AppColors.secondaryPurple,
+                        size: 16,
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Text(
+                      'Recent',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.darkCharcoal,
+                      ),
+                    ),
+                  ],
+                ),
+                GestureDetector(
+                  onTap: () {
+                    // TODO: Navigate to all transactions
+                  },
+                  child: Text(
+                    'See All',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: AppColors.primaryPink,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: AppSpacing.sm),
+
+            // Transactions List
+            transactionsAsync.when(
+              loading: () => _buildShimmerList(),
+              error: (error, stack) => _buildError(theme),
+              data: (transactions) {
+                if (transactions.isEmpty) {
+                  return _buildEmptyState(theme);
+                }
+
+                // Show only last 3 transactions for compact view
+                final recentTransactions = transactions.take(3).toList();
+
+                return ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: recentTransactions.length,
+                  separatorBuilder: (context, index) => const SizedBox(height: 2),
+                  itemBuilder: (context, index) {
+                    final transaction = recentTransactions[index];
+                    return _TransactionTile(
+                      emoji: transaction.categoryEmoji,
+                      category: transaction.categoryName,
+                      note: transaction.note,
+                      amount: transaction.amount,
+                      date: transaction.date,
+                      currency: currency,
+                    );
+                  },
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(ThemeData theme) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.receipt_long_rounded,
+            size: 20,
+            color: AppColors.mediumGray,
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Text(
+            'No transactions yet',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: AppColors.mediumGray,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildShimmerList() {
+    return Column(
+      children: List.generate(3, (index) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: AppColors.subtleGray,
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    height: 12,
+                    width: 80,
+                    decoration: BoxDecoration(
+                      color: AppColors.subtleGray,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Container(
+                    height: 12,
+                    width: 60,
+                    decoration: BoxDecoration(
+                      color: AppColors.subtleGray,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              height: 14,
+              width: 50,
+              decoration: BoxDecoration(
+                color: AppColors.subtleGray,
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+          ],
+        ),
+      )),
+    ).animate(onPlay: (controller) => controller.repeat())
+        .shimmer(duration: 1200.ms, color: AppColors.lightGray);
+  }
+
+  Widget _buildError(ThemeData theme) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.error_outline_rounded, color: AppColors.error, size: 16),
+          const SizedBox(width: AppSpacing.xs),
+          Text(
+            'Error loading',
+            style: theme.textTheme.bodySmall?.copyWith(color: AppColors.error),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TransactionTile extends StatelessWidget {
+  final String emoji;
+  final String category;
+  final String note;
+  final double amount;
+  final DateTime date;
+  final String currency;
+
+  const _TransactionTile({
+    required this.emoji,
+    required this.category,
+    required this.note,
+    required this.amount,
+    required this.date,
+    required this.currency,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        children: [
+          // Emoji Icon - Compact
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: AppColors.lightPink.withOpacity(0.6),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+            ),
+            child: Center(
+              child: Text(
+                emoji,
+                style: const TextStyle(fontSize: 16),
+              ),
+            ),
+          ),
+
+          const SizedBox(width: AppSpacing.sm),
+
+          // Details - Compact
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  category,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.darkCharcoal,
+                  ),
+                ),
+                Text(
+                  _formatDate(date),
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: AppColors.mediumGray,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Amount - Compact
+          Text(
+            '-${CurrencyFormatter.format(amount, currency)}',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: AppColors.error,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    final now = DateTime.now();
+    final diff = now.difference(date);
+
+    if (diff.inDays == 0) {
+      return DateFormat('h:mm a').format(date);
+    } else if (diff.inDays == 1) {
+      return 'Yesterday';
+    } else if (diff.inDays < 7) {
+      return DateFormat('EEE').format(date);
+    } else {
+      return DateFormat('MMM d').format(date);
+    }
+  }
+}
+
