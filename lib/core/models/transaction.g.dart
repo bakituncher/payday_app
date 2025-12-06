@@ -17,6 +17,15 @@ _$TransactionImpl _$$TransactionImplFromJson(Map<String, dynamic> json) =>
       date: DateTime.parse(json['date'] as String),
       note: json['note'] as String? ?? '',
       isExpense: json['isExpense'] as bool? ?? true,
+      isRecurring: json['isRecurring'] as bool? ?? false,
+      frequency: $enumDecodeNullable(
+        _$TransactionFrequencyEnumMap,
+        json['frequency'],
+      ),
+      subscriptionId: json['subscriptionId'] as String?,
+      nextRecurrenceDate: json['nextRecurrenceDate'] == null
+          ? null
+          : DateTime.parse(json['nextRecurrenceDate'] as String),
     );
 
 Map<String, dynamic> _$$TransactionImplToJson(_$TransactionImpl instance) =>
@@ -30,4 +39,17 @@ Map<String, dynamic> _$$TransactionImplToJson(_$TransactionImpl instance) =>
       'date': instance.date.toIso8601String(),
       'note': instance.note,
       'isExpense': instance.isExpense,
+      'isRecurring': instance.isRecurring,
+      'frequency': _$TransactionFrequencyEnumMap[instance.frequency],
+      'subscriptionId': instance.subscriptionId,
+      'nextRecurrenceDate': instance.nextRecurrenceDate?.toIso8601String(),
     };
+
+const _$TransactionFrequencyEnumMap = {
+  TransactionFrequency.daily: 'daily',
+  TransactionFrequency.weekly: 'weekly',
+  TransactionFrequency.biweekly: 'biweekly',
+  TransactionFrequency.monthly: 'monthly',
+  TransactionFrequency.quarterly: 'quarterly',
+  TransactionFrequency.yearly: 'yearly',
+};

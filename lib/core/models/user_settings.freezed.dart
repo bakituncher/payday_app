@@ -28,7 +28,16 @@ mixin _$UserSettings {
   double get incomeAmount => throw _privateConstructorUsedError;
   String get market => throw _privateConstructorUsedError;
   bool get notificationsEnabled => throw _privateConstructorUsedError;
-  bool get paydayReminders => throw _privateConstructorUsedError;
+  bool get paydayReminders =>
+      throw _privateConstructorUsedError; // Bill reminder settings
+  bool get billReminders => throw _privateConstructorUsedError;
+  int get billReminderDaysBefore =>
+      throw _privateConstructorUsedError; // Days before due date
+  bool get subscriptionAlerts => throw _privateConstructorUsedError;
+  bool get weeklySubscriptionSummary => throw _privateConstructorUsedError;
+  bool get unusedSubscriptionAlerts => throw _privateConstructorUsedError;
+  int get unusedThresholdDays =>
+      throw _privateConstructorUsedError; // Days before marking as unused
   DateTime? get createdAt => throw _privateConstructorUsedError;
   DateTime? get updatedAt => throw _privateConstructorUsedError;
 
@@ -58,6 +67,12 @@ abstract class $UserSettingsCopyWith<$Res> {
     String market,
     bool notificationsEnabled,
     bool paydayReminders,
+    bool billReminders,
+    int billReminderDaysBefore,
+    bool subscriptionAlerts,
+    bool weeklySubscriptionSummary,
+    bool unusedSubscriptionAlerts,
+    int unusedThresholdDays,
     DateTime? createdAt,
     DateTime? updatedAt,
   });
@@ -86,6 +101,12 @@ class _$UserSettingsCopyWithImpl<$Res, $Val extends UserSettings>
     Object? market = null,
     Object? notificationsEnabled = null,
     Object? paydayReminders = null,
+    Object? billReminders = null,
+    Object? billReminderDaysBefore = null,
+    Object? subscriptionAlerts = null,
+    Object? weeklySubscriptionSummary = null,
+    Object? unusedSubscriptionAlerts = null,
+    Object? unusedThresholdDays = null,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
   }) {
@@ -123,6 +144,30 @@ class _$UserSettingsCopyWithImpl<$Res, $Val extends UserSettings>
                 ? _value.paydayReminders
                 : paydayReminders // ignore: cast_nullable_to_non_nullable
                       as bool,
+            billReminders: null == billReminders
+                ? _value.billReminders
+                : billReminders // ignore: cast_nullable_to_non_nullable
+                      as bool,
+            billReminderDaysBefore: null == billReminderDaysBefore
+                ? _value.billReminderDaysBefore
+                : billReminderDaysBefore // ignore: cast_nullable_to_non_nullable
+                      as int,
+            subscriptionAlerts: null == subscriptionAlerts
+                ? _value.subscriptionAlerts
+                : subscriptionAlerts // ignore: cast_nullable_to_non_nullable
+                      as bool,
+            weeklySubscriptionSummary: null == weeklySubscriptionSummary
+                ? _value.weeklySubscriptionSummary
+                : weeklySubscriptionSummary // ignore: cast_nullable_to_non_nullable
+                      as bool,
+            unusedSubscriptionAlerts: null == unusedSubscriptionAlerts
+                ? _value.unusedSubscriptionAlerts
+                : unusedSubscriptionAlerts // ignore: cast_nullable_to_non_nullable
+                      as bool,
+            unusedThresholdDays: null == unusedThresholdDays
+                ? _value.unusedThresholdDays
+                : unusedThresholdDays // ignore: cast_nullable_to_non_nullable
+                      as int,
             createdAt: freezed == createdAt
                 ? _value.createdAt
                 : createdAt // ignore: cast_nullable_to_non_nullable
@@ -155,6 +200,12 @@ abstract class _$$UserSettingsImplCopyWith<$Res>
     String market,
     bool notificationsEnabled,
     bool paydayReminders,
+    bool billReminders,
+    int billReminderDaysBefore,
+    bool subscriptionAlerts,
+    bool weeklySubscriptionSummary,
+    bool unusedSubscriptionAlerts,
+    int unusedThresholdDays,
     DateTime? createdAt,
     DateTime? updatedAt,
   });
@@ -182,6 +233,12 @@ class __$$UserSettingsImplCopyWithImpl<$Res>
     Object? market = null,
     Object? notificationsEnabled = null,
     Object? paydayReminders = null,
+    Object? billReminders = null,
+    Object? billReminderDaysBefore = null,
+    Object? subscriptionAlerts = null,
+    Object? weeklySubscriptionSummary = null,
+    Object? unusedSubscriptionAlerts = null,
+    Object? unusedThresholdDays = null,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
   }) {
@@ -219,6 +276,30 @@ class __$$UserSettingsImplCopyWithImpl<$Res>
             ? _value.paydayReminders
             : paydayReminders // ignore: cast_nullable_to_non_nullable
                   as bool,
+        billReminders: null == billReminders
+            ? _value.billReminders
+            : billReminders // ignore: cast_nullable_to_non_nullable
+                  as bool,
+        billReminderDaysBefore: null == billReminderDaysBefore
+            ? _value.billReminderDaysBefore
+            : billReminderDaysBefore // ignore: cast_nullable_to_non_nullable
+                  as int,
+        subscriptionAlerts: null == subscriptionAlerts
+            ? _value.subscriptionAlerts
+            : subscriptionAlerts // ignore: cast_nullable_to_non_nullable
+                  as bool,
+        weeklySubscriptionSummary: null == weeklySubscriptionSummary
+            ? _value.weeklySubscriptionSummary
+            : weeklySubscriptionSummary // ignore: cast_nullable_to_non_nullable
+                  as bool,
+        unusedSubscriptionAlerts: null == unusedSubscriptionAlerts
+            ? _value.unusedSubscriptionAlerts
+            : unusedSubscriptionAlerts // ignore: cast_nullable_to_non_nullable
+                  as bool,
+        unusedThresholdDays: null == unusedThresholdDays
+            ? _value.unusedThresholdDays
+            : unusedThresholdDays // ignore: cast_nullable_to_non_nullable
+                  as int,
         createdAt: freezed == createdAt
             ? _value.createdAt
             : createdAt // ignore: cast_nullable_to_non_nullable
@@ -244,6 +325,12 @@ class _$UserSettingsImpl implements _UserSettings {
     this.market = 'US',
     this.notificationsEnabled = true,
     this.paydayReminders = true,
+    this.billReminders = true,
+    this.billReminderDaysBefore = 2,
+    this.subscriptionAlerts = true,
+    this.weeklySubscriptionSummary = true,
+    this.unusedSubscriptionAlerts = true,
+    this.unusedThresholdDays = 30,
     this.createdAt,
     this.updatedAt,
   });
@@ -270,6 +357,27 @@ class _$UserSettingsImpl implements _UserSettings {
   @override
   @JsonKey()
   final bool paydayReminders;
+  // Bill reminder settings
+  @override
+  @JsonKey()
+  final bool billReminders;
+  @override
+  @JsonKey()
+  final int billReminderDaysBefore;
+  // Days before due date
+  @override
+  @JsonKey()
+  final bool subscriptionAlerts;
+  @override
+  @JsonKey()
+  final bool weeklySubscriptionSummary;
+  @override
+  @JsonKey()
+  final bool unusedSubscriptionAlerts;
+  @override
+  @JsonKey()
+  final int unusedThresholdDays;
+  // Days before marking as unused
   @override
   final DateTime? createdAt;
   @override
@@ -277,7 +385,7 @@ class _$UserSettingsImpl implements _UserSettings {
 
   @override
   String toString() {
-    return 'UserSettings(userId: $userId, currency: $currency, payCycle: $payCycle, nextPayday: $nextPayday, incomeAmount: $incomeAmount, market: $market, notificationsEnabled: $notificationsEnabled, paydayReminders: $paydayReminders, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'UserSettings(userId: $userId, currency: $currency, payCycle: $payCycle, nextPayday: $nextPayday, incomeAmount: $incomeAmount, market: $market, notificationsEnabled: $notificationsEnabled, paydayReminders: $paydayReminders, billReminders: $billReminders, billReminderDaysBefore: $billReminderDaysBefore, subscriptionAlerts: $subscriptionAlerts, weeklySubscriptionSummary: $weeklySubscriptionSummary, unusedSubscriptionAlerts: $unusedSubscriptionAlerts, unusedThresholdDays: $unusedThresholdDays, createdAt: $createdAt, updatedAt: $updatedAt)';
   }
 
   @override
@@ -299,6 +407,24 @@ class _$UserSettingsImpl implements _UserSettings {
                 other.notificationsEnabled == notificationsEnabled) &&
             (identical(other.paydayReminders, paydayReminders) ||
                 other.paydayReminders == paydayReminders) &&
+            (identical(other.billReminders, billReminders) ||
+                other.billReminders == billReminders) &&
+            (identical(other.billReminderDaysBefore, billReminderDaysBefore) ||
+                other.billReminderDaysBefore == billReminderDaysBefore) &&
+            (identical(other.subscriptionAlerts, subscriptionAlerts) ||
+                other.subscriptionAlerts == subscriptionAlerts) &&
+            (identical(
+                  other.weeklySubscriptionSummary,
+                  weeklySubscriptionSummary,
+                ) ||
+                other.weeklySubscriptionSummary == weeklySubscriptionSummary) &&
+            (identical(
+                  other.unusedSubscriptionAlerts,
+                  unusedSubscriptionAlerts,
+                ) ||
+                other.unusedSubscriptionAlerts == unusedSubscriptionAlerts) &&
+            (identical(other.unusedThresholdDays, unusedThresholdDays) ||
+                other.unusedThresholdDays == unusedThresholdDays) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             (identical(other.updatedAt, updatedAt) ||
@@ -317,6 +443,12 @@ class _$UserSettingsImpl implements _UserSettings {
     market,
     notificationsEnabled,
     paydayReminders,
+    billReminders,
+    billReminderDaysBefore,
+    subscriptionAlerts,
+    weeklySubscriptionSummary,
+    unusedSubscriptionAlerts,
+    unusedThresholdDays,
     createdAt,
     updatedAt,
   );
@@ -345,6 +477,12 @@ abstract class _UserSettings implements UserSettings {
     final String market,
     final bool notificationsEnabled,
     final bool paydayReminders,
+    final bool billReminders,
+    final int billReminderDaysBefore,
+    final bool subscriptionAlerts,
+    final bool weeklySubscriptionSummary,
+    final bool unusedSubscriptionAlerts,
+    final int unusedThresholdDays,
     final DateTime? createdAt,
     final DateTime? updatedAt,
   }) = _$UserSettingsImpl;
@@ -367,7 +505,19 @@ abstract class _UserSettings implements UserSettings {
   @override
   bool get notificationsEnabled;
   @override
-  bool get paydayReminders;
+  bool get paydayReminders; // Bill reminder settings
+  @override
+  bool get billReminders;
+  @override
+  int get billReminderDaysBefore; // Days before due date
+  @override
+  bool get subscriptionAlerts;
+  @override
+  bool get weeklySubscriptionSummary;
+  @override
+  bool get unusedSubscriptionAlerts;
+  @override
+  int get unusedThresholdDays; // Days before marking as unused
   @override
   DateTime? get createdAt;
   @override

@@ -8,6 +8,7 @@ import 'package:payday_flutter/features/home/widgets/countdown_card.dart';
 import 'package:payday_flutter/features/home/widgets/daily_spend_card.dart';
 import 'package:payday_flutter/features/home/widgets/budget_progress_card.dart';
 import 'package:payday_flutter/features/home/widgets/recent_transactions_card.dart';
+import 'package:payday_flutter/features/home/widgets/active_subscriptions_card.dart';
 import 'package:payday_flutter/features/transactions/screens/add_transaction_screen.dart';
 import 'package:payday_flutter/shared/widgets/payday_button.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -193,6 +194,14 @@ class HomeScreen extends ConsumerWidget {
                               .animate()
                               .fadeIn(duration: 500.ms, delay: 300.ms)
                               .slideX(begin: 0.1, end: 0),
+
+                          const SizedBox(height: AppSpacing.sm),
+
+                          // Active Subscriptions Card
+                          const ActiveSubscriptionsCard()
+                              .animate()
+                              .fadeIn(duration: 500.ms, delay: 350.ms)
+                              .slideY(begin: 0.1, end: 0),
 
                           const SizedBox(height: AppSpacing.sm),
 

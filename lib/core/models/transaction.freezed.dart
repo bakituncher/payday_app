@@ -29,7 +29,13 @@ mixin _$Transaction {
   String get categoryEmoji => throw _privateConstructorUsedError;
   DateTime get date => throw _privateConstructorUsedError;
   String get note => throw _privateConstructorUsedError;
-  bool get isExpense => throw _privateConstructorUsedError;
+  bool get isExpense =>
+      throw _privateConstructorUsedError; // Recurring payment fields
+  bool get isRecurring => throw _privateConstructorUsedError;
+  TransactionFrequency? get frequency => throw _privateConstructorUsedError;
+  String? get subscriptionId =>
+      throw _privateConstructorUsedError; // Link to subscription if applicable
+  DateTime? get nextRecurrenceDate => throw _privateConstructorUsedError;
 
   /// Serializes this Transaction to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -58,6 +64,10 @@ abstract class $TransactionCopyWith<$Res> {
     DateTime date,
     String note,
     bool isExpense,
+    bool isRecurring,
+    TransactionFrequency? frequency,
+    String? subscriptionId,
+    DateTime? nextRecurrenceDate,
   });
 }
 
@@ -85,6 +95,10 @@ class _$TransactionCopyWithImpl<$Res, $Val extends Transaction>
     Object? date = null,
     Object? note = null,
     Object? isExpense = null,
+    Object? isRecurring = null,
+    Object? frequency = freezed,
+    Object? subscriptionId = freezed,
+    Object? nextRecurrenceDate = freezed,
   }) {
     return _then(
       _value.copyWith(
@@ -124,6 +138,22 @@ class _$TransactionCopyWithImpl<$Res, $Val extends Transaction>
                 ? _value.isExpense
                 : isExpense // ignore: cast_nullable_to_non_nullable
                       as bool,
+            isRecurring: null == isRecurring
+                ? _value.isRecurring
+                : isRecurring // ignore: cast_nullable_to_non_nullable
+                      as bool,
+            frequency: freezed == frequency
+                ? _value.frequency
+                : frequency // ignore: cast_nullable_to_non_nullable
+                      as TransactionFrequency?,
+            subscriptionId: freezed == subscriptionId
+                ? _value.subscriptionId
+                : subscriptionId // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            nextRecurrenceDate: freezed == nextRecurrenceDate
+                ? _value.nextRecurrenceDate
+                : nextRecurrenceDate // ignore: cast_nullable_to_non_nullable
+                      as DateTime?,
           )
           as $Val,
     );
@@ -149,6 +179,10 @@ abstract class _$$TransactionImplCopyWith<$Res>
     DateTime date,
     String note,
     bool isExpense,
+    bool isRecurring,
+    TransactionFrequency? frequency,
+    String? subscriptionId,
+    DateTime? nextRecurrenceDate,
   });
 }
 
@@ -175,6 +209,10 @@ class __$$TransactionImplCopyWithImpl<$Res>
     Object? date = null,
     Object? note = null,
     Object? isExpense = null,
+    Object? isRecurring = null,
+    Object? frequency = freezed,
+    Object? subscriptionId = freezed,
+    Object? nextRecurrenceDate = freezed,
   }) {
     return _then(
       _$TransactionImpl(
@@ -214,6 +252,22 @@ class __$$TransactionImplCopyWithImpl<$Res>
             ? _value.isExpense
             : isExpense // ignore: cast_nullable_to_non_nullable
                   as bool,
+        isRecurring: null == isRecurring
+            ? _value.isRecurring
+            : isRecurring // ignore: cast_nullable_to_non_nullable
+                  as bool,
+        frequency: freezed == frequency
+            ? _value.frequency
+            : frequency // ignore: cast_nullable_to_non_nullable
+                  as TransactionFrequency?,
+        subscriptionId: freezed == subscriptionId
+            ? _value.subscriptionId
+            : subscriptionId // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        nextRecurrenceDate: freezed == nextRecurrenceDate
+            ? _value.nextRecurrenceDate
+            : nextRecurrenceDate // ignore: cast_nullable_to_non_nullable
+                  as DateTime?,
       ),
     );
   }
@@ -221,7 +275,7 @@ class __$$TransactionImplCopyWithImpl<$Res>
 
 /// @nodoc
 @JsonSerializable()
-class _$TransactionImpl implements _Transaction {
+class _$TransactionImpl extends _Transaction {
   const _$TransactionImpl({
     required this.id,
     required this.userId,
@@ -232,7 +286,11 @@ class _$TransactionImpl implements _Transaction {
     required this.date,
     this.note = '',
     this.isExpense = true,
-  });
+    this.isRecurring = false,
+    this.frequency,
+    this.subscriptionId,
+    this.nextRecurrenceDate,
+  }) : super._();
 
   factory _$TransactionImpl.fromJson(Map<String, dynamic> json) =>
       _$$TransactionImplFromJson(json);
@@ -257,10 +315,21 @@ class _$TransactionImpl implements _Transaction {
   @override
   @JsonKey()
   final bool isExpense;
+  // Recurring payment fields
+  @override
+  @JsonKey()
+  final bool isRecurring;
+  @override
+  final TransactionFrequency? frequency;
+  @override
+  final String? subscriptionId;
+  // Link to subscription if applicable
+  @override
+  final DateTime? nextRecurrenceDate;
 
   @override
   String toString() {
-    return 'Transaction(id: $id, userId: $userId, amount: $amount, categoryId: $categoryId, categoryName: $categoryName, categoryEmoji: $categoryEmoji, date: $date, note: $note, isExpense: $isExpense)';
+    return 'Transaction(id: $id, userId: $userId, amount: $amount, categoryId: $categoryId, categoryName: $categoryName, categoryEmoji: $categoryEmoji, date: $date, note: $note, isExpense: $isExpense, isRecurring: $isRecurring, frequency: $frequency, subscriptionId: $subscriptionId, nextRecurrenceDate: $nextRecurrenceDate)';
   }
 
   @override
@@ -280,7 +349,15 @@ class _$TransactionImpl implements _Transaction {
             (identical(other.date, date) || other.date == date) &&
             (identical(other.note, note) || other.note == note) &&
             (identical(other.isExpense, isExpense) ||
-                other.isExpense == isExpense));
+                other.isExpense == isExpense) &&
+            (identical(other.isRecurring, isRecurring) ||
+                other.isRecurring == isRecurring) &&
+            (identical(other.frequency, frequency) ||
+                other.frequency == frequency) &&
+            (identical(other.subscriptionId, subscriptionId) ||
+                other.subscriptionId == subscriptionId) &&
+            (identical(other.nextRecurrenceDate, nextRecurrenceDate) ||
+                other.nextRecurrenceDate == nextRecurrenceDate));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -296,6 +373,10 @@ class _$TransactionImpl implements _Transaction {
     date,
     note,
     isExpense,
+    isRecurring,
+    frequency,
+    subscriptionId,
+    nextRecurrenceDate,
   );
 
   /// Create a copy of Transaction
@@ -312,7 +393,7 @@ class _$TransactionImpl implements _Transaction {
   }
 }
 
-abstract class _Transaction implements Transaction {
+abstract class _Transaction extends Transaction {
   const factory _Transaction({
     required final String id,
     required final String userId,
@@ -323,7 +404,12 @@ abstract class _Transaction implements Transaction {
     required final DateTime date,
     final String note,
     final bool isExpense,
+    final bool isRecurring,
+    final TransactionFrequency? frequency,
+    final String? subscriptionId,
+    final DateTime? nextRecurrenceDate,
   }) = _$TransactionImpl;
+  const _Transaction._() : super._();
 
   factory _Transaction.fromJson(Map<String, dynamic> json) =
       _$TransactionImpl.fromJson;
@@ -345,7 +431,15 @@ abstract class _Transaction implements Transaction {
   @override
   String get note;
   @override
-  bool get isExpense;
+  bool get isExpense; // Recurring payment fields
+  @override
+  bool get isRecurring;
+  @override
+  TransactionFrequency? get frequency;
+  @override
+  String? get subscriptionId; // Link to subscription if applicable
+  @override
+  DateTime? get nextRecurrenceDate;
 
   /// Create a copy of Transaction
   /// with the given fields replaced by the non-null parameter values.

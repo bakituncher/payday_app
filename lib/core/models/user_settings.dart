@@ -1,4 +1,4 @@
-/// User settings model
+/// User settings model with bill reminders support
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'user_settings.freezed.dart';
@@ -15,6 +15,13 @@ class UserSettings with _$UserSettings {
     @Default('US') String market,
     @Default(true) bool notificationsEnabled,
     @Default(true) bool paydayReminders,
+    // Bill reminder settings
+    @Default(true) bool billReminders,
+    @Default(2) int billReminderDaysBefore, // Days before due date
+    @Default(true) bool subscriptionAlerts,
+    @Default(true) bool weeklySubscriptionSummary,
+    @Default(true) bool unusedSubscriptionAlerts,
+    @Default(30) int unusedThresholdDays, // Days before marking as unused
     DateTime? createdAt,
     DateTime? updatedAt,
   }) = _UserSettings;
