@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:payday_flutter/core/theme/app_theme.dart';
-import 'package:payday_flutter/core/models/subscription.dart';
 import 'package:payday_flutter/features/subscriptions/providers/subscription_providers.dart';
 import 'package:payday_flutter/features/subscriptions/widgets/subscription_card.dart';
 import 'package:payday_flutter/features/subscriptions/widgets/subscription_summary_card.dart';

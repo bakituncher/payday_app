@@ -13,7 +13,6 @@ class UpcomingBillsCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final subscriptionsDueAsync = ref.watch(subscriptionsDueSoonProvider);
-    final remindersAsync = ref.watch(upcomingRemindersProvider);
     final theme = Theme.of(context);
     final currencyFormat = NumberFormat.currency(symbol: '\$');
 

@@ -1,150 +1,25 @@
-/// Mock implementation of SubscriptionRepository for UI testing
+/// Mock implementation of SubscriptionRepository for development/testing
+/// Data is stored in-memory and will be cleared on app restart
 import 'package:payday_flutter/core/models/subscription.dart';
 import 'package:payday_flutter/core/models/subscription_analysis.dart';
 import 'package:payday_flutter/core/models/bill_reminder.dart';
 import 'package:payday_flutter/core/repositories/subscription_repository.dart';
 
 class MockSubscriptionRepository implements SubscriptionRepository {
-  // In-memory storage
+  // In-memory storage - starts empty, user adds their own data
   final List<Subscription> _subscriptions = [];
   final List<BillReminder> _reminders = [];
-  bool _initialized = false;
-
-  Future<void> _initMockData() async {
-    if (_initialized) return;
-
-    // Add sample subscriptions for demo
-    final now = DateTime.now();
-    _subscriptions.addAll([
-      Subscription(
-        id: 'sub_1',
-        userId: 'mock-user-123',
-        name: 'Netflix',
-        amount: 15.49,
-        currency: 'USD',
-        frequency: RecurrenceFrequency.monthly,
-        category: SubscriptionCategory.streaming,
-        nextBillingDate: now.add(const Duration(days: 5)),
-        emoji: '🎬',
-        status: SubscriptionStatus.active,
-        startDate: now.subtract(const Duration(days: 120)),
-        createdAt: now.subtract(const Duration(days: 120)),
-      ),
-      Subscription(
-        id: 'sub_2',
-        userId: 'mock-user-123',
-        name: 'Spotify',
-        amount: 10.99,
-        currency: 'USD',
-        frequency: RecurrenceFrequency.monthly,
-        category: SubscriptionCategory.streaming,
-        nextBillingDate: now.add(const Duration(days: 12)),
-        emoji: '🎵',
-        status: SubscriptionStatus.active,
-        startDate: now.subtract(const Duration(days: 200)),
-        createdAt: now.subtract(const Duration(days: 200)),
-      ),
-      Subscription(
-        id: 'sub_3',
-        userId: 'mock-user-123',
-        name: 'iCloud',
-        amount: 2.99,
-        currency: 'USD',
-        frequency: RecurrenceFrequency.monthly,
-        category: SubscriptionCategory.cloudStorage,
-        nextBillingDate: now.add(const Duration(days: 18)),
-        emoji: '☁️',
-        status: SubscriptionStatus.active,
-        startDate: now.subtract(const Duration(days: 365)),
-        createdAt: now.subtract(const Duration(days: 365)),
-      ),
-      Subscription(
-        id: 'sub_4',
-        userId: 'mock-user-123',
-        name: 'Gym Membership',
-        amount: 29.99,
-        currency: 'USD',
-        frequency: RecurrenceFrequency.monthly,
-        category: SubscriptionCategory.fitness,
-        nextBillingDate: now.add(const Duration(days: 2)),
-        emoji: '💪',
-        status: SubscriptionStatus.active,
-        startDate: now.subtract(const Duration(days: 90)),
-        createdAt: now.subtract(const Duration(days: 90)),
-      ),
-      Subscription(
-        id: 'sub_5',
-        userId: 'mock-user-123',
-        name: 'Amazon Prime',
-        amount: 14.99,
-        currency: 'USD',
-        frequency: RecurrenceFrequency.monthly,
-        category: SubscriptionCategory.shopping,
-        nextBillingDate: now.add(const Duration(days: 8)),
-        emoji: '📦',
-        status: SubscriptionStatus.active,
-        startDate: now.subtract(const Duration(days: 180)),
-        createdAt: now.subtract(const Duration(days: 180)),
-      ),
-      Subscription(
-        id: 'sub_6',
-        userId: 'mock-user-123',
-        name: 'Adobe Creative Cloud',
-        amount: 54.99,
-        currency: 'USD',
-        frequency: RecurrenceFrequency.monthly,
-        category: SubscriptionCategory.productivity,
-        nextBillingDate: now.add(const Duration(days: 15)),
-        emoji: '🎨',
-        status: SubscriptionStatus.active,
-        startDate: now.subtract(const Duration(days: 60)),
-        createdAt: now.subtract(const Duration(days: 60)),
-      ),
-    ]);
-
-    // Add sample reminders
-    _reminders.addAll([
-      BillReminder(
-        id: 'rem_1',
-        userId: 'mock-user-123',
-        subscriptionId: 'sub_4',
-        subscriptionName: 'Gym Membership',
-        amount: 29.99,
-        dueDate: now.add(const Duration(days: 2)),
-        reminderDate: now,
-        emoji: '💪',
-        priority: ReminderPriority.high,
-        status: ReminderStatus.pending,
-      ),
-      BillReminder(
-        id: 'rem_2',
-        userId: 'mock-user-123',
-        subscriptionId: 'sub_1',
-        subscriptionName: 'Netflix',
-        amount: 15.49,
-        dueDate: now.add(const Duration(days: 5)),
-        reminderDate: now.add(const Duration(days: 3)),
-        emoji: '🎬',
-        priority: ReminderPriority.medium,
-        status: ReminderStatus.pending,
-      ),
-    ]);
-
-    _initialized = true;
-  }
 
   @override
   Future<List<Subscription>> getSubscriptions(String userId) async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    await _initMockData();
+    await Future.delayed(const Duration(milliseconds: 200));
     return _subscriptions.where((s) => s.userId == userId).toList()
       ..sort((a, b) => a.nextBillingDate.compareTo(b.nextBillingDate));
   }
 
   @override
   Future<List<Subscription>> getActiveSubscriptions(String userId) async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    await _initMockData();
+    await Future.delayed(const Duration(milliseconds: 200));
     return _subscriptions
         .where((s) => s.userId == userId && s.status == SubscriptionStatus.active)
         .toList()
@@ -153,8 +28,7 @@ class MockSubscriptionRepository implements SubscriptionRepository {
 
   @override
   Future<Subscription?> getSubscription(String subscriptionId) async {
-    await Future.delayed(const Duration(milliseconds: 200));
-    await _initMockData();
+    await Future.delayed(const Duration(milliseconds: 100));
     try {
       return _subscriptions.firstWhere((s) => s.id == subscriptionId);
     } catch (_) {
@@ -166,7 +40,7 @@ class MockSubscriptionRepository implements SubscriptionRepository {
   Future<void> addSubscription(Subscription subscription) async {
     await Future.delayed(const Duration(milliseconds: 200));
     _subscriptions.add(subscription.copyWith(
-      createdAt: DateTime.now(),
+      createdAt: subscription.createdAt ?? DateTime.now(),
       updatedAt: DateTime.now(),
     ));
   }
@@ -226,8 +100,7 @@ class MockSubscriptionRepository implements SubscriptionRepository {
 
   @override
   Future<List<Subscription>> getSubscriptionsDueSoon(String userId, int days) async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    await _initMockData();
+    await Future.delayed(const Duration(milliseconds: 200));
     final now = DateTime.now();
     final futureDate = now.add(Duration(days: days));
 
@@ -235,7 +108,7 @@ class MockSubscriptionRepository implements SubscriptionRepository {
         .where((s) =>
             s.userId == userId &&
             s.status == SubscriptionStatus.active &&
-            s.nextBillingDate.isAfter(now) &&
+            s.nextBillingDate.isAfter(now.subtract(const Duration(days: 1))) &&
             s.nextBillingDate.isBefore(futureDate))
         .toList()
       ..sort((a, b) => a.nextBillingDate.compareTo(b.nextBillingDate));
@@ -258,8 +131,7 @@ class MockSubscriptionRepository implements SubscriptionRepository {
     String userId,
     SubscriptionCategory category,
   ) async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    await _initMockData();
+    await Future.delayed(const Duration(milliseconds: 200));
     return _subscriptions
         .where((s) => s.userId == userId && s.category == category)
         .toList();
@@ -279,15 +151,13 @@ class MockSubscriptionRepository implements SubscriptionRepository {
 
   @override
   Stream<List<Subscription>> subscriptionsStream(String userId) async* {
-    await _initMockData();
     yield _subscriptions.where((s) => s.userId == userId).toList();
   }
 
   // Bill Reminders
   @override
   Future<List<BillReminder>> getUpcomingReminders(String userId, int days) async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    await _initMockData();
+    await Future.delayed(const Duration(milliseconds: 200));
     final now = DateTime.now();
     final futureDate = now.add(Duration(days: days));
 
@@ -295,7 +165,7 @@ class MockSubscriptionRepository implements SubscriptionRepository {
         .where((r) =>
             r.userId == userId &&
             r.status == ReminderStatus.pending &&
-            r.dueDate.isAfter(now) &&
+            r.dueDate.isAfter(now.subtract(const Duration(days: 1))) &&
             r.dueDate.isBefore(futureDate))
         .toList()
       ..sort((a, b) => a.dueDate.compareTo(b.dueDate));
@@ -303,21 +173,20 @@ class MockSubscriptionRepository implements SubscriptionRepository {
 
   @override
   Future<List<BillReminder>> getReminders(String userId) async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    await _initMockData();
+    await Future.delayed(const Duration(milliseconds: 200));
     return _reminders.where((r) => r.userId == userId).toList()
       ..sort((a, b) => a.dueDate.compareTo(b.dueDate));
   }
 
   @override
   Future<void> createReminder(BillReminder reminder) async {
-    await Future.delayed(const Duration(milliseconds: 200));
+    await Future.delayed(const Duration(milliseconds: 100));
     _reminders.add(reminder);
   }
 
   @override
   Future<void> updateReminderStatus(String reminderId, ReminderStatus status) async {
-    await Future.delayed(const Duration(milliseconds: 200));
+    await Future.delayed(const Duration(milliseconds: 100));
     final index = _reminders.indexWhere((r) => r.id == reminderId);
     if (index != -1) {
       _reminders[index] = _reminders[index].copyWith(status: status);
@@ -326,7 +195,7 @@ class MockSubscriptionRepository implements SubscriptionRepository {
 
   @override
   Future<void> dismissReminder(String reminderId) async {
-    await Future.delayed(const Duration(milliseconds: 200));
+    await Future.delayed(const Duration(milliseconds: 100));
     final index = _reminders.indexWhere((r) => r.id == reminderId);
     if (index != -1) {
       _reminders[index] = _reminders[index].copyWith(
@@ -338,7 +207,7 @@ class MockSubscriptionRepository implements SubscriptionRepository {
 
   @override
   Future<void> snoozeReminder(String reminderId, Duration snoozeDuration) async {
-    await Future.delayed(const Duration(milliseconds: 200));
+    await Future.delayed(const Duration(milliseconds: 100));
     final index = _reminders.indexWhere((r) => r.id == reminderId);
     if (index != -1) {
       _reminders[index] = _reminders[index].copyWith(
@@ -350,9 +219,7 @@ class MockSubscriptionRepository implements SubscriptionRepository {
 
   @override
   Future<void> generateUpcomingReminders(String userId) async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    await _initMockData();
-
+    await Future.delayed(const Duration(milliseconds: 200));
     final subscriptions = await getActiveSubscriptions(userId);
     final now = DateTime.now();
 
@@ -366,8 +233,9 @@ class MockSubscriptionRepository implements SubscriptionRepository {
       if (reminderDate.isAfter(now)) {
         final existingReminder = _reminders.any(
           (r) => r.subscriptionId == sub.id &&
-                 r.dueDate.day == sub.nextBillingDate.day &&
-                 r.dueDate.month == sub.nextBillingDate.month,
+                 r.dueDate.year == sub.nextBillingDate.year &&
+                 r.dueDate.month == sub.nextBillingDate.month &&
+                 r.dueDate.day == sub.nextBillingDate.day,
         );
 
         if (!existingReminder) {
@@ -381,6 +249,7 @@ class MockSubscriptionRepository implements SubscriptionRepository {
             reminderDate: reminderDate,
             emoji: sub.emoji,
             priority: sub.amount > 50 ? ReminderPriority.high : ReminderPriority.medium,
+            createdAt: DateTime.now(),
           ));
         }
       }
@@ -390,10 +259,25 @@ class MockSubscriptionRepository implements SubscriptionRepository {
   // Subscription Analysis
   @override
   Future<SubscriptionSummary> analyzeSubscriptions(String userId) async {
-    await Future.delayed(const Duration(milliseconds: 500));
-    await _initMockData();
-
+    await Future.delayed(const Duration(milliseconds: 300));
     final subscriptions = await getActiveSubscriptions(userId);
+
+    if (subscriptions.isEmpty) {
+      return SubscriptionSummary(
+        userId: userId,
+        totalSubscriptions: 0,
+        totalMonthlySpend: 0,
+        totalYearlySpend: 0,
+        potentialMonthlySavings: 0,
+        potentialYearlySavings: 0,
+        subscriptionsToReview: 0,
+        subscriptionsToCancel: 0,
+        spendByCategory: {},
+        analyses: [],
+        lastAnalyzedAt: DateTime.now(),
+      );
+    }
+
     final analyses = <SubscriptionAnalysis>[];
     double potentialMonthlySavings = 0;
     int toReview = 0;
@@ -411,7 +295,7 @@ class MockSubscriptionRepository implements SubscriptionRepository {
       List<String> reasons = [];
       List<String> alternatives = [];
 
-      // Analysis logic
+      // Smart analysis based on subscription characteristics
       if (sub.category == SubscriptionCategory.streaming && sub.monthlyCost > 15) {
         usageLevel = UsageLevel.medium;
         recommendation = RecommendationType.review;
@@ -475,18 +359,16 @@ class MockSubscriptionRepository implements SubscriptionRepository {
 
   @override
   Future<List<Subscription>> getUnusedSubscriptions(String userId, int thresholdDays) async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    await _initMockData();
-    // Return subscriptions that might be unused (for demo purposes)
-    return _subscriptions
-        .where((s) => s.userId == userId && s.category == SubscriptionCategory.fitness)
-        .toList();
+    await Future.delayed(const Duration(milliseconds: 200));
+    // In a real implementation, this would track actual usage
+    // For now, return empty list as we don't have usage data
+    return [];
   }
 
   @override
   Future<void> markSubscriptionUsed(String subscriptionId) async {
-    await Future.delayed(const Duration(milliseconds: 200));
-    // In real implementation, this would update lastUsedAt
+    await Future.delayed(const Duration(milliseconds: 100));
+    // In a real implementation, this would update lastUsedAt timestamp
   }
 }
 

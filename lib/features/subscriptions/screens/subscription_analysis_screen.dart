@@ -15,7 +15,6 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final analysisAsync = ref.watch(subscriptionAnalysisProvider);
-    final theme = Theme.of(context);
 
     return Scaffold(
       backgroundColor: AppColors.backgroundWhite,
@@ -48,12 +47,15 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
           backgroundColor: AppColors.backgroundWhite,
           elevation: 0,
           surfaceTintColor: Colors.transparent,
+          leadingWidth: 56,
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_ios_new_rounded),
             onPressed: () => Navigator.of(context).pop(),
             color: AppColors.darkCharcoal,
           ),
+          titleSpacing: 0,
           title: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               Container(
                 padding: const EdgeInsets.all(8),

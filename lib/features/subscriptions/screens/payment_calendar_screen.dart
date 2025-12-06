@@ -30,12 +30,15 @@ class _PaymentCalendarScreenState extends ConsumerState<PaymentCalendarScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.backgroundWhite,
         elevation: 0,
+        leadingWidth: 56,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
           onPressed: () => Navigator.of(context).pop(),
           color: AppColors.darkCharcoal,
         ),
+        titleSpacing: 0,
         title: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Container(
               padding: const EdgeInsets.all(8),
@@ -52,10 +55,9 @@ class _PaymentCalendarScreenState extends ConsumerState<PaymentCalendarScreen> {
             const SizedBox(width: AppSpacing.sm),
             Text(
               'Payment Calendar',
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w800,
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w700,
                 color: AppColors.darkCharcoal,
-                letterSpacing: -0.5,
               ),
             ),
           ],
