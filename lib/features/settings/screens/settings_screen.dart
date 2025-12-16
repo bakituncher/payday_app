@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:payday/core/theme/app_theme.dart';
 import 'package:payday/core/constants/app_constants.dart';
 import 'package:payday/core/providers/repository_providers.dart';
@@ -497,31 +498,120 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             const SizedBox(height: AppSpacing.md),
 
             // Google Sign In Button
-            PaydayButton(
-              text: 'Sign in with Google',
-              icon: Icons.g_mobiledata_rounded,
-              isLoading: _isSigningIn,
-              width: double.infinity,
-              onPressed: _handleGoogleSignIn,
-              style: PaydayButtonStyle.outlined,
-            ),
+            _buildGoogleSignInButton(),
 
             const SizedBox(height: AppSpacing.sm),
 
             // Apple Sign In Button (if available)
             if (_isAppleSignInAvailable)
-              PaydayButton(
-                text: 'Sign in with Apple',
-                icon: Icons.apple_rounded,
-                isLoading: _isSigningIn,
-                width: double.infinity,
-                onPressed: _handleAppleSignIn,
-                style: PaydayButtonStyle.outlined,
-              ),
+              _buildAppleSignInButton(),
           ],
         ],
       ),
     ).animate().fadeIn(duration: 300.ms).slideY(begin: 0.1, end: 0);
+  }
+
+  Widget _buildGoogleSignInButton() {
+    return SizedBox(
+      width: double.infinity,
+      height: 48,
+      child: ElevatedButton(
+        onPressed: _isSigningIn ? null : _handleGoogleSignIn,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.black87,
+          elevation: 1,
+          shadowColor: Colors.black26,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(4),
+            side: BorderSide(
+              color: Colors.black.withValues(alpha: 0.12),
+              width: 1,
+            ),
+          ),
+          padding: EdgeInsets.zero,
+        ),
+        child: _isSigningIn
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.black54),
+                ),
+              )
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Google Logo
+                  SvgPicture.asset(
+                    'assets/google_logo.svg',
+                    width: 18,
+                    height: 18,
+                  ),
+                  const SizedBox(width: 12),
+                  const Text(
+                    'Sign in with Google',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: 0.25,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ],
+              ),
+      ),
+    );
+  }
+
+  Widget _buildAppleSignInButton() {
+    return SizedBox(
+      width: double.infinity,
+      height: 48,
+      child: ElevatedButton(
+        onPressed: _isSigningIn ? null : _handleAppleSignIn,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.black,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(4),
+          ),
+          padding: EdgeInsets.zero,
+        ),
+        child: _isSigningIn
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              )
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Apple Logo
+                  const Icon(
+                    Icons.apple,
+                    size: 20,
+                    color: Colors.white,
+                  ),
+                  const SizedBox(width: 12),
+                  const Text(
+                    'Sign in with Apple',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: -0.31,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+      ),
+    );
   }
 
   Widget _buildIncomeCard(ThemeData theme) {
