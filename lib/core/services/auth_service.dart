@@ -1,18 +1,13 @@
 /// Authentication Service
 /// Handles Google and Apple Sign In
+import 'dart:io'; // Platform kontrolü için
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  // SAKIN CANLIYA BÖYLE ATMA, SADECE TEST İÇİN
-  final GoogleSignIn _googleSignIn = GoogleSignIn(
-    scopes: [
-      'email',
-      'https://www.googleapis.com/auth/contacts.readonly', // Rehberi okuma izni (Hassas İzin)
-    ],
-  );
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
 
   // Get current user
   User? get currentUser => _auth.currentUser;
@@ -51,35 +46,50 @@ class AuthService {
   // Sign in with Apple
   Future<UserCredential?> signInWithApple() async {
     try {
-      // Request credential for the currently signed in Apple account
-      final appleCredential = await SignInWithApple.getAppleIDCredential(
-        scopes: [
-          AppleIDAuthorizationScopes.email,
-          AppleIDAuthorizationScopes.fullName,
-        ],
-      );
+      if (Platform.isAndroid) {
+        // --- ANDROID İÇİN ÇÖZÜM (Firebase Provider Kullan) ---
+        // Bu yöntem, "Missing initial state" hatasını %100 çözer.
+        // Çünkü akışı Firebase başlatır ve bitirir.
+        final provider = AppleAuthProvider();
+        provider.addScope('email');
+        provider.addScope('name');
 
-      // Create an OAuth credential
-      final oauthCredential = OAuthProvider("apple.com").credential(
-        idToken: appleCredential.identityToken,
-        accessToken: appleCredential.authorizationCode,
-      );
+        // Bu satır Android'de otomatik olarak tarayıcıyı açar,
+        // Service ID'ni kullanır ve hatasız giriş yapar.
+        return await _auth.signInWithProvider(provider);
+      } else {
+        // --- iOS İÇİN NATIVE YÖNTEM (Mevcut Çalışan Yöntem) ---
+        // Request credential for the currently signed in Apple account
+        final appleCredential = await SignInWithApple.getAppleIDCredential(
+          scopes: [
+            AppleIDAuthorizationScopes.email,
+            AppleIDAuthorizationScopes.fullName,
+          ],
+          // iOS'te web options'a gerek yok
+        );
 
-      // Sign in to Firebase with the Apple credential
-      final userCredential = await _auth.signInWithCredential(oauthCredential);
+        // Create an OAuth credential
+        final oauthCredential = OAuthProvider("apple.com").credential(
+          idToken: appleCredential.identityToken,
+          accessToken: appleCredential.authorizationCode,
+        );
 
-      // Update display name if it's the first sign in and we have the name
-      if (userCredential.additionalUserInfo?.isNewUser == true) {
-        final fullName = appleCredential.givenName != null && appleCredential.familyName != null
-            ? '${appleCredential.givenName} ${appleCredential.familyName}'
-            : null;
+        // Sign in to Firebase with the Apple credential
+        final userCredential = await _auth.signInWithCredential(oauthCredential);
 
-        if (fullName != null) {
-          await userCredential.user?.updateDisplayName(fullName);
+        // Update display name if it's the first sign in and we have the name
+        if (userCredential.additionalUserInfo?.isNewUser == true) {
+          final fullName = appleCredential.givenName != null && appleCredential.familyName != null
+              ? '${appleCredential.givenName} ${appleCredential.familyName}'
+              : null;
+
+          if (fullName != null) {
+            await userCredential.user?.updateDisplayName(fullName);
+          }
         }
-      }
 
-      return userCredential;
+        return userCredential;
+      }
     } catch (e) {
       print('Error signing in with Apple: $e');
       rethrow;
