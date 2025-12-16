@@ -11,6 +11,7 @@ import 'package:payday/core/providers/repository_providers.dart';
 import 'package:payday/core/providers/auth_providers.dart';
 import 'package:payday/features/home/providers/home_providers.dart';
 import 'package:payday/features/insights/providers/monthly_summary_providers.dart';
+import 'package:payday/features/premium/screens/premium_paywall_screen.dart';
 import 'package:payday/shared/widgets/payday_button.dart';
 import 'package:intl/intl.dart';
 
@@ -347,6 +348,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
             const SizedBox(height: AppSpacing.lg),
 
+            // Premium Section
+            _buildSectionTitle(theme, 'Premium', Icons.workspace_premium_rounded),
+            const SizedBox(height: AppSpacing.sm),
+            _buildPremiumCard(theme),
+
+            const SizedBox(height: AppSpacing.lg),
+
             // Income Section
             _buildSectionTitle(theme, 'Income', Icons.attach_money_rounded),
             const SizedBox(height: AppSpacing.sm),
@@ -611,6 +619,87 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ],
               ),
       ),
+    );
+  }
+
+  Widget _buildPremiumCard(ThemeData theme) {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.mediumImpact();
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const PremiumPaywallScreen(),
+          ),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        decoration: BoxDecoration(
+          gradient: AppColors.premiumGradient,
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primaryPink.withOpacity(0.3),
+              blurRadius: 20,
+              spreadRadius: 0,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            // Premium icon with glow
+            Container(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(AppRadius.md),
+              ),
+              child: const Icon(
+                Icons.workspace_premium_rounded,
+                color: Colors.white,
+                size: 32,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+
+            // Text content
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Upgrade to Premium',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Remove ads and unlock exclusive features',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: Colors.white.withOpacity(0.9),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Arrow
+            const Icon(
+              Icons.arrow_forward_ios_rounded,
+              color: Colors.white,
+              size: 18,
+            ),
+          ],
+        ),
+      ).animate().fadeIn(duration: 300.ms).slideY(begin: 0.1, end: 0).shimmer(
+            delay: 1000.ms,
+            duration: 2000.ms,
+            color: Colors.white.withOpacity(0.3),
+          ),
     );
   }
 
