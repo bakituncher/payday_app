@@ -1,5 +1,5 @@
-name: payday_flutter
-description: "A new Flutter project."
+name: payday
+description: "Payday - Modern expense tracking application."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -44,6 +44,8 @@ dependencies:
   firebase_auth: ^5.3.1
   cloud_firestore: ^5.4.4
   firebase_analytics: ^11.3.3
+  google_sign_in: ^6.2.1
+  sign_in_with_apple: ^6.1.1
 
   # UI & Design
   google_fonts: ^6.2.1

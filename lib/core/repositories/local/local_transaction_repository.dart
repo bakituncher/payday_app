@@ -2,8 +2,8 @@
 /// Data persists across app restarts
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:payday_flutter/core/models/transaction.dart';
-import 'package:payday_flutter/core/repositories/transaction_repository.dart';
+import 'package:payday/core/models/transaction.dart';
+import 'package:payday/core/repositories/transaction_repository.dart';
 
 class LocalTransactionRepository implements TransactionRepository {
   static const String _storageKey = 'local_transactions';

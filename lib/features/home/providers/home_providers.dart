@@ -1,10 +1,10 @@
 /// Home screen state and providers
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:payday_flutter/core/models/user_settings.dart';
-import 'package:payday_flutter/core/models/transaction.dart';
-import 'package:payday_flutter/core/providers/repository_providers.dart';
-import 'package:payday_flutter/core/utils/date_utils.dart' as app_date_utils;
-import 'package:payday_flutter/core/services/date_cycle_service.dart';
+import 'package:payday/core/models/user_settings.dart';
+import 'package:payday/core/models/transaction.dart';
+import 'package:payday/core/providers/repository_providers.dart';
+import 'package:payday/core/utils/date_utils.dart' as app_date_utils;
+import 'package:payday/core/services/date_cycle_service.dart';
 
 /// User Settings Provider - Auto-updates payday if it has passed
 final userSettingsProvider = FutureProvider<UserSettings?>((ref) async {

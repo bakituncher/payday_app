@@ -1,14 +1,14 @@
 /// Monthly Summary Providers
 /// State management for monthly financial summaries
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:payday_flutter/core/models/monthly_summary.dart';
-import 'package:payday_flutter/core/models/budget_goal.dart';
-import 'package:payday_flutter/core/providers/repository_providers.dart';
-import 'package:payday_flutter/core/repositories/monthly_summary_repository.dart';
-import 'package:payday_flutter/core/services/financial_insights_service.dart';
-import 'package:payday_flutter/core/services/leftover_allocation_service.dart';
-import 'package:payday_flutter/features/home/providers/home_providers.dart';
-import 'package:payday_flutter/features/subscriptions/providers/subscription_providers.dart';
+import 'package:payday/core/models/monthly_summary.dart';
+import 'package:payday/core/models/budget_goal.dart';
+import 'package:payday/core/providers/repository_providers.dart';
+import 'package:payday/core/repositories/monthly_summary_repository.dart';
+import 'package:payday/core/services/financial_insights_service.dart';
+import 'package:payday/core/services/leftover_allocation_service.dart';
+import 'package:payday/features/home/providers/home_providers.dart';
+import 'package:payday/features/subscriptions/providers/subscription_providers.dart';
 
 /// Leftover Allocation Service Provider
 final leftoverAllocationServiceProvider = Provider<LeftoverAllocationService>((ref) {

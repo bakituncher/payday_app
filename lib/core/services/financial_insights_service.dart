@@ -1,8 +1,8 @@
 /// Financial Insights Service
 /// Generates smart insights and recommendations based on user data
-import 'package:payday_flutter/core/models/monthly_summary.dart';
-import 'package:payday_flutter/core/models/subscription.dart';
-import 'package:payday_flutter/core/models/transaction.dart';
+import 'package:payday/core/models/monthly_summary.dart';
+import 'package:payday/core/models/subscription.dart';
+import 'package:payday/core/models/transaction.dart';
 
 class FinancialInsightsService {
   /// Generate monthly summary from transactions

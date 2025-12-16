@@ -1,5 +1,5 @@
 /// Repository interface for savings goal operations
-import 'package:payday_flutter/core/models/savings_goal.dart';
+import 'package:payday/core/models/savings_goal.dart';
 
 abstract class SavingsGoalRepository {
   /// Get all savings goals for a user

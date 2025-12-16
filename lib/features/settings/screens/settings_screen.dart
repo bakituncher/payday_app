@@ -4,12 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:payday_flutter/core/theme/app_theme.dart';
-import 'package:payday_flutter/core/constants/app_constants.dart';
-import 'package:payday_flutter/core/providers/repository_providers.dart';
-import 'package:payday_flutter/features/home/providers/home_providers.dart';
-import 'package:payday_flutter/features/insights/providers/monthly_summary_providers.dart';
-import 'package:payday_flutter/shared/widgets/payday_button.dart';
+import 'package:payday/core/theme/app_theme.dart';
+import 'package:payday/core/constants/app_constants.dart';
+import 'package:payday/core/providers/repository_providers.dart';
+import 'package:payday/core/providers/auth_providers.dart';
+import 'package:payday/features/home/providers/home_providers.dart';
+import 'package:payday/features/insights/providers/monthly_summary_providers.dart';
+import 'package:payday/shared/widgets/payday_button.dart';
 import 'package:intl/intl.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -25,11 +26,24 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   String _selectedPayCycle = 'Monthly';
   DateTime _nextPayday = DateTime.now().add(const Duration(days: 30));
   bool _isLoading = false;
+  bool _isSigningIn = false;
+  bool _isAppleSignInAvailable = false;
 
   @override
   void initState() {
     super.initState();
     _loadCurrentSettings();
+    _checkAppleSignInAvailability();
+  }
+
+  Future<void> _checkAppleSignInAvailability() async {
+    final authService = ref.read(authServiceProvider);
+    final isAvailable = await authService.isAppleSignInAvailable();
+    if (mounted) {
+      setState(() {
+        _isAppleSignInAvailable = isAvailable;
+      });
+    }
   }
 
   Future<void> _loadCurrentSettings() async {
@@ -75,6 +89,133 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       setState(() {
         _nextPayday = picked;
       });
+    }
+  }
+
+  Future<void> _handleGoogleSignIn() async {
+    setState(() => _isSigningIn = true);
+
+    try {
+      final authService = ref.read(authServiceProvider);
+      final userCredential = await authService.signInWithGoogle();
+
+      if (userCredential != null && mounted) {
+        HapticFeedback.mediumImpact();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle, color: Colors.white),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text('Signed in as ${userCredential.user?.displayName ?? userCredential.user?.email}'),
+                ),
+              ],
+            ),
+            backgroundColor: AppColors.success,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error signing in with Google: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSigningIn = false);
+      }
+    }
+  }
+
+  Future<void> _handleAppleSignIn() async {
+    setState(() => _isSigningIn = true);
+
+    try {
+      final authService = ref.read(authServiceProvider);
+      final userCredential = await authService.signInWithApple();
+
+      if (userCredential != null && mounted) {
+        HapticFeedback.mediumImpact();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle, color: Colors.white),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text('Signed in as ${userCredential.user?.displayName ?? userCredential.user?.email}'),
+                ),
+              ],
+            ),
+            backgroundColor: AppColors.success,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error signing in with Apple: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSigningIn = false);
+      }
+    }
+  }
+
+  Future<void> _handleSignOut() async {
+    setState(() => _isSigningIn = true);
+
+    try {
+      final authService = ref.read(authServiceProvider);
+      await authService.signOut();
+
+      if (mounted) {
+        HapticFeedback.mediumImpact();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.white),
+                SizedBox(width: 8),
+                Text('Signed out successfully'),
+              ],
+            ),
+            backgroundColor: AppColors.success,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error signing out: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSigningIn = false);
+      }
     }
   }
 
@@ -154,6 +295,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final currentUser = ref.watch(currentUserProvider).asData?.value;
+    final isSignedIn = currentUser != null;
 
     return Scaffold(
       backgroundColor: AppColors.backgroundWhite,
@@ -196,6 +339,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Account Section
+            _buildSectionTitle(theme, 'Account', Icons.person_rounded),
+            const SizedBox(height: AppSpacing.sm),
+            _buildAccountCard(theme, isSignedIn, currentUser),
+
+            const SizedBox(height: AppSpacing.lg),
+
             // Income Section
             _buildSectionTitle(theme, 'Income', Icons.attach_money_rounded),
             const SizedBox(height: AppSpacing.sm),
@@ -254,6 +404,124 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ),
       ],
     );
+  }
+
+  Widget _buildAccountCard(ThemeData theme, bool isSignedIn, dynamic currentUser) {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.cardWhite,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        boxShadow: AppColors.cardShadow,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (isSignedIn) ...[
+            // User Info
+            Row(
+              children: [
+                // User Avatar
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: AppColors.pinkGradient,
+                  ),
+                  child: currentUser?.photoURL != null
+                      ? ClipOval(
+                          child: Image.network(
+                            currentUser!.photoURL!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return const Icon(
+                                Icons.person,
+                                color: Colors.white,
+                                size: 28,
+                              );
+                            },
+                          ),
+                        )
+                      : const Icon(
+                          Icons.person,
+                          color: Colors.white,
+                          size: 28,
+                        ),
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        currentUser?.displayName ?? 'User',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.darkCharcoal,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        currentUser?.email ?? '',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: AppColors.mediumGray,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.md),
+            const Divider(),
+            const SizedBox(height: AppSpacing.sm),
+            // Sign Out Button
+            PaydayButton(
+              text: 'Sign Out',
+              icon: Icons.logout_rounded,
+              isLoading: _isSigningIn,
+              width: double.infinity,
+              onPressed: _handleSignOut,
+              style: PaydayButtonStyle.outlined,
+            ),
+          ] else ...[
+            // Sign In Options
+            Text(
+              'Sign in to sync your data across devices',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: AppColors.mediumGray,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+
+            // Google Sign In Button
+            PaydayButton(
+              text: 'Sign in with Google',
+              icon: Icons.g_mobiledata_rounded,
+              isLoading: _isSigningIn,
+              width: double.infinity,
+              onPressed: _handleGoogleSignIn,
+              style: PaydayButtonStyle.outlined,
+            ),
+
+            const SizedBox(height: AppSpacing.sm),
+
+            // Apple Sign In Button (if available)
+            if (_isAppleSignInAvailable)
+              PaydayButton(
+                text: 'Sign in with Apple',
+                icon: Icons.apple_rounded,
+                isLoading: _isSigningIn,
+                width: double.infinity,
+                onPressed: _handleAppleSignIn,
+                style: PaydayButtonStyle.outlined,
+              ),
+          ],
+        ],
+      ),
+    ).animate().fadeIn(duration: 300.ms).slideY(begin: 0.1, end: 0);
   }
 
   Widget _buildIncomeCard(ThemeData theme) {
@@ -386,7 +654,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             Container(
               padding: const EdgeInsets.all(AppSpacing.md),
               decoration: BoxDecoration(
-                color: AppColors.primaryPink.withOpacity(0.1),
+                color: AppColors.primaryPink.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(AppRadius.md),
               ),
               child: const Icon(

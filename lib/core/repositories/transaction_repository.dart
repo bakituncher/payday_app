@@ -1,5 +1,5 @@
 /// Repository interface for transaction operations
-import 'package:payday_flutter/core/models/transaction.dart';
+import 'package:payday/core/models/transaction.dart';
 
 abstract class TransactionRepository {
   /// Get all transactions for a user

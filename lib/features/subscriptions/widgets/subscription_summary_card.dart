@@ -2,8 +2,8 @@
 /// Displays total monthly/yearly subscription costs
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:payday_flutter/core/theme/app_theme.dart';
-import 'package:payday_flutter/features/subscriptions/providers/subscription_providers.dart';
+import 'package:payday/core/theme/app_theme.dart';
+import 'package:payday/features/subscriptions/providers/subscription_providers.dart';
 import 'package:intl/intl.dart';
 
 class SubscriptionSummaryCard extends ConsumerWidget {

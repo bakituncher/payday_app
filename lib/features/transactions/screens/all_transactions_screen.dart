@@ -3,12 +3,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:payday_flutter/core/theme/app_theme.dart';
-import 'package:payday_flutter/core/utils/currency_formatter.dart';
-import 'package:payday_flutter/core/providers/repository_providers.dart';
-import 'package:payday_flutter/core/models/transaction.dart';
-import 'package:payday_flutter/features/home/providers/home_providers.dart';
-import 'package:payday_flutter/features/insights/providers/monthly_summary_providers.dart';
+import 'package:payday/core/theme/app_theme.dart';
+import 'package:payday/core/utils/currency_formatter.dart';
+import 'package:payday/core/providers/repository_providers.dart';
+import 'package:payday/core/models/transaction.dart';
+import 'package:payday/features/home/providers/home_providers.dart';
+import 'package:payday/features/insights/providers/monthly_summary_providers.dart';
 import 'package:intl/intl.dart';
 
 class AllTransactionsScreen extends ConsumerStatefulWidget {

@@ -1,8 +1,8 @@
 /// Repository interface for subscription operations
 /// Industry-grade implementation with Firebase support
-import 'package:payday_flutter/core/models/subscription.dart';
-import 'package:payday_flutter/core/models/subscription_analysis.dart';
-import 'package:payday_flutter/core/models/bill_reminder.dart';
+import 'package:payday/core/models/subscription.dart';
+import 'package:payday/core/models/subscription_analysis.dart';
+import 'package:payday/core/models/bill_reminder.dart';
 
 abstract class SubscriptionRepository {
   /// Get all subscriptions for a user

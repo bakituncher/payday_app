@@ -1,7 +1,7 @@
 /// Monthly Summary Repository Interface
 /// Manages monthly financial summaries and leftover allocations
-import 'package:payday_flutter/core/models/monthly_summary.dart';
-import 'package:payday_flutter/core/models/budget_goal.dart';
+import 'package:payday/core/models/monthly_summary.dart';
+import 'package:payday/core/models/budget_goal.dart';
 
 abstract class MonthlySummaryRepository {
   /// Get summary for a specific month

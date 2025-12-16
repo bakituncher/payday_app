@@ -1,9 +1,9 @@
 /// Mock implementation of SubscriptionRepository for development/testing
 /// Data is stored in-memory and will be cleared on app restart
-import 'package:payday_flutter/core/models/subscription.dart';
-import 'package:payday_flutter/core/models/subscription_analysis.dart';
-import 'package:payday_flutter/core/models/bill_reminder.dart';
-import 'package:payday_flutter/core/repositories/subscription_repository.dart';
+import 'package:payday/core/models/subscription.dart';
+import 'package:payday/core/models/subscription_analysis.dart';
+import 'package:payday/core/models/bill_reminder.dart';
+import 'package:payday/core/repositories/subscription_repository.dart';
 
 class MockSubscriptionRepository implements SubscriptionRepository {
   // In-memory storage - starts empty, user adds their own data

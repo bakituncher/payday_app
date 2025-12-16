@@ -1,7 +1,7 @@
 /// Premium glass morphism card widget with industry-grade design
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:payday_flutter/core/theme/app_theme.dart';
+import 'package:payday/core/theme/app_theme.dart';
 
 class GlassCard extends StatefulWidget {
   final Widget child;

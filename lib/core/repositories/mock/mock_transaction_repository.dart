@@ -1,6 +1,6 @@
 /// Mock implementation of TransactionRepository for UI testing
-import 'package:payday_flutter/core/models/transaction.dart';
-import 'package:payday_flutter/core/repositories/transaction_repository.dart';
+import 'package:payday/core/models/transaction.dart';
+import 'package:payday/core/repositories/transaction_repository.dart';
 
 class MockTransactionRepository implements TransactionRepository {
   // In-memory storage

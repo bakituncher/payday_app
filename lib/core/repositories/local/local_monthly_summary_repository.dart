@@ -2,9 +2,9 @@
 /// Data persists across app restarts
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:payday_flutter/core/models/monthly_summary.dart';
-import 'package:payday_flutter/core/models/budget_goal.dart';
-import 'package:payday_flutter/core/repositories/monthly_summary_repository.dart';
+import 'package:payday/core/models/monthly_summary.dart';
+import 'package:payday/core/models/budget_goal.dart';
+import 'package:payday/core/repositories/monthly_summary_repository.dart';
 
 class LocalMonthlySummaryRepository implements MonthlySummaryRepository {
   static const String _summariesKey = 'local_monthly_summaries';
