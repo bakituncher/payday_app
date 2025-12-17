@@ -150,13 +150,13 @@ class _AddSubscriptionScreenState extends ConsumerState<AddSubscriptionScreen> {
         leading: IconButton(
           icon: const Icon(Icons.close_rounded),
           onPressed: () => Navigator.of(context).pop(),
-          color: AppColors.darkCharcoal,
+          color: AppColors.getTextPrimary(context),
         ),
         title: Text(
           'Add Subscription',
           style: theme.textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.w700,
-            color: AppColors.darkCharcoal,
+            color: AppColors.getTextPrimary(context),
           ),
         ),
         actions: [
@@ -203,14 +203,14 @@ class _AddSubscriptionScreenState extends ConsumerState<AddSubscriptionScreen> {
                   'Popular Subscriptions',
                   style: theme.textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.w700,
-                    color: AppColors.darkCharcoal,
+                    color: AppColors.getTextPrimary(context),
                   ),
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 Text(
                   'Tap to quickly add a subscription or create a custom one',
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: AppColors.mediumGray,
+                    color: AppColors.getTextSecondary(context),
                   ),
                 ),
                 const SizedBox(height: AppSpacing.md),
@@ -227,7 +227,7 @@ class _AddSubscriptionScreenState extends ConsumerState<AddSubscriptionScreen> {
                       borderRadius: BorderRadius.circular(AppRadius.lg),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.primaryPink.withOpacity(0.3),
+                          color: AppColors.primaryPink.withValues(alpha: 0.3),
                           blurRadius: 12,
                           offset: const Offset(0, 4),
                         ),
@@ -238,7 +238,7 @@ class _AddSubscriptionScreenState extends ConsumerState<AddSubscriptionScreen> {
                         Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
+                            color: Colors.white.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(AppRadius.md),
                           ),
                           child: const Icon(
@@ -262,7 +262,7 @@ class _AddSubscriptionScreenState extends ConsumerState<AddSubscriptionScreen> {
                               Text(
                                 'Add any subscription manually',
                                 style: theme.textTheme.bodySmall?.copyWith(
-                                  color: Colors.white.withOpacity(0.8),
+                                  color: Colors.white.withValues(alpha: 0.8),
                                 ),
                               ),
                             ],
@@ -270,7 +270,7 @@ class _AddSubscriptionScreenState extends ConsumerState<AddSubscriptionScreen> {
                         ),
                         Icon(
                           Icons.arrow_forward_ios_rounded,
-                          color: Colors.white.withOpacity(0.8),
+                          color: Colors.white.withValues(alpha: 0.8),
                           size: 16,
                         ),
                       ],
@@ -298,7 +298,7 @@ class _AddSubscriptionScreenState extends ConsumerState<AddSubscriptionScreen> {
                     _getCategoryDisplayName(category),
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w600,
-                      color: AppColors.darkCharcoal,
+                      color: AppColors.getTextPrimary(context),
                     ),
                   ),
                   const SizedBox(height: AppSpacing.sm),
@@ -314,9 +314,9 @@ class _AddSubscriptionScreenState extends ConsumerState<AddSubscriptionScreen> {
                             vertical: AppSpacing.sm,
                           ),
                           decoration: BoxDecoration(
-                            color: AppColors.cardWhite,
+                            color: AppColors.getCardBackground(context),
                             borderRadius: BorderRadius.circular(AppRadius.lg),
-                            boxShadow: AppColors.cardShadow,
+                            boxShadow: AppColors.getCardShadow(context),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
@@ -330,7 +330,7 @@ class _AddSubscriptionScreenState extends ConsumerState<AddSubscriptionScreen> {
                                 template['name'] as String,
                                 style: theme.textTheme.bodyMedium?.copyWith(
                                   fontWeight: FontWeight.w500,
-                                  color: AppColors.darkCharcoal,
+                                  color: AppColors.getTextPrimary(context),
                                 ),
                               ),
                             ],
@@ -395,10 +395,10 @@ class _AddSubscriptionScreenState extends ConsumerState<AddSubscriptionScreen> {
               '0.00',
               prefixIcon: Text(
                 ref.watch(currencySymbolProvider),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.darkCharcoal,
+                  color: AppColors.getTextPrimary(context),
                 ),
               ),
             ),
@@ -434,9 +434,9 @@ class _AddSubscriptionScreenState extends ConsumerState<AddSubscriptionScreen> {
             child: Container(
               padding: const EdgeInsets.all(AppSpacing.md),
               decoration: BoxDecoration(
-                color: AppColors.cardWhite,
+                color: AppColors.getCardBackground(context),
                 borderRadius: BorderRadius.circular(AppRadius.lg),
-                border: Border.all(color: AppColors.lightGray),
+                border: Border.all(color: AppColors.getBorder(context)),
               ),
               child: Row(
                 children: [
@@ -446,11 +446,11 @@ class _AddSubscriptionScreenState extends ConsumerState<AddSubscriptionScreen> {
                     '${_nextBillingDate.day}/${_nextBillingDate.month}/${_nextBillingDate.year}',
                     style: theme.textTheme.bodyLarge?.copyWith(
                       fontWeight: FontWeight.w500,
-                      color: AppColors.darkCharcoal,
+                      color: AppColors.getTextPrimary(context),
                     ),
                   ),
                   const Spacer(),
-                  Icon(Icons.chevron_right_rounded, color: AppColors.mediumGray),
+                  Icon(Icons.chevron_right_rounded, color: AppColors.getTextSecondary(context)),
                 ],
               ),
             ),
@@ -463,9 +463,9 @@ class _AddSubscriptionScreenState extends ConsumerState<AddSubscriptionScreen> {
           Container(
             padding: const EdgeInsets.all(AppSpacing.md),
             decoration: BoxDecoration(
-              color: AppColors.cardWhite,
+              color: AppColors.getCardBackground(context),
               borderRadius: BorderRadius.circular(AppRadius.lg),
-              border: Border.all(color: AppColors.lightGray),
+              border: Border.all(color: AppColors.getBorder(context)),
             ),
             child: Column(
               children: [
@@ -476,13 +476,13 @@ class _AddSubscriptionScreenState extends ConsumerState<AddSubscriptionScreen> {
                       'Bill Reminders',
                       style: theme.textTheme.bodyLarge?.copyWith(
                         fontWeight: FontWeight.w500,
-                        color: AppColors.darkCharcoal,
+                        color: AppColors.getTextPrimary(context),
                       ),
                     ),
                     Switch.adaptive(
                       value: _reminderEnabled,
                       onChanged: (value) => setState(() => _reminderEnabled = value),
-                      activeColor: AppColors.primaryPink,
+                      activeTrackColor: AppColors.primaryPink,
                     ),
                   ],
                 ),
@@ -494,7 +494,7 @@ class _AddSubscriptionScreenState extends ConsumerState<AddSubscriptionScreen> {
                       Text(
                         'Remind me',
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: AppColors.mediumGray,
+                          color: AppColors.getTextSecondary(context),
                         ),
                       ),
                       DropdownButton<int>(
@@ -567,7 +567,7 @@ class _AddSubscriptionScreenState extends ConsumerState<AddSubscriptionScreen> {
         title,
         style: Theme.of(context).textTheme.titleSmall?.copyWith(
           fontWeight: FontWeight.w600,
-          color: AppColors.mediumGray,
+          color: AppColors.getTextSecondary(context),
         ),
       ),
     );
@@ -576,7 +576,7 @@ class _AddSubscriptionScreenState extends ConsumerState<AddSubscriptionScreen> {
   InputDecoration _buildInputDecoration(String hint, {Widget? prefixIcon}) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: TextStyle(color: AppColors.mediumGray.withOpacity(0.5)),
+      hintStyle: TextStyle(color: AppColors.getTextSecondary(context).withValues(alpha: 0.5)),
       prefixIcon: prefixIcon != null
           ? Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -585,14 +585,14 @@ class _AddSubscriptionScreenState extends ConsumerState<AddSubscriptionScreen> {
           : null,
       prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
       filled: true,
-      fillColor: AppColors.cardWhite,
+      fillColor: AppColors.getCardBackground(context),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        borderSide: BorderSide(color: AppColors.lightGray),
+        borderSide: BorderSide(color: AppColors.getBorder(context)),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        borderSide: BorderSide(color: AppColors.lightGray),
+        borderSide: BorderSide(color: AppColors.getBorder(context)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -627,7 +627,7 @@ class _AddSubscriptionScreenState extends ConsumerState<AddSubscriptionScreen> {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: isSelected ? AppColors.primaryPink.withOpacity(0.1) : AppColors.subtleGray,
+              color: isSelected ? AppColors.primaryPink.withValues(alpha: 0.1) : AppColors.getSubtle(context),
               borderRadius: BorderRadius.circular(AppRadius.md),
               border: isSelected
                   ? Border.all(color: AppColors.primaryPink, width: 2)
@@ -669,13 +669,13 @@ class _AddSubscriptionScreenState extends ConsumerState<AddSubscriptionScreen> {
             ),
             decoration: BoxDecoration(
               gradient: isSelected ? AppColors.pinkGradient : null,
-              color: isSelected ? null : AppColors.subtleGray,
+              color: isSelected ? null : AppColors.getSubtle(context),
               borderRadius: BorderRadius.circular(AppRadius.round),
             ),
             child: Text(
               freq.$2,
               style: TextStyle(
-                color: isSelected ? Colors.white : AppColors.darkCharcoal,
+                color: isSelected ? Colors.white : AppColors.getTextPrimary(context),
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                 fontSize: 13,
               ),
@@ -707,13 +707,13 @@ class _AddSubscriptionScreenState extends ConsumerState<AddSubscriptionScreen> {
             ),
             decoration: BoxDecoration(
               gradient: isSelected ? AppColors.pinkGradient : null,
-              color: isSelected ? null : AppColors.subtleGray,
+              color: isSelected ? null : AppColors.getSubtle(context),
               borderRadius: BorderRadius.circular(AppRadius.round),
             ),
             child: Text(
               _getCategoryDisplayName(category),
               style: TextStyle(
-                color: isSelected ? Colors.white : AppColors.darkCharcoal,
+                color: isSelected ? Colors.white : AppColors.getTextPrimary(context),
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                 fontSize: 13,
               ),

@@ -39,7 +39,7 @@ class SubscriptionDetailScreen extends ConsumerWidget {
             leading: Container(
               margin: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.9),
+                color: Colors.white.withValues(alpha: 0.9),
                 borderRadius: BorderRadius.circular(AppRadius.md),
               ),
               child: IconButton(
@@ -52,7 +52,7 @@ class SubscriptionDetailScreen extends ConsumerWidget {
               Container(
                 margin: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.9),
+                  color: Colors.white.withValues(alpha: 0.9),
                   borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
                 child: PopupMenuButton<String>(
@@ -90,7 +90,7 @@ class SubscriptionDetailScreen extends ConsumerWidget {
                         width: 80,
                         height: 80,
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
+                          color: Colors.white.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(AppRadius.lg),
                         ),
                         child: Center(
@@ -112,7 +112,7 @@ class SubscriptionDetailScreen extends ConsumerWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
+                          color: Colors.white.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(AppRadius.round),
                         ),
                         child: Text(
@@ -141,9 +141,9 @@ class SubscriptionDetailScreen extends ConsumerWidget {
                   Container(
                     padding: const EdgeInsets.all(AppSpacing.lg),
                     decoration: BoxDecoration(
-                      color: AppColors.cardWhite,
+                      color: AppColors.getCardBackground(context),
                       borderRadius: BorderRadius.circular(AppRadius.lg),
-                      boxShadow: AppColors.cardShadow,
+                      boxShadow: AppColors.getCardShadow(context),
                     ),
                     child: Column(
                       children: [
@@ -157,13 +157,13 @@ class SubscriptionDetailScreen extends ConsumerWidget {
                                   CurrencyFormatter.format(subscription.amount, currencyCode),
                                   style: theme.textTheme.headlineMedium?.copyWith(
                                     fontWeight: FontWeight.w800,
-                                    color: AppColors.darkCharcoal,
+                                    color: AppColors.getTextPrimary(context),
                                   ),
                                 ),
                                 Text(
                                   subscription.frequencyText,
                                   style: theme.textTheme.bodyMedium?.copyWith(
-                                    color: AppColors.mediumGray,
+                                    color: AppColors.getTextSecondary(context),
                                   ),
                                 ),
                               ],
@@ -174,7 +174,7 @@ class SubscriptionDetailScreen extends ConsumerWidget {
                                 vertical: AppSpacing.sm,
                               ),
                               decoration: BoxDecoration(
-                                color: AppColors.primaryPink.withOpacity(0.1),
+                                color: AppColors.primaryPink.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(AppRadius.md),
                               ),
                               child: Column(
@@ -207,16 +207,16 @@ class SubscriptionDetailScreen extends ConsumerWidget {
                   Container(
                     padding: const EdgeInsets.all(AppSpacing.lg),
                     decoration: BoxDecoration(
-                      color: AppColors.cardWhite,
+                      color: AppColors.getCardBackground(context),
                       borderRadius: BorderRadius.circular(AppRadius.lg),
-                      boxShadow: AppColors.cardShadow,
+                      boxShadow: AppColors.getCardShadow(context),
                     ),
                     child: Row(
                       children: [
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: AppColors.warning.withOpacity(0.1),
+                            color: AppColors.warning.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(AppRadius.md),
                           ),
                           child: Icon(
@@ -233,7 +233,7 @@ class SubscriptionDetailScreen extends ConsumerWidget {
                               Text(
                                 'Next Billing Date',
                                 style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: AppColors.mediumGray,
+                                  color: AppColors.getTextSecondary(context),
                                 ),
                               ),
                               const SizedBox(height: 4),
@@ -241,7 +241,7 @@ class SubscriptionDetailScreen extends ConsumerWidget {
                                 dateFormat.format(subscription.nextBillingDate),
                                 style: theme.textTheme.titleMedium?.copyWith(
                                   fontWeight: FontWeight.w700,
-                                  color: AppColors.darkCharcoal,
+                                  color: AppColors.getTextPrimary(context),
                                 ),
                               ),
                             ],
@@ -254,8 +254,8 @@ class SubscriptionDetailScreen extends ConsumerWidget {
                           ),
                           decoration: BoxDecoration(
                             color: subscription.daysUntilBilling <= 3
-                                ? AppColors.warning.withOpacity(0.1)
-                                : AppColors.subtleGray,
+                                ? AppColors.warning.withValues(alpha: 0.1)
+                                : AppColors.getSubtle(context),
                             borderRadius: BorderRadius.circular(AppRadius.round),
                           ),
                           child: Text(
@@ -263,7 +263,7 @@ class SubscriptionDetailScreen extends ConsumerWidget {
                             style: TextStyle(
                               color: subscription.daysUntilBilling <= 3
                                   ? AppColors.warning
-                                  : AppColors.mediumGray,
+                                  : AppColors.getTextSecondary(context),
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -279,7 +279,7 @@ class SubscriptionDetailScreen extends ConsumerWidget {
                     'Details',
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w700,
-                      color: AppColors.darkCharcoal,
+                      color: AppColors.getTextPrimary(context),
                     ),
                   ),
                   const SizedBox(height: AppSpacing.sm),
@@ -287,9 +287,9 @@ class SubscriptionDetailScreen extends ConsumerWidget {
                   Container(
                     padding: const EdgeInsets.all(AppSpacing.md),
                     decoration: BoxDecoration(
-                      color: AppColors.cardWhite,
+                      color: AppColors.getCardBackground(context),
                       borderRadius: BorderRadius.circular(AppRadius.lg),
-                      boxShadow: AppColors.cardShadow,
+                      boxShadow: AppColors.getCardShadow(context),
                     ),
                     child: Column(
                       children: [
@@ -315,7 +315,7 @@ class SubscriptionDetailScreen extends ConsumerWidget {
                     'Quick Actions',
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w700,
-                      color: AppColors.darkCharcoal,
+                      color: AppColors.getTextPrimary(context),
                     ),
                   ),
                   const SizedBox(height: AppSpacing.sm),
@@ -371,26 +371,28 @@ class SubscriptionDetailScreen extends ConsumerWidget {
   }
 
   Widget _buildDetailRow(String label, String value, String emoji) {
-    return Row(
-      children: [
-        Text(emoji, style: const TextStyle(fontSize: 18)),
-        const SizedBox(width: AppSpacing.sm),
-        Text(
-          label,
-          style: const TextStyle(
-            color: AppColors.mediumGray,
-            fontWeight: FontWeight.w500,
+    return Builder(
+      builder: (context) => Row(
+        children: [
+          Text(emoji, style: const TextStyle(fontSize: 18)),
+          const SizedBox(width: AppSpacing.sm),
+          Text(
+            label,
+            style: TextStyle(
+              color: AppColors.getTextSecondary(context),
+              fontWeight: FontWeight.w500,
+            ),
           ),
-        ),
-        const Spacer(),
-        Text(
-          value,
-          style: const TextStyle(
-            color: AppColors.darkCharcoal,
-            fontWeight: FontWeight.w600,
+          const Spacer(),
+          Text(
+            value,
+            style: TextStyle(
+              color: AppColors.getTextPrimary(context),
+              fontWeight: FontWeight.w600,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -410,7 +412,7 @@ class SubscriptionDetailScreen extends ConsumerWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
         decoration: BoxDecoration(
-          color: buttonColor.withOpacity(0.1),
+          color: buttonColor.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(AppRadius.lg),
         ),
         child: Column(
