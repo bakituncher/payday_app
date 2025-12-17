@@ -166,11 +166,10 @@ class SubscriptionNotifier extends StateNotifier<AsyncValue<void>> {
     }
   }
 
-  Future<void> deleteSubscription(String subscriptionId) async {
+  Future<void> deleteSubscription(String subscriptionId, String userId) async {
     state = const AsyncValue.loading();
     try {
       final repository = _ref.read(subscriptionRepositoryProvider);
-      final userId = _ref.read(currentUserIdProvider);
       await repository.deleteSubscription(subscriptionId, userId);
 
       // Cancel notification
@@ -190,11 +189,10 @@ class SubscriptionNotifier extends StateNotifier<AsyncValue<void>> {
     }
   }
 
-  Future<void> cancelSubscription(String subscriptionId) async {
+  Future<void> cancelSubscription(String subscriptionId, String userId) async {
     state = const AsyncValue.loading();
     try {
       final repository = _ref.read(subscriptionRepositoryProvider);
-      final userId = _ref.read(currentUserIdProvider);
       await repository.cancelSubscription(subscriptionId, userId);
 
       // Cancel notification
@@ -214,11 +212,10 @@ class SubscriptionNotifier extends StateNotifier<AsyncValue<void>> {
     }
   }
 
-  Future<void> pauseSubscription(String subscriptionId) async {
+  Future<void> pauseSubscription(String subscriptionId, String userId) async {
     state = const AsyncValue.loading();
     try {
       final repository = _ref.read(subscriptionRepositoryProvider);
-      final userId = _ref.read(currentUserIdProvider);
       await repository.pauseSubscription(subscriptionId, userId);
 
       _ref.invalidate(subscriptionsProvider);
@@ -230,11 +227,10 @@ class SubscriptionNotifier extends StateNotifier<AsyncValue<void>> {
     }
   }
 
-  Future<void> resumeSubscription(String subscriptionId) async {
+  Future<void> resumeSubscription(String subscriptionId, String userId) async {
     state = const AsyncValue.loading();
     try {
       final repository = _ref.read(subscriptionRepositoryProvider);
-      final userId = _ref.read(currentUserIdProvider);
       await repository.resumeSubscription(subscriptionId, userId);
 
       _ref.invalidate(subscriptionsProvider);
@@ -297,4 +293,3 @@ class SubscriptionNotifier extends StateNotifier<AsyncValue<void>> {
 final subscriptionNotifierProvider = StateNotifierProvider<SubscriptionNotifier, AsyncValue<void>>((ref) {
   return SubscriptionNotifier(ref);
 });
-
