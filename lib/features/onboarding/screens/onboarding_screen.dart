@@ -8,7 +8,6 @@ import 'package:payday/core/models/user_settings.dart';
 import 'package:payday/core/providers/repository_providers.dart';
 import 'package:payday/core/providers/auth_providers.dart';
 import 'package:payday/core/utils/currency_formatter.dart';
-import 'package:payday/core/services/currency_service.dart';
 import 'package:payday/shared/widgets/payday_button.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 

@@ -1,6 +1,7 @@
 /// Utility functions for formatting currency
 import 'dart:ui' as ui;
 import 'package:intl/intl.dart';
+import 'package:currency_picker/currency_picker.dart';
 
 class CurrencyFormatter {
   /// Format amount with currency symbol
@@ -36,15 +37,25 @@ class CurrencyFormatter {
   }
 
   /// Get currency symbol from code
-  /// Supports all world currencies automatically via Intl package
+  /// Uses currency_picker package for accurate symbols (₺, $, €, etc.)
   static String _getCurrencySymbol(String currencyCode) {
     try {
-      // Intl kütüphanesi otomatik olarak tüm dünya para birimlerini destekler
-      final format = NumberFormat.simpleCurrency(name: currencyCode);
-      return format.currencySymbol;
+      // currency_picker paketinden sembolü al - daha doğru semboller (₺, $, € gibi)
+      final currencies = CurrencyService().getAll();
+      final currency = currencies.firstWhere(
+        (c) => c.code == currencyCode,
+        orElse: () => currencies.first,
+      );
+      return currency.symbol;
     } catch (e) {
-      // Eğer para birimi bulunamazsa varsayılan olarak kod kendisini döner
-      return currencyCode;
+      // Fallback: Intl paketini kullan
+      try {
+        final format = NumberFormat.simpleCurrency(name: currencyCode);
+        return format.currencySymbol;
+      } catch (e) {
+        // Son çare: kod kendisi
+        return currencyCode;
+      }
     }
   }
 
@@ -56,22 +67,33 @@ class CurrencyFormatter {
   /// Get decimal digits for currency
   /// Some currencies like JPY don't use decimal places
   static int _getDecimalDigits(String currencyCode) {
-    switch (currencyCode.toUpperCase()) {
-      case 'JPY': // Japanese Yen
-      case 'KRW': // Korean Won
-      case 'VND': // Vietnamese Dong
-      case 'CLP': // Chilean Peso
-      case 'ISK': // Icelandic Krona
-        return 0;
-      case 'BHD': // Bahraini Dinar
-      case 'IQD': // Iraqi Dinar
-      case 'JOD': // Jordanian Dinar
-      case 'KWD': // Kuwaiti Dinar
-      case 'OMR': // Omani Rial
-      case 'TND': // Tunisian Dinar
-        return 3;
-      default:
-        return 2;
+    try {
+      // currency_picker'dan ondalık basamak sayısını al
+      final currencies = CurrencyService().getAll();
+      final currency = currencies.firstWhere(
+        (c) => c.code == currencyCode,
+        orElse: () => currencies.first,
+      );
+      return currency.decimalDigits;
+    } catch (e) {
+      // Fallback: Manuel kontrol
+      switch (currencyCode.toUpperCase()) {
+        case 'JPY': // Japanese Yen
+        case 'KRW': // Korean Won
+        case 'VND': // Vietnamese Dong
+        case 'CLP': // Chilean Peso
+        case 'ISK': // Icelandic Krona
+          return 0;
+        case 'BHD': // Bahraini Dinar
+        case 'IQD': // Iraqi Dinar
+        case 'JOD': // Jordanian Dinar
+        case 'KWD': // Kuwaiti Dinar
+        case 'OMR': // Omani Rial
+        case 'TND': // Tunisian Dinar
+          return 3;
+        default:
+          return 2;
+      }
     }
   }
 
