@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:payday/core/theme/app_theme.dart';
 import 'package:payday/features/subscriptions/providers/subscription_providers.dart';
-import 'package:intl/intl.dart';
+import 'package:payday/core/providers/currency_providers.dart';
+import 'package:payday/core/utils/currency_formatter.dart';
 
 class SubscriptionSummaryCard extends ConsumerWidget {
   const SubscriptionSummaryCard({super.key});
@@ -14,8 +15,9 @@ class SubscriptionSummaryCard extends ConsumerWidget {
     final monthlyCostAsync = ref.watch(totalMonthlyCostProvider);
     final yearlyCostAsync = ref.watch(totalYearlyCostProvider);
     final subscriptionsAsync = ref.watch(activeSubscriptionsProvider);
+    final currencyCode = ref.watch(currencyCodeProvider);
+    final currencySymbol = ref.watch(currencySymbolProvider);
     final theme = Theme.of(context);
-    final currencyFormat = NumberFormat.currency(symbol: '\$');
 
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
@@ -75,7 +77,7 @@ class SubscriptionSummaryCard extends ConsumerWidget {
               monthlyCostAsync.when(
                 loading: () => _buildLoadingText(),
                 error: (_, __) => Text(
-                  '\$0.00',
+                  '${currencySymbol}0.00',
                   style: theme.textTheme.displaySmall?.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.w800,
@@ -83,7 +85,7 @@ class SubscriptionSummaryCard extends ConsumerWidget {
                   ),
                 ),
                 data: (cost) => Text(
-                  currencyFormat.format(cost),
+                  CurrencyFormatter.format(cost, currencyCode),
                   style: theme.textTheme.displaySmall?.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.w800,
@@ -131,14 +133,14 @@ class SubscriptionSummaryCard extends ConsumerWidget {
                 yearlyCostAsync.when(
                   loading: () => _buildSmallLoadingText(),
                   error: (_, __) => Text(
-                    '\$0.00',
+                    '${currencySymbol}0.00',
                     style: theme.textTheme.bodyLarge?.copyWith(
                       color: Colors.white,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                   data: (cost) => Text(
-                    currencyFormat.format(cost),
+                    CurrencyFormatter.format(cost, currencyCode),
                     style: theme.textTheme.bodyLarge?.copyWith(
                       color: Colors.white,
                       fontWeight: FontWeight.w700,

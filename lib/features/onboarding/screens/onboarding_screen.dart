@@ -2,12 +2,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:currency_picker/currency_picker.dart';
 import 'package:payday/core/theme/app_theme.dart';
 import 'package:payday/core/constants/app_constants.dart';
-import 'package:payday/core/services/currency_service.dart';
 import 'package:payday/core/models/user_settings.dart';
 import 'package:payday/core/providers/repository_providers.dart';
+import 'package:payday/core/providers/auth_providers.dart';
 import 'package:payday/core/utils/currency_formatter.dart';
 import 'package:payday/shared/widgets/payday_button.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -33,7 +32,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   @override
   void initState() {
     super.initState();
-    // Cihazın yerel ayarlarından para birimini otomatik seç
     _selectedCurrency = CurrencyFormatter.getLocalCurrencyCode();
   }
 
@@ -53,7 +51,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       body: SafeArea(
         child: Stack(
           children: [
-            // Background decoration
+            // Background decorations
             Positioned(
               top: -80,
               right: -60,
@@ -88,7 +86,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 ),
               ),
             ),
-            // Main content
             Column(
               children: [
                 // Progress Indicator
@@ -109,11 +106,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                             borderRadius: BorderRadius.circular(AppRadius.round),
                             boxShadow: isCurrent
                                 ? [
-                                    BoxShadow(
-                                      color: AppColors.primaryPink.withValues(alpha: 0.4),
-                                      blurRadius: 4,
-                                    ),
-                                  ]
+                              BoxShadow(
+                                color: AppColors.primaryPink.withValues(alpha: 0.4),
+                                blurRadius: 4,
+                              ),
+                            ]
                                 : null,
                           ),
                         ),
@@ -122,7 +119,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   ),
                 ),
 
-                // Step indicator
+                // Step indicator & Back button
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                   child: Row(
@@ -153,7 +150,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   ),
                 ),
 
-                // Content
+                // Content Pages
                 Expanded(
                   child: PageView(
                     controller: _pageController,
@@ -199,7 +196,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const SizedBox(height: AppSpacing.xl),
-          // Logo
           Container(
             padding: const EdgeInsets.all(AppSpacing.xl),
             decoration: BoxDecoration(
@@ -212,9 +208,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               size: 64,
               color: Colors.white,
             ),
-          )
-              .animate()
-              .scale(duration: 600.ms, curve: Curves.elasticOut),
+          ).animate().scale(duration: 600.ms, curve: Curves.elasticOut),
           const SizedBox(height: AppSpacing.xl),
           Text(
             'Welcome to Payday',
@@ -223,9 +217,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               letterSpacing: -0.5,
             ),
             textAlign: TextAlign.center,
-          )
-              .animate()
-              .fadeIn(duration: 400.ms, delay: 200.ms),
+          ).animate().fadeIn(duration: 400.ms, delay: 200.ms),
           const SizedBox(height: AppSpacing.sm),
           Text(
             'Your smart companion for tracking money\nuntil your next payday',
@@ -234,49 +226,19 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               height: 1.5,
             ),
             textAlign: TextAlign.center,
-          )
-              .animate()
-              .fadeIn(duration: 400.ms, delay: 300.ms),
+          ).animate().fadeIn(duration: 400.ms, delay: 300.ms),
           const SizedBox(height: AppSpacing.xxl),
-          _buildFeatureItem(
-            theme,
-            Icons.timer_rounded,
-            'Live Countdown',
-            'Watch the clock tick down to money day',
-            AppColors.primaryPink,
-            0,
-          ),
+          _buildFeatureItem(theme, Icons.timer_rounded, 'Live Countdown', 'Watch the clock tick down to money day', AppColors.primaryPink, 0),
           const SizedBox(height: AppSpacing.lg),
-          _buildFeatureItem(
-            theme,
-            Icons.account_balance_wallet_rounded,
-            'Smart Budgeting',
-            'Know exactly how much you can spend daily',
-            AppColors.secondaryPurple,
-            1,
-          ),
+          _buildFeatureItem(theme, Icons.account_balance_wallet_rounded, 'Smart Budgeting', 'Know exactly how much you can spend daily', AppColors.secondaryPurple, 1),
           const SizedBox(height: AppSpacing.lg),
-          _buildFeatureItem(
-            theme,
-            Icons.savings_rounded,
-            'Savings Goals',
-            'Build your dream fund one payday at a time',
-            AppColors.secondaryTeal,
-            2,
-          ),
+          _buildFeatureItem(theme, Icons.savings_rounded, 'Savings Goals', 'Build your dream fund one payday at a time', AppColors.secondaryTeal, 2),
         ],
       ),
     );
   }
 
-  Widget _buildFeatureItem(
-    ThemeData theme,
-    IconData icon,
-    String title,
-    String description,
-    Color color,
-    int index,
-  ) {
+  Widget _buildFeatureItem(ThemeData theme, IconData icon, String title, String description, Color color, int index) {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
@@ -299,30 +261,16 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
+                Text(title, style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
                 const SizedBox(height: 2),
-                Text(
-                  description,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: AppColors.mediumGray,
-                  ),
-                ),
+                Text(description, style: theme.textTheme.bodySmall?.copyWith(color: AppColors.mediumGray)),
               ],
             ),
           ),
         ],
       ),
-    )
-        .animate()
-        .fadeIn(duration: 400.ms, delay: (400 + index * 100).ms)
-        .slideX(begin: 0.1, end: 0);
+    ).animate().fadeIn(duration: 400.ms, delay: (400 + index * 100).ms).slideX(begin: 0.1, end: 0);
   }
-
 
   Widget _buildPayCyclePage(ThemeData theme) {
     return SingleChildScrollView(
@@ -332,35 +280,13 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           const SizedBox(height: AppSpacing.lg),
           Container(
             padding: const EdgeInsets.all(AppSpacing.lg),
-            decoration: BoxDecoration(
-              color: AppColors.subtleGray,
-              shape: BoxShape.circle,
-            ),
+            decoration: BoxDecoration(color: AppColors.subtleGray, shape: BoxShape.circle),
             child: const Text('📅', style: TextStyle(fontSize: 48)),
-          )
-              .animate()
-              .scale(duration: 400.ms, curve: Curves.elasticOut),
+          ).animate().scale(duration: 400.ms, curve: Curves.elasticOut),
           const SizedBox(height: AppSpacing.xl),
-          Text(
-            'How Often Are You Paid?',
-            style: theme.textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.w800,
-              letterSpacing: -0.5,
-            ),
-            textAlign: TextAlign.center,
-          )
-              .animate()
-              .fadeIn(duration: 300.ms, delay: 100.ms),
+          Text('How Often Are You Paid?', style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800, letterSpacing: -0.5), textAlign: TextAlign.center).animate().fadeIn(duration: 300.ms, delay: 100.ms),
           const SizedBox(height: AppSpacing.sm),
-          Text(
-            'This helps us calculate your daily budget',
-            style: theme.textTheme.bodyLarge?.copyWith(
-              color: AppColors.mediumGray,
-            ),
-            textAlign: TextAlign.center,
-          )
-              .animate()
-              .fadeIn(duration: 300.ms, delay: 150.ms),
+          Text('This helps us calculate your daily budget', style: theme.textTheme.bodyLarge?.copyWith(color: AppColors.mediumGray), textAlign: TextAlign.center).animate().fadeIn(duration: 300.ms, delay: 150.ms),
           const SizedBox(height: AppSpacing.xl),
           _buildPayCycleOption(theme, AppConstants.payCycleWeekly, 'Weekly', 'Every 7 days', 0),
           const SizedBox(height: AppSpacing.md),
@@ -368,40 +294,22 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           const SizedBox(height: AppSpacing.md),
           _buildPayCycleOption(theme, AppConstants.payCycleMonthly, 'Monthly', 'Once a month', 2),
           const SizedBox(height: AppSpacing.xl),
-
-          // Date selector
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(AppSpacing.lg),
-            decoration: BoxDecoration(
-              color: AppColors.cardWhite,
-              borderRadius: BorderRadius.circular(AppRadius.xl),
-              boxShadow: AppColors.cardShadow,
-            ),
+            decoration: BoxDecoration(color: AppColors.cardWhite, borderRadius: BorderRadius.circular(AppRadius.xl), boxShadow: AppColors.cardShadow),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                  Row(
+                Row(
                   children: [
                     Container(
                       padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: AppColors.primaryPink.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(AppRadius.sm),
-                      ),
-                      child: Icon(
-                        Icons.event_rounded,
-                        color: AppColors.primaryPink,
-                        size: 20,
-                      ),
+                      decoration: BoxDecoration(color: AppColors.primaryPink.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(AppRadius.sm)),
+                      child: Icon(Icons.event_rounded, color: AppColors.primaryPink, size: 20),
                     ),
                     const SizedBox(width: AppSpacing.sm),
-                    Text(
-                      'Next Payday',
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
+                    Text('Next Payday', style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
                   ],
                 ),
                 const SizedBox(height: AppSpacing.md),
@@ -409,22 +317,13 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   onTap: () => _selectDate(context),
                   child: Container(
                     padding: const EdgeInsets.all(AppSpacing.md),
-                    decoration: BoxDecoration(
-                      gradient: AppColors.pinkGradient,
-                      borderRadius: BorderRadius.circular(AppRadius.lg),
-                    ),
+                    decoration: BoxDecoration(gradient: AppColors.pinkGradient, borderRadius: BorderRadius.circular(AppRadius.lg)),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const Icon(Icons.calendar_today_rounded, color: Colors.white, size: 20),
                         const SizedBox(width: AppSpacing.sm),
-                        Text(
-                          _formatDate(_nextPayday),
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
+                        Text(_formatDate(_nextPayday), style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600, color: Colors.white)),
                         const SizedBox(width: AppSpacing.sm),
                         const Icon(Icons.edit_rounded, color: Colors.white, size: 16),
                       ],
@@ -433,20 +332,14 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 ),
               ],
             ),
-          )
-              .animate()
-              .fadeIn(duration: 300.ms, delay: 500.ms)
-              .slideY(begin: 0.1, end: 0),
+          ).animate().fadeIn(duration: 300.ms, delay: 500.ms).slideY(begin: 0.1, end: 0),
         ],
       ),
     );
   }
 
   String _formatDate(DateTime date) {
-    final months = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
-    ];
+    final months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }
 
@@ -465,10 +358,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         decoration: BoxDecoration(
           color: isSelected ? AppColors.lightPink : AppColors.cardWhite,
           borderRadius: BorderRadius.circular(AppRadius.xl),
-          border: Border.all(
-            color: isSelected ? AppColors.primaryPink : AppColors.lightGray,
-            width: isSelected ? 2 : 1,
-          ),
+          border: Border.all(color: isSelected ? AppColors.primaryPink : AppColors.lightGray, width: isSelected ? 2 : 1),
           boxShadow: isSelected ? AppColors.cardShadow : null,
         ),
         child: Row(
@@ -477,18 +367,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    title,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  Text(
-                    description,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: AppColors.mediumGray,
-                    ),
-                  ),
+                  Text(title, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                  Text(description, style: theme.textTheme.bodySmall?.copyWith(color: AppColors.mediumGray)),
                 ],
               ),
             ),
@@ -498,30 +378,17 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               decoration: BoxDecoration(
                 color: isSelected ? AppColors.primaryPink : Colors.transparent,
                 shape: BoxShape.circle,
-                border: Border.all(
-                  color: isSelected ? AppColors.primaryPink : AppColors.lightGray,
-                  width: 2,
-                ),
+                border: Border.all(color: isSelected ? AppColors.primaryPink : AppColors.lightGray, width: 2),
               ),
-              child: Icon(
-                Icons.check_rounded,
-                color: isSelected ? Colors.white : Colors.transparent,
-                size: 18,
-              ),
+              child: Icon(Icons.check_rounded, color: isSelected ? Colors.white : Colors.transparent, size: 18),
             ),
           ],
         ),
       ),
-    )
-        .animate()
-        .fadeIn(duration: 300.ms, delay: (200 + index * 100).ms)
-        .slideY(begin: 0.1, end: 0);
+    ).animate().fadeIn(duration: 300.ms, delay: (200 + index * 100).ms).slideY(begin: 0.1, end: 0);
   }
 
   Widget _buildIncomePage(ThemeData theme) {
-    final currencyService = CurrencyUtilityService();
-    final currencySymbol = currencyService.getSymbol(_selectedCurrency);
-
     return SingleChildScrollView(
       padding: const EdgeInsets.all(AppSpacing.xl),
       child: Column(
@@ -529,86 +396,38 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           const SizedBox(height: AppSpacing.xl),
           Container(
             padding: const EdgeInsets.all(AppSpacing.lg),
-            decoration: BoxDecoration(
-              color: AppColors.subtleGray,
-              shape: BoxShape.circle,
-            ),
+            decoration: BoxDecoration(color: AppColors.subtleGray, shape: BoxShape.circle),
             child: const Text('💰', style: TextStyle(fontSize: 48)),
-          )
-              .animate()
-              .scale(duration: 400.ms, curve: Curves.elasticOut),
+          ).animate().scale(duration: 400.ms, curve: Curves.elasticOut),
           const SizedBox(height: AppSpacing.xl),
-          Text(
-            'What\'s Your Income?',
-            style: theme.textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.w800,
-              letterSpacing: -0.5,
-            ),
-            textAlign: TextAlign.center,
-          )
-              .animate()
-              .fadeIn(duration: 300.ms, delay: 100.ms),
+          Text('What\'s Your Income?', style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800, letterSpacing: -0.5), textAlign: TextAlign.center).animate().fadeIn(duration: 300.ms, delay: 100.ms),
           const SizedBox(height: AppSpacing.sm),
-          Text(
-            'Enter your per-paycheck income (after tax)',
-            style: theme.textTheme.bodyLarge?.copyWith(
-              color: AppColors.mediumGray,
-            ),
-            textAlign: TextAlign.center,
-          )
-              .animate()
-              .fadeIn(duration: 300.ms, delay: 150.ms),
+          Text('Enter your per-paycheck income (after tax)', style: theme.textTheme.bodyLarge?.copyWith(color: AppColors.mediumGray), textAlign: TextAlign.center).animate().fadeIn(duration: 300.ms, delay: 150.ms),
           const SizedBox(height: AppSpacing.xxl),
-
-          // Income input card
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(AppSpacing.xl),
-            decoration: BoxDecoration(
-              color: AppColors.cardWhite,
-              borderRadius: BorderRadius.circular(AppRadius.xl),
-              boxShadow: AppColors.cardShadow,
-            ),
+            decoration: BoxDecoration(color: AppColors.cardWhite, borderRadius: BorderRadius.circular(AppRadius.xl), boxShadow: AppColors.cardShadow),
             child: Column(
               children: [
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-                  decoration: BoxDecoration(
-                    color: AppColors.subtleGray,
-                    borderRadius: BorderRadius.circular(AppRadius.lg),
-                  ),
+                  decoration: BoxDecoration(color: AppColors.subtleGray, borderRadius: BorderRadius.circular(AppRadius.lg)),
                   child: Row(
                     children: [
-                      Text(
-                        CurrencyFormatter.getSymbol(_selectedCurrency),
-                        style: theme.textTheme.headlineLarge?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.primaryPink,
-                        ),
-                      ),
+                      Text(CurrencyFormatter.getSymbol(_selectedCurrency), style: theme.textTheme.headlineLarge?.copyWith(fontWeight: FontWeight.w800, color: AppColors.primaryPink)),
                       Expanded(
                         child: TextFormField(
                           controller: _incomeController,
                           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                          inputFormatters: [
-                            FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
-                          ],
-                          style: theme.textTheme.headlineLarge?.copyWith(
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.darkCharcoal,
-                          ),
+                          inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}'))],
+                          style: theme.textTheme.headlineLarge?.copyWith(fontWeight: FontWeight.w800, color: AppColors.darkCharcoal),
                           textAlign: TextAlign.center,
                           decoration: InputDecoration(
                             hintText: '0.00',
-                            hintStyle: theme.textTheme.headlineLarge?.copyWith(
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.mediumGray.withValues(alpha: 0.3),
-                            ),
+                            hintStyle: theme.textTheme.headlineLarge?.copyWith(fontWeight: FontWeight.w500, color: AppColors.mediumGray.withValues(alpha: 0.3)),
                             border: InputBorder.none,
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: AppSpacing.md,
-                              vertical: AppSpacing.lg,
-                            ),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.lg),
                           ),
                         ),
                       ),
@@ -617,46 +436,25 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 ),
               ],
             ),
-          )
-              .animate()
-              .fadeIn(duration: 300.ms, delay: 200.ms)
-              .slideY(begin: 0.1, end: 0),
-
+          ).animate().fadeIn(duration: 300.ms, delay: 200.ms).slideY(begin: 0.1, end: 0),
           const SizedBox(height: AppSpacing.lg),
-
-          // Info banner
           Container(
             padding: const EdgeInsets.all(AppSpacing.md),
-            decoration: BoxDecoration(
-              color: AppColors.infoLight,
-              borderRadius: BorderRadius.circular(AppRadius.lg),
-              border: Border.all(color: AppColors.info.withValues(alpha: 0.3)),
-            ),
+            decoration: BoxDecoration(color: AppColors.infoLight, borderRadius: BorderRadius.circular(AppRadius.lg), border: Border.all(color: AppColors.info.withValues(alpha: 0.3))),
             child: Row(
               children: [
                 Container(
                   padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: AppColors.info.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
-                  ),
+                  decoration: BoxDecoration(color: AppColors.info.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(AppRadius.sm)),
                   child: Icon(Icons.lightbulb_outline_rounded, color: AppColors.info, size: 20),
                 ),
                 const SizedBox(width: AppSpacing.md),
                 Expanded(
-                  child: Text(
-                    'We\'ll use this to calculate how much you can safely spend each day until payday',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: AppColors.darkCharcoal.withValues(alpha: 0.8),
-                      height: 1.4,
-                    ),
-                  ),
+                  child: Text('We\'ll use this to calculate how much you can safely spend each day until payday', style: theme.textTheme.bodySmall?.copyWith(color: AppColors.darkCharcoal.withValues(alpha: 0.8), height: 1.4)),
                 ),
               ],
             ),
-          )
-              .animate()
-              .fadeIn(duration: 300.ms, delay: 400.ms),
+          ).animate().fadeIn(duration: 300.ms, delay: 400.ms),
         ],
       ),
     );
@@ -671,18 +469,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: AppColors.primaryPink,
-              onPrimary: Colors.white,
-              surface: AppColors.cardWhite,
-              onSurface: AppColors.darkCharcoal,
-            ),
+            colorScheme: ColorScheme.light(primary: AppColors.primaryPink, onPrimary: Colors.white, surface: AppColors.cardWhite, onSurface: AppColors.darkCharcoal),
           ),
           child: child!,
         );
       },
     );
-
     if (picked != null) {
       setState(() {
         _nextPayday = picked;
@@ -691,41 +483,31 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   void _previousPage() {
-    _pageController.previousPage(
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
+    _pageController.previousPage(duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
   }
 
   Future<void> _nextPage() async {
     if (_currentPage == 2) {
-      // Validate income
       if (_incomeController.text.isEmpty || double.tryParse(_incomeController.text) == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please enter a valid income amount'),
-            backgroundColor: AppColors.error,
-          ),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter a valid income amount'), backgroundColor: AppColors.error));
         return;
       }
-
       await _saveSettings();
     } else {
-      _pageController.nextPage(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
+      _pageController.nextPage(duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
     }
   }
 
   Future<void> _saveSettings() async {
-    setState(() {
-      _isLoading = true;
-    });
-
+    setState(() { _isLoading = true; });
     try {
-      final userId = ref.read(currentUserIdProvider);
+      final authService = ref.read(authServiceProvider);
+      // Ensure user is logged in (anonymous if needed) before saving
+      if (authService.currentUser == null) {
+        await authService.signInAnonymously();
+      }
+
+      final userId = authService.currentUser?.uid ?? 'unknown';
       final repository = ref.read(userSettingsRepositoryProvider);
 
       final settings = UserSettings(
@@ -738,28 +520,19 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         updatedAt: DateTime.now(),
       );
 
+      // Save settings to repository
       await repository.saveUserSettings(settings);
 
       if (mounted) {
-        // Navigate to home screen
-        Navigator.of(context).pushReplacementNamed('/home');
+        // Point-blank fix: Clear navigation stack and go to home
+        Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error saving settings: $e'),
-            backgroundColor: AppColors.error,
-          ),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error saving settings: $e'), backgroundColor: AppColors.error));
       }
     } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+      if (mounted) { setState(() { _isLoading = false; }); }
     }
   }
 }
-

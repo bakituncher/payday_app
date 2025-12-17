@@ -23,8 +23,50 @@ class CurrencyUtilityService {
 
   /// Get currency symbol
   String getSymbol(String code) {
+    // Önce özel sembol mapping'ini kontrol et
+    final customSymbol = _getCustomSymbol(code);
+    if (customSymbol != null) {
+      return customSymbol;
+    }
+
     final currency = getCurrencyByCode(code);
     return currency?.symbol ?? '\$';
+  }
+
+  /// Para birimleri için özel semboller
+  /// currency_picker paketi bazı para birimleri için eski/yanlış semboller döndürüyor
+  /// Bu fonksiyon doğru sembolleri sağlar
+  String? _getCustomSymbol(String code) {
+    final customSymbols = {
+      'TRY': '₺', // Turkish Lira - currency_picker "TL" döndürüyor
+      'GBP': '£', // British Pound
+      'EUR': '€', // Euro
+      'USD': '\$', // US Dollar
+      'JPY': '¥', // Japanese Yen
+      'CNY': '¥', // Chinese Yuan
+      'RUB': '₽', // Russian Ruble
+      'INR': '₹', // Indian Rupee
+      'KRW': '₩', // South Korean Won
+      'BRL': 'R\$', // Brazilian Real
+      'ZAR': 'R', // South African Rand
+      'PLN': 'zł', // Polish Zloty
+      'THB': '฿', // Thai Baht
+      'IDR': 'Rp', // Indonesian Rupiah
+      'MYR': 'RM', // Malaysian Ringgit
+      'PHP': '₱', // Philippine Peso
+      'VND': '₫', // Vietnamese Dong
+      'SEK': 'kr', // Swedish Krona
+      'NOK': 'kr', // Norwegian Krone
+      'DKK': 'kr', // Danish Krone
+      'CHF': 'CHF', // Swiss Franc
+      'AUD': 'A\$', // Australian Dollar
+      'CAD': 'C\$', // Canadian Dollar
+      'NZD': 'NZ\$', // New Zealand Dollar
+      'SGD': 'S\$', // Singapore Dollar
+      'HKD': 'HK\$', // Hong Kong Dollar
+    };
+
+    return customSymbols[code.toUpperCase()];
   }
 
   /// Get currency name
@@ -41,8 +83,7 @@ class CurrencyUtilityService {
 
   /// Format amount with currency
   String formatAmount(double amount, String currencyCode, {int? decimals}) {
-    final currency = getCurrencyByCode(currencyCode);
-    final symbol = currency?.symbol ?? '\$';
+    final symbol = getSymbol(currencyCode);
     final decimalPlaces = decimals ?? _getDefaultDecimals(currencyCode);
     final formattedAmount = amount.toStringAsFixed(decimalPlaces);
 
@@ -60,8 +101,7 @@ class CurrencyUtilityService {
     String currencyCode,
     {int? decimals}
   ) {
-    final currency = getCurrencyByCode(currencyCode);
-    final symbol = currency?.symbol ?? '\$';
+    final symbol = getSymbol(currencyCode);
     final decimalPlaces = decimals ?? _getDefaultDecimals(currencyCode);
 
     // Split into integer and decimal parts

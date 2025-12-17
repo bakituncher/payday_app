@@ -37,13 +37,16 @@ class FirebaseSubscriptionRepository implements SubscriptionRepository {
 
   @override
   Future<void> cancelSubscription(String subscriptionId, String userId) async {
-     // Soft delete or status update
-     await _getCollection(userId).doc(subscriptionId).update({'isActive': false});
+     // Update status to cancelled and set cancelledAt timestamp
+     await _getCollection(userId).doc(subscriptionId).update({
+       'status': 'cancelled',
+       'cancelledAt': FieldValue.serverTimestamp(),
+     });
   }
 
   @override
   Future<void> pauseSubscription(String subscriptionId, String userId) async {
-      await _getCollection(userId).doc(subscriptionId).update({'status': 'paused'}); // Assuming status field
+      await _getCollection(userId).doc(subscriptionId).update({'status': 'paused'});
   }
 
   @override
@@ -54,7 +57,9 @@ class FirebaseSubscriptionRepository implements SubscriptionRepository {
   // Implementing other required methods with basic logic or throw unimplemented for now if complex
   @override
   Future<List<Subscription>> getActiveSubscriptions(String userId) async {
-    final snapshot = await _getCollection(userId).where('isActive', isEqualTo: true).get();
+    final snapshot = await _getCollection(userId)
+        .where('status', isEqualTo: 'active')
+        .get();
     return snapshot.docs.map((d) => Subscription.fromJson(d.data())).toList();
   }
 

@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:payday/core/theme/app_theme.dart';
+import 'package:payday/core/providers/currency_providers.dart';
 import 'package:payday/shared/widgets/payday_button.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
@@ -75,6 +76,51 @@ class _PremiumPaywallScreenState extends ConsumerState<PremiumPaywallScreen>
         behavior: SnackBarBehavior.floating,
       ),
     );
+  }
+
+  /// Get localized price with user's currency
+  String _getLocalizedPrice(double usdPrice) {
+    final currencyCode = ref.read(currencyCodeProvider);
+    final currencySymbol = ref.read(currencySymbolProvider);
+
+    // Simple conversion rates (in real app, use actual exchange rates API)
+    final conversionRates = {
+      'USD': 1.0,
+      'EUR': 0.92,
+      'GBP': 0.79,
+      'TRY': 32.50,
+      'CAD': 1.36,
+      'AUD': 1.53,
+      'JPY': 149.0,
+      'INR': 83.0,
+    };
+
+    final rate = conversionRates[currencyCode] ?? 1.0;
+    final convertedPrice = usdPrice * rate;
+
+    return '$currencySymbol${convertedPrice.toStringAsFixed(2)}';
+  }
+
+  /// Get localized monthly price description
+  String _getLocalizedMonthlyPrice(double usdMonthlyPrice) {
+    final currencyCode = ref.read(currencyCodeProvider);
+    final currencySymbol = ref.read(currencySymbolProvider);
+
+    final conversionRates = {
+      'USD': 1.0,
+      'EUR': 0.92,
+      'GBP': 0.79,
+      'TRY': 32.50,
+      'CAD': 1.36,
+      'AUD': 1.53,
+      'JPY': 149.0,
+      'INR': 83.0,
+    };
+
+    final rate = conversionRates[currencyCode] ?? 1.0;
+    final convertedPrice = usdMonthlyPrice * rate;
+
+    return 'Just $currencySymbol${convertedPrice.toStringAsFixed(2)}/month';
   }
 
   @override
@@ -467,10 +513,10 @@ class _PremiumPaywallScreenState extends ConsumerState<PremiumPaywallScreen>
           isSelected: _selectedPlan == 'yearly',
           isRecommended: true,
           title: 'Yearly',
-          price: '\$9.99',
+          price: _getLocalizedPrice(9.99),
           period: '/year',
           savings: 'Save 60%',
-          description: 'Just \$0.83/month',
+          description: _getLocalizedMonthlyPrice(0.83),
           onTap: () {
             HapticFeedback.selectionClick();
             setState(() => _selectedPlan = 'yearly');
@@ -483,7 +529,7 @@ class _PremiumPaywallScreenState extends ConsumerState<PremiumPaywallScreen>
           isSelected: _selectedPlan == 'monthly',
           isRecommended: false,
           title: 'Monthly',
-          price: '\$1.99',
+          price: _getLocalizedPrice(1.99),
           period: '/month',
           savings: null,
           description: 'Billed monthly',

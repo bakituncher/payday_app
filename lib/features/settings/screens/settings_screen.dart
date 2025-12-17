@@ -8,7 +8,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:currency_picker/currency_picker.dart';
 import 'package:payday/core/theme/app_theme.dart';
 import 'package:payday/core/constants/app_constants.dart';
-import 'package:payday/core/services/currency_service.dart';
+import 'package:payday/core/utils/currency_formatter.dart';
 import 'package:payday/core/providers/repository_providers.dart';
 import 'package:payday/core/providers/auth_providers.dart';
 import 'package:payday/core/providers/theme_providers.dart';
@@ -843,7 +843,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Widget _buildIncomeCard(ThemeData theme) {
-    final currencySymbol = CurrencyUtilityService().findByCode(_selectedCurrency)?.symbol ?? '\$';
+    final currencySymbol = CurrencyFormatter.getSymbol(_selectedCurrency);
 
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
@@ -913,38 +913,48 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ),
           ),
           const SizedBox(height: AppSpacing.md),
-          Wrap(
-            spacing: AppSpacing.sm,
-            runSpacing: AppSpacing.sm,
-            children: AppConstants.payCycleOptions.map((cycle) {
+          Row(
+            children: AppConstants.payCycleOptions.asMap().entries.map((entry) {
+              final index = entry.key;
+              final cycle = entry.value;
               final isSelected = _selectedPayCycle == cycle;
-              return GestureDetector(
-                onTap: () {
-                  HapticFeedback.lightImpact();
-                  setState(() {
-                    _selectedPayCycle = cycle;
-                  });
-                },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.md,
-                    vertical: AppSpacing.sm,
+              return Expanded(
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    right: index < AppConstants.payCycleOptions.length - 1
+                        ? AppSpacing.sm
+                        : 0,
                   ),
-                  decoration: BoxDecoration(
-                    gradient: isSelected ? AppColors.pinkGradient : null,
-                    color: isSelected ? null : AppColors.getSubtle(context),
-                    borderRadius: BorderRadius.circular(AppRadius.round),
-                    border: Border.all(
-                      color: isSelected ? AppColors.primaryPink : Colors.transparent,
-                      width: 2,
-                    ),
-                  ),
-                  child: Text(
-                    cycle,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: isSelected ? Colors.white : AppColors.getTextPrimary(context),
-                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                  child: GestureDetector(
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      setState(() {
+                        _selectedPayCycle = cycle;
+                      });
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.sm,
+                        vertical: AppSpacing.sm,
+                      ),
+                      decoration: BoxDecoration(
+                        gradient: isSelected ? AppColors.pinkGradient : null,
+                        color: isSelected ? null : AppColors.getSubtle(context),
+                        borderRadius: BorderRadius.circular(AppRadius.round),
+                        border: Border.all(
+                          color: isSelected ? AppColors.primaryPink : Colors.transparent,
+                          width: 2,
+                        ),
+                      ),
+                      child: Text(
+                        cycle,
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: isSelected ? Colors.white : AppColors.getTextPrimary(context),
+                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -1138,7 +1148,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Widget _buildCurrencyCard(ThemeData theme) {
-    final selectedCurrency = CurrencyUtilityService().findByCode(_selectedCurrency);
+    // currency_picker paketinden gelen bilgileri kullan
+    final currencies = CurrencyService().getAll();
+    final currencyPickerCurrency = currencies.firstWhere(
+      (c) => c.code == _selectedCurrency,
+      orElse: () => currencies.first,
+    );
+    final currencySymbol = CurrencyFormatter.getSymbol(_selectedCurrency);
 
     return GestureDetector(
       onTap: () {
@@ -1164,7 +1180,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
               child: Center(
                 child: Text(
-                  selectedCurrency?.flag ?? '🌍',
+                  currencyPickerCurrency.flag ?? '🌍',
                   style: const TextStyle(fontSize: 28),
                 ),
               ),
@@ -1177,7 +1193,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    selectedCurrency?.name ?? 'Select Currency',
+                    currencyPickerCurrency.name,
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                       color: AppColors.getTextPrimary(context),
@@ -1187,7 +1203,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   Row(
                     children: [
                       Text(
-                        '${selectedCurrency?.code ?? ''} ${selectedCurrency?.symbol ?? ''}',
+                        '$_selectedCurrency $currencySymbol',
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: AppColors.getTextSecondary(context),
                           fontWeight: FontWeight.w500,
