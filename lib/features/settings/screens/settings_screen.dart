@@ -9,6 +9,7 @@ import 'package:payday/core/theme/app_theme.dart';
 import 'package:payday/core/constants/app_constants.dart';
 import 'package:payday/core/providers/repository_providers.dart';
 import 'package:payday/core/providers/auth_providers.dart';
+import 'package:payday/core/providers/theme_providers.dart';
 import 'package:payday/features/home/providers/home_providers.dart';
 import 'package:payday/features/insights/providers/monthly_summary_providers.dart';
 import 'package:payday/features/premium/screens/premium_paywall_screen.dart';
@@ -67,6 +68,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Future<void> _selectPayday() async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     final picked = await showDatePicker(
       context: context,
       initialDate: _nextPayday,
@@ -75,11 +78,36 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: AppColors.primaryPink,
-              onPrimary: Colors.white,
-              surface: Colors.white,
-              onSurface: AppColors.darkCharcoal,
+            colorScheme: isDark
+                ? ColorScheme.dark(
+                    primary: AppColors.primaryPink,
+                    onPrimary: Colors.white,
+                    surface: AppColors.darkSurface,
+                    onSurface: AppColors.darkTextPrimary,
+                  )
+                : const ColorScheme.light(
+                    primary: AppColors.primaryPink,
+                    onPrimary: Colors.white,
+                    surface: Colors.white,
+                    onSurface: AppColors.darkCharcoal,
+                  ),
+            dialogTheme: DialogThemeData(
+              backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
+            ),
+            textTheme: Theme.of(context).textTheme.copyWith(
+              headlineMedium: TextStyle(
+                color: isDark ? AppColors.darkTextPrimary : AppColors.darkCharcoal,
+                fontWeight: FontWeight.w600,
+              ),
+              titleMedium: TextStyle(
+                color: isDark ? AppColors.darkTextPrimary : AppColors.darkCharcoal,
+              ),
+              bodyLarge: TextStyle(
+                color: isDark ? AppColors.darkTextPrimary : AppColors.darkCharcoal,
+              ),
+              bodyMedium: TextStyle(
+                color: isDark ? AppColors.darkTextSecondary : AppColors.mediumGray,
+              ),
             ),
           ),
           child: child!,
@@ -301,14 +329,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final isSignedIn = currentUser != null;
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundWhite,
+      backgroundColor: AppColors.getBackground(context),
       appBar: AppBar(
-        backgroundColor: AppColors.backgroundWhite,
+        backgroundColor: AppColors.getBackground(context),
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
           onPressed: () => Navigator.pop(context),
-          color: AppColors.darkCharcoal,
+          color: AppColors.getTextPrimary(context),
         ),
         title: Row(
           mainAxisSize: MainAxisSize.min,
@@ -330,7 +358,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               'Settings',
               style: theme.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.w700,
-                color: AppColors.darkCharcoal,
+                color: AppColors.getTextPrimary(context),
               ),
             ),
           ],
@@ -376,6 +404,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
             const SizedBox(height: AppSpacing.lg),
 
+            // Theme Section
+            _buildSectionTitle(theme, 'Appearance', Icons.palette_rounded),
+            const SizedBox(height: AppSpacing.sm),
+            _buildThemeCard(theme),
+
+            const SizedBox(height: AppSpacing.lg),
+
             // Currency Section
             _buildSectionTitle(theme, 'Currency', Icons.currency_exchange_rounded),
             const SizedBox(height: AppSpacing.sm),
@@ -408,7 +443,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           title,
           style: theme.textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w600,
-            color: AppColors.darkCharcoal,
+            color: AppColors.getTextPrimary(context),
           ),
         ),
       ],
@@ -419,9 +454,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColors.cardWhite,
+        color: AppColors.getCardBackground(context),
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        boxShadow: AppColors.cardShadow,
+        boxShadow: AppColors.getCardShadow(context),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -467,14 +502,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         currentUser?.displayName ?? 'User',
                         style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w600,
-                          color: AppColors.darkCharcoal,
+                          color: AppColors.getTextPrimary(context),
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         currentUser?.email ?? '',
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: AppColors.mediumGray,
+                          color: AppColors.getTextSecondary(context),
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -500,7 +535,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             Text(
               'Sign in to sync your data across devices',
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: AppColors.mediumGray,
+                color: AppColors.getTextSecondary(context),
               ),
             ),
             const SizedBox(height: AppSpacing.md),
@@ -640,7 +675,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           borderRadius: BorderRadius.circular(AppRadius.lg),
           boxShadow: [
             BoxShadow(
-              color: AppColors.primaryPink.withOpacity(0.3),
+              color: AppColors.primaryPink.withValues(alpha: 0.3),
               blurRadius: 20,
               spreadRadius: 0,
               offset: const Offset(0, 8),
@@ -653,7 +688,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             Container(
               padding: const EdgeInsets.all(AppSpacing.md),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
+                color: Colors.white.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(AppRadius.md),
               ),
               child: const Icon(
@@ -680,7 +715,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   Text(
                     'Remove ads and unlock exclusive features',
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: Colors.white.withOpacity(0.9),
+                      color: Colors.white.withValues(alpha: 0.9),
                     ),
                   ),
                 ],
@@ -698,7 +733,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       ).animate().fadeIn(duration: 300.ms).slideY(begin: 0.1, end: 0).shimmer(
             delay: 1000.ms,
             duration: 2000.ms,
-            color: Colors.white.withOpacity(0.3),
+            color: Colors.white.withValues(alpha: 0.3),
           ),
     );
   }
@@ -707,9 +742,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColors.cardWhite,
+        color: AppColors.getCardBackground(context),
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        boxShadow: AppColors.cardShadow,
+        boxShadow: AppColors.getCardShadow(context),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -717,7 +752,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           Text(
             'Monthly Income',
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: AppColors.mediumGray,
+              color: AppColors.getTextSecondary(context),
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
@@ -726,7 +761,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             style: theme.textTheme.headlineSmall?.copyWith(
               fontWeight: FontWeight.w700,
-              color: AppColors.darkCharcoal,
+              color: AppColors.getTextPrimary(context),
             ),
             decoration: InputDecoration(
               prefixText: AppConstants.currencySymbols[_selectedCurrency] ?? '\$',
@@ -736,7 +771,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppRadius.md),
-                borderSide: BorderSide(color: AppColors.lightGray),
+                borderSide: BorderSide(color: AppColors.getBorder(context)),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppRadius.md),
@@ -758,9 +793,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColors.cardWhite,
+        color: AppColors.getCardBackground(context),
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        boxShadow: AppColors.cardShadow,
+        boxShadow: AppColors.getCardShadow(context),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -768,7 +803,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           Text(
             'How often do you get paid?',
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: AppColors.mediumGray,
+              color: AppColors.getTextSecondary(context),
             ),
           ),
           const SizedBox(height: AppSpacing.md),
@@ -792,7 +827,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ),
                   decoration: BoxDecoration(
                     gradient: isSelected ? AppColors.pinkGradient : null,
-                    color: isSelected ? null : AppColors.subtleGray,
+                    color: isSelected ? null : AppColors.getSubtle(context),
                     borderRadius: BorderRadius.circular(AppRadius.round),
                     border: Border.all(
                       color: isSelected ? AppColors.primaryPink : Colors.transparent,
@@ -802,7 +837,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   child: Text(
                     cycle,
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: isSelected ? Colors.white : AppColors.darkCharcoal,
+                      color: isSelected ? Colors.white : AppColors.getTextPrimary(context),
                       fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                     ),
                   ),
@@ -824,9 +859,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       child: Container(
         padding: const EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
-          color: AppColors.cardWhite,
+          color: AppColors.getCardBackground(context),
           borderRadius: BorderRadius.circular(AppRadius.lg),
-          boxShadow: AppColors.cardShadow,
+          boxShadow: AppColors.getCardShadow(context),
         ),
         child: Row(
           children: [
@@ -851,7 +886,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     dateFormat.format(_nextPayday),
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w600,
-                      color: AppColors.darkCharcoal,
+                      color: AppColors.getTextPrimary(context),
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -862,15 +897,133 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             ? 'Today! 🎉'
                             : 'Date has passed - tap to update',
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: daysUntil < 0 ? AppColors.error : AppColors.mediumGray,
+                      color: daysUntil < 0 ? AppColors.error : AppColors.getTextSecondary(context),
                     ),
                   ),
                 ],
               ),
             ),
-            const Icon(
+            Icon(
               Icons.chevron_right_rounded,
-              color: AppColors.mediumGray,
+              color: AppColors.getTextSecondary(context),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildThemeCard(ThemeData theme) {
+    final currentThemeMode = ref.watch(themeModeProvider);
+    final themeNotifier = ref.read(themeModeProvider.notifier);
+
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.getCardBackground(context),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        boxShadow: AppColors.getCardShadow(context),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Choose your theme',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: AppColors.getTextSecondary(context),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Row(
+            children: [
+              // Light Theme
+              Expanded(
+                child: _buildThemeOption(
+                  theme: theme,
+                  title: 'Light',
+                  icon: Icons.light_mode_rounded,
+                  isSelected: currentThemeMode == ThemeMode.light,
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    themeNotifier.setThemeMode(ThemeMode.light);
+                  },
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              // Dark Theme
+              Expanded(
+                child: _buildThemeOption(
+                  theme: theme,
+                  title: 'Dark',
+                  icon: Icons.dark_mode_rounded,
+                  isSelected: currentThemeMode == ThemeMode.dark,
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    themeNotifier.setThemeMode(ThemeMode.dark);
+                  },
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              // System Theme
+              Expanded(
+                child: _buildThemeOption(
+                  theme: theme,
+                  title: 'System',
+                  icon: Icons.settings_suggest_rounded,
+                  isSelected: currentThemeMode == ThemeMode.system,
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    themeNotifier.setThemeMode(ThemeMode.system);
+                  },
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    ).animate().fadeIn(duration: 300.ms).slideY(begin: 0.1, end: 0);
+  }
+
+  Widget _buildThemeOption({
+    required ThemeData theme,
+    required String title,
+    required IconData icon,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(
+          vertical: AppSpacing.md,
+          horizontal: AppSpacing.sm,
+        ),
+        decoration: BoxDecoration(
+          gradient: isSelected ? AppColors.pinkGradient : null,
+          color: isSelected ? null : AppColors.getSubtle(context),
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          border: Border.all(
+            color: isSelected ? Colors.transparent : AppColors.getBorder(context),
+            width: 1,
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              color: isSelected ? Colors.white : AppColors.getTextSecondary(context),
+              size: 28,
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              title,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: isSelected ? Colors.white : AppColors.getTextPrimary(context),
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+              ),
+              textAlign: TextAlign.center,
             ),
           ],
         ),
@@ -882,9 +1035,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColors.cardWhite,
+        color: AppColors.getCardBackground(context),
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        boxShadow: AppColors.cardShadow,
+        boxShadow: AppColors.getCardShadow(context),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -892,7 +1045,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           Text(
             'Select your currency',
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: AppColors.mediumGray,
+              color: AppColors.getTextSecondary(context),
             ),
           ),
           const SizedBox(height: AppSpacing.md),
@@ -916,7 +1069,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ),
                   decoration: BoxDecoration(
                     gradient: isSelected ? AppColors.pinkGradient : null,
-                    color: isSelected ? null : AppColors.subtleGray,
+                    color: isSelected ? null : AppColors.getSubtle(context),
                     borderRadius: BorderRadius.circular(AppRadius.round),
                     border: Border.all(
                       color: isSelected ? AppColors.primaryPink : Colors.transparent,
@@ -930,14 +1083,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         currency['symbol'] as String,
                         style: TextStyle(
                           fontSize: 18,
-                          color: isSelected ? Colors.white : AppColors.darkCharcoal,
+                          color: isSelected ? Colors.white : AppColors.getTextPrimary(context),
                         ),
                       ),
                       const SizedBox(width: 6),
                       Text(
                         currency['code'] as String,
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: isSelected ? Colors.white : AppColors.darkCharcoal,
+                          color: isSelected ? Colors.white : AppColors.getTextPrimary(context),
                           fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                         ),
                       ),

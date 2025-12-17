@@ -18,6 +18,7 @@ class ActiveSubscriptionsCard extends ConsumerWidget {
     final subscriptionsDueAsync = ref.watch(subscriptionsDueSoonProvider);
     final theme = Theme.of(context);
     final currencyFormat = NumberFormat.currency(symbol: '\$');
+    final isDark = theme.brightness == Brightness.dark;
 
     return GestureDetector(
       onTap: () {
@@ -29,9 +30,10 @@ class ActiveSubscriptionsCard extends ConsumerWidget {
       child: Container(
         padding: const EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
-          color: AppColors.cardWhite,
+          color: AppColors.getCardBackground(context),
           borderRadius: BorderRadius.circular(AppRadius.lg),
-          boxShadow: AppColors.cardShadow,
+          boxShadow: isDark ? null : AppColors.cardShadow,
+          border: isDark ? Border.all(color: AppColors.darkBorder, width: 1) : null,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -59,14 +61,14 @@ class ActiveSubscriptionsCard extends ConsumerWidget {
                       'Subscriptions',
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w700,
-                        color: AppColors.darkCharcoal,
+                        color: AppColors.getTextPrimary(context),
                       ),
                     ),
                   ],
                 ),
                 Icon(
                   Icons.chevron_right_rounded,
-                  color: AppColors.mediumGray,
+                  color: AppColors.getTextSecondary(context),
                 ),
               ],
             ),
@@ -81,7 +83,7 @@ class ActiveSubscriptionsCard extends ConsumerWidget {
                   child: Container(
                     padding: const EdgeInsets.all(AppSpacing.sm),
                     decoration: BoxDecoration(
-                      color: AppColors.subtleGray,
+                      color: isDark ? AppColors.darkSurfaceVariant : AppColors.subtleGray,
                       borderRadius: BorderRadius.circular(AppRadius.md),
                     ),
                     child: Column(
@@ -90,7 +92,7 @@ class ActiveSubscriptionsCard extends ConsumerWidget {
                         Text(
                           'Monthly',
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: AppColors.mediumGray,
+                            color: AppColors.getTextSecondary(context),
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -99,7 +101,9 @@ class ActiveSubscriptionsCard extends ConsumerWidget {
                             width: 60,
                             height: 20,
                             decoration: BoxDecoration(
-                              color: AppColors.lightGray,
+                              color: isDark
+                                  ? AppColors.darkBorder
+                                  : AppColors.lightGray,
                               borderRadius: BorderRadius.circular(4),
                             ),
                           ),
@@ -107,14 +111,14 @@ class ActiveSubscriptionsCard extends ConsumerWidget {
                             '\$0.00',
                             style: theme.textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.w700,
-                              color: AppColors.darkCharcoal,
+                              color: AppColors.getTextPrimary(context),
                             ),
                           ),
                           data: (cost) => Text(
                             currencyFormat.format(cost),
                             style: theme.textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.w700,
-                              color: AppColors.darkCharcoal,
+                              color: AppColors.getTextPrimary(context),
                             ),
                           ),
                         ),
@@ -130,7 +134,7 @@ class ActiveSubscriptionsCard extends ConsumerWidget {
                   child: Container(
                     padding: const EdgeInsets.all(AppSpacing.sm),
                     decoration: BoxDecoration(
-                      color: AppColors.subtleGray,
+                      color: isDark ? AppColors.darkSurfaceVariant : AppColors.subtleGray,
                       borderRadius: BorderRadius.circular(AppRadius.md),
                     ),
                     child: Column(
@@ -139,7 +143,7 @@ class ActiveSubscriptionsCard extends ConsumerWidget {
                         Text(
                           'Active',
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: AppColors.mediumGray,
+                            color: AppColors.getTextSecondary(context),
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -148,7 +152,9 @@ class ActiveSubscriptionsCard extends ConsumerWidget {
                             width: 30,
                             height: 20,
                             decoration: BoxDecoration(
-                              color: AppColors.lightGray,
+                              color: isDark
+                                  ? AppColors.darkBorder
+                                  : AppColors.lightGray,
                               borderRadius: BorderRadius.circular(4),
                             ),
                           ),
@@ -156,14 +162,14 @@ class ActiveSubscriptionsCard extends ConsumerWidget {
                             '0',
                             style: theme.textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.w700,
-                              color: AppColors.darkCharcoal,
+                              color: AppColors.getTextPrimary(context),
                             ),
                           ),
                           data: (subs) => Text(
                             '${subs.length}',
                             style: theme.textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.w700,
-                              color: AppColors.darkCharcoal,
+                              color: AppColors.getTextPrimary(context),
                             ),
                           ),
                         ),
@@ -179,7 +185,7 @@ class ActiveSubscriptionsCard extends ConsumerWidget {
                   child: Container(
                     padding: const EdgeInsets.all(AppSpacing.sm),
                     decoration: BoxDecoration(
-                      color: AppColors.warning.withOpacity(0.1),
+                      color: AppColors.warning.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(AppRadius.md),
                     ),
                     child: Column(
@@ -197,7 +203,7 @@ class ActiveSubscriptionsCard extends ConsumerWidget {
                             width: 30,
                             height: 20,
                             decoration: BoxDecoration(
-                              color: AppColors.warning.withOpacity(0.2),
+                              color: AppColors.warning.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(4),
                             ),
                           ),
@@ -239,7 +245,7 @@ class ActiveSubscriptionsCard extends ConsumerWidget {
                     Text(
                       'Coming up',
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: AppColors.mediumGray,
+                        color: AppColors.getTextSecondary(context),
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -265,7 +271,7 @@ class ActiveSubscriptionsCard extends ConsumerWidget {
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: sub.daysUntilBilling <= 2
                                   ? AppColors.warning
-                                  : AppColors.mediumGray,
+                                  : AppColors.getTextSecondary(context),
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -274,7 +280,7 @@ class ActiveSubscriptionsCard extends ConsumerWidget {
                             currencyFormat.format(sub.amount),
                             style: theme.textTheme.bodyMedium?.copyWith(
                               fontWeight: FontWeight.w600,
-                              color: AppColors.darkCharcoal,
+                              color: AppColors.getTextPrimary(context),
                             ),
                           ),
                         ],

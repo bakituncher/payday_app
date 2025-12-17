@@ -18,13 +18,21 @@ class AppColors {
   static const Color secondaryBlue = Color(0xFF448AFF); // Bright Blue
   static const Color secondaryTeal = Color(0xFF00BFA5); // Teal accent
 
-  // Neutrals - Premium Grayscale
+  // Neutrals - Premium Grayscale (Light Theme)
   static const Color backgroundWhite = Color(0xFFF8F9FC); // Slightly blue-tinted white
   static const Color cardWhite = Color(0xFFFFFFFF);
   static const Color darkCharcoal = Color(0xFF1A1D29); // Rich dark
   static const Color mediumGray = Color(0xFF6B7280);
   static const Color lightGray = Color(0xFFE5E7EB);
   static const Color subtleGray = Color(0xFFF3F4F6);
+
+  // Dark Theme Colors
+  static const Color darkBackground = Color(0xFF0F1015); // Deep dark background
+  static const Color darkSurface = Color(0xFF1A1D24); // Card background
+  static const Color darkSurfaceVariant = Color(0xFF232831); // Elevated surface
+  static const Color darkBorder = Color(0xFF2A2D36); // Border color
+  static const Color darkTextPrimary = Color(0xFFFFFFFF); // Primary text
+  static const Color darkTextSecondary = Color(0xFFB4B7C0); // Secondary text
 
   // Functional Colors - Refined
   static const Color success = Color(0xFF10B981); // Modern green
@@ -78,12 +86,12 @@ class AppColors {
   // Card Shadows
   static List<BoxShadow> get cardShadow => [
     BoxShadow(
-      color: const Color(0xFF1A1D29).withOpacity(0.04),
+      color: const Color(0xFF1A1D29).withValues(alpha: 0.04),
       blurRadius: 8,
       offset: const Offset(0, 2),
     ),
     BoxShadow(
-      color: const Color(0xFF1A1D29).withOpacity(0.08),
+      color: const Color(0xFF1A1D29).withValues(alpha: 0.08),
       blurRadius: 24,
       offset: const Offset(0, 8),
     ),
@@ -91,12 +99,12 @@ class AppColors {
 
   static List<BoxShadow> get elevatedShadow => [
     BoxShadow(
-      color: primaryPink.withOpacity(0.15),
+      color: primaryPink.withValues(alpha: 0.15),
       blurRadius: 20,
       offset: const Offset(0, 8),
     ),
     BoxShadow(
-      color: const Color(0xFF1A1D29).withOpacity(0.1),
+      color: const Color(0xFF1A1D29).withValues(alpha: 0.1),
       blurRadius: 32,
       offset: const Offset(0, 16),
     ),
@@ -104,11 +112,67 @@ class AppColors {
 
   static List<BoxShadow> get glowShadow => [
     BoxShadow(
-      color: primaryPink.withOpacity(0.3),
+      color: primaryPink.withValues(alpha: 0.3),
       blurRadius: 24,
       spreadRadius: 0,
     ),
   ];
+
+  // Context-aware color helpers
+  static Color getBackground(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? darkBackground
+        : backgroundWhite;
+  }
+
+  static Color getCardBackground(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? darkSurface
+        : cardWhite;
+  }
+
+  static Color getTextPrimary(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? darkTextPrimary
+        : darkCharcoal;
+  }
+
+  static Color getTextSecondary(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? darkTextSecondary
+        : mediumGray;
+  }
+
+  static Color getBorder(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? darkBorder
+        : lightGray;
+  }
+
+  static Color getSubtle(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? darkSurfaceVariant
+        : subtleGray;
+  }
+
+  static Color getSurfaceVariant(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? darkSurfaceVariant
+        : subtleGray;
+  }
+
+  static List<BoxShadow> getCardShadow(BuildContext context) {
+    if (Theme.of(context).brightness == Brightness.dark) {
+      return [
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.3),
+          blurRadius: 12,
+          offset: const Offset(0, 4),
+        ),
+      ];
+    }
+    return cardShadow;
+  }
 }
 
 /// Typography using Poppins for geometric, modern look
@@ -267,7 +331,7 @@ class AppTheme {
       // Card Theme - Rounded, elevated, premium
       cardTheme: CardThemeData(
         elevation: 2,
-        shadowColor: Colors.black.withOpacity(0.08),
+        shadowColor: Colors.black.withValues(alpha: 0.08),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24),
         ),
@@ -281,7 +345,7 @@ class AppTheme {
           backgroundColor: AppColors.primaryPink,
           foregroundColor: Colors.white,
           elevation: 4,
-          shadowColor: AppColors.primaryPink.withOpacity(0.4),
+          shadowColor: AppColors.primaryPink.withValues(alpha: 0.4),
           padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
@@ -387,21 +451,175 @@ class AppTheme {
     );
   }
 
-  /// Dark Theme - Optional for future
+  /// Dark Theme - Optimized for OLED
   static ThemeData get darkTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
-      colorScheme: ColorScheme.dark(
-        primary: AppColors.softPink,
-        primaryContainer: AppColors.primaryPink,
-        secondary: AppColors.accentPink,
-        surface: const Color(0xFF1E1E1E),
+
+      // Color Scheme
+      colorScheme: const ColorScheme.dark(
+        primary: AppColors.primaryPink,
+        primaryContainer: AppColors.deepPink,
+        secondary: AppColors.secondaryPurple,
+        secondaryContainer: Color(0xFF4A3A6F),
+        surface: AppColors.darkSurface,
+        surfaceContainerHighest: AppColors.darkSurfaceVariant,
         error: AppColors.error,
-        onPrimary: AppColors.darkCharcoal,
-        onSurface: Colors.white,
+        onPrimary: Colors.white,
+        onSecondary: Colors.white,
+        onSurface: AppColors.darkTextPrimary,
+        onError: Colors.white,
+        outline: AppColors.darkBorder,
       ),
-      textTheme: AppTypography.textTheme,
+
+      // Scaffold
+      scaffoldBackgroundColor: AppColors.darkBackground,
+
+      // Typography
+      textTheme: AppTypography.textTheme.apply(
+        bodyColor: AppColors.darkTextPrimary,
+        displayColor: AppColors.darkTextPrimary,
+      ),
+
+      // AppBar Theme
+      appBarTheme: AppBarTheme(
+        elevation: 0,
+        centerTitle: true,
+        backgroundColor: AppColors.darkBackground,
+        foregroundColor: AppColors.darkTextPrimary,
+        systemOverlayStyle: SystemUiOverlayStyle.light,
+        titleTextStyle: GoogleFonts.poppins(
+          fontSize: 20,
+          fontWeight: FontWeight.w600,
+          color: AppColors.darkTextPrimary,
+        ),
+        iconTheme: const IconThemeData(
+          color: AppColors.darkTextPrimary,
+          size: 24,
+        ),
+      ),
+
+      // Card Theme
+      cardTheme: CardThemeData(
+        elevation: 0,
+        shadowColor: Colors.black.withValues(alpha: 0.4),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+        ),
+        color: AppColors.darkSurface,
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      ),
+
+      // Elevated Button
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primaryPink,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          shadowColor: AppColors.primaryPink.withValues(alpha: 0.3),
+          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          textStyle: GoogleFonts.poppins(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.5,
+          ),
+        ),
+      ),
+
+      // Text Button
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: AppColors.accentPink,
+          textStyle: GoogleFonts.poppins(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.5,
+          ),
+        ),
+      ),
+
+      // Input Decoration
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: AppColors.darkSurface,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: AppColors.darkBorder, width: 1.5),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: AppColors.darkBorder, width: 1.5),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: AppColors.primaryPink, width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: AppColors.error, width: 1.5),
+        ),
+        labelStyle: GoogleFonts.poppins(
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+          color: AppColors.darkTextSecondary,
+        ),
+        hintStyle: GoogleFonts.poppins(
+          fontSize: 14,
+          fontWeight: FontWeight.w400,
+          color: AppColors.darkTextSecondary,
+        ),
+      ),
+
+      // Floating Action Button
+      floatingActionButtonTheme: const FloatingActionButtonThemeData(
+        backgroundColor: AppColors.primaryPink,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(20)),
+        ),
+      ),
+
+      // Bottom Navigation Bar
+      bottomNavigationBarTheme: BottomNavigationBarThemeData(
+        backgroundColor: AppColors.darkSurface,
+        selectedItemColor: AppColors.primaryPink,
+        unselectedItemColor: AppColors.darkTextSecondary,
+        selectedLabelStyle: GoogleFonts.poppins(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+        unselectedLabelStyle: GoogleFonts.poppins(
+          fontSize: 12,
+          fontWeight: FontWeight.w400,
+        ),
+        elevation: 0,
+        type: BottomNavigationBarType.fixed,
+      ),
+
+      // Divider
+      dividerTheme: const DividerThemeData(
+        color: AppColors.darkBorder,
+        thickness: 1,
+        space: 1,
+      ),
+
+      // Icon Theme
+      iconTheme: const IconThemeData(
+        color: AppColors.darkTextPrimary,
+        size: 24,
+      ),
+
+      // Progress Indicator
+      progressIndicatorTheme: const ProgressIndicatorThemeData(
+        color: AppColors.primaryPink,
+        circularTrackColor: AppColors.darkBorder,
+      ),
     );
   }
 }
@@ -464,19 +682,18 @@ class AppDecorations {
   );
 
   static BoxDecoration glassCard({double opacity = 0.8}) => BoxDecoration(
-    color: AppColors.cardWhite.withOpacity(opacity),
+    color: AppColors.cardWhite.withValues(alpha: opacity),
     borderRadius: BorderRadius.circular(AppRadius.xl),
     border: Border.all(
-      color: Colors.white.withOpacity(0.2),
+      color: Colors.white.withValues(alpha: 0.2),
       width: 1.5,
     ),
     boxShadow: [
       BoxShadow(
-        color: Colors.black.withOpacity(0.05),
+        color: Colors.black.withValues(alpha: 0.05),
         blurRadius: 20,
         offset: const Offset(0, 4),
       ),
     ],
   );
 }
-

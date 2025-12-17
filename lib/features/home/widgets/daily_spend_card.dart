@@ -16,126 +16,124 @@ class DailySpendCard extends ConsumerWidget {
     final userSettings = ref.watch(userSettingsProvider);
 
     return Container(
+      padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: AppColors.cardWhite,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        boxShadow: AppColors.cardShadow,
+        color: AppColors.getCardBackground(context),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+        boxShadow: AppColors.getCardShadow(context),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: dailySpendAsync.when(
-          loading: () => _buildShimmer(),
-          error: (error, stack) => _buildError(theme),
-          data: (dailySpend) {
-            final currency = userSettings.value?.currency ?? 'USD';
-            final isPositive = dailySpend > 0;
-            final statusColor = isPositive ? AppColors.success : AppColors.error;
-            final statusBgColor = isPositive ? AppColors.successLight : AppColors.errorLight;
+      child: dailySpendAsync.when(
+        loading: () => _buildShimmer(context),
+        error: (error, stack) => _buildError(context, theme),
+        data: (dailySpend) {
+          final currency = userSettings.value?.currency ?? 'USD';
+          final isPositive = dailySpend > 0;
+          final statusColor = isPositive ? AppColors.success : AppColors.error;
+          final statusBgColor = isPositive ? AppColors.successLight : AppColors.errorLight;
 
-            return Row(
-              children: [
-                // Icon
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: isPositive
-                          ? [AppColors.success.withOpacity(0.2), AppColors.success.withOpacity(0.05)]
-                          : [AppColors.error.withOpacity(0.2), AppColors.error.withOpacity(0.05)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
+          return Row(
+            children: [
+              // Icon
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: isPositive
+                        ? [AppColors.success.withValues(alpha: 0.2), AppColors.success.withValues(alpha: 0.05)]
+                        : [AppColors.error.withValues(alpha: 0.2), AppColors.error.withValues(alpha: 0.05)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                ),
+                child: Icon(
+                  isPositive ? Icons.account_balance_wallet_rounded : Icons.warning_rounded,
+                  color: statusColor,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              // Content
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Daily Budget',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: AppColors.getTextSecondary(context),
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
-                    borderRadius: BorderRadius.circular(AppRadius.md),
-                  ),
-                  child: Icon(
-                    isPositive ? Icons.account_balance_wallet_rounded : Icons.warning_rounded,
-                    color: statusColor,
-                    size: 22,
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.md),
-                // Content
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'Daily Budget',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: AppColors.mediumGray,
-                          fontWeight: FontWeight.w500,
+                    const SizedBox(height: 2),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
+                      children: [
+                        Text(
+                          CurrencyFormatter.format(dailySpend.abs(), currency),
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            color: statusColor,
+                            height: 1.1,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 2),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.baseline,
-                        textBaseline: TextBaseline.alphabetic,
-                        children: [
-                          Text(
-                            CurrencyFormatter.format(dailySpend.abs(), currency),
-                            style: theme.textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.w800,
-                              color: statusColor,
-                              height: 1.1,
-                            ),
+                        const SizedBox(width: 6),
+                        Text(
+                          isPositive ? 'available' : 'over',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: AppColors.getTextSecondary(context),
+                            fontWeight: FontWeight.w500,
                           ),
-                          const SizedBox(width: 6),
-                          Text(
-                            isPositive ? 'available' : 'over',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: AppColors.mediumGray,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-                // Badge
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: statusBgColor,
-                    borderRadius: BorderRadius.circular(AppRadius.round),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        isPositive ? Icons.trending_up_rounded : Icons.trending_down_rounded,
-                        size: 12,
+              ),
+              // Badge
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 4),
+                decoration: BoxDecoration(
+                  color: statusBgColor,
+                  borderRadius: BorderRadius.circular(AppRadius.round),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      isPositive ? Icons.trending_up_rounded : Icons.trending_down_rounded,
+                      size: 12,
+                      color: statusColor,
+                    ),
+                    const SizedBox(width: 3),
+                    Text(
+                      isPositive ? 'On Track' : 'Over',
+                      style: theme.textTheme.labelSmall?.copyWith(
                         color: statusColor,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 10,
                       ),
-                      const SizedBox(width: 3),
-                      Text(
-                        isPositive ? 'On Track' : 'Over',
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: statusColor,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 10,
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ],
-            );
-          },
-        ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
 
-  Widget _buildShimmer() {
+  Widget _buildShimmer(BuildContext context) {
     return Row(
       children: [
         Container(
           width: 42,
           height: 42,
           decoration: BoxDecoration(
-            color: AppColors.subtleGray,
+            color: AppColors.getSubtle(context),
             borderRadius: BorderRadius.circular(AppRadius.md),
           ),
         ),
@@ -149,7 +147,7 @@ class DailySpendCard extends ConsumerWidget {
                 height: 12,
                 width: 70,
                 decoration: BoxDecoration(
-                  color: AppColors.subtleGray,
+                  color: AppColors.getSubtle(context),
                   borderRadius: BorderRadius.circular(4),
                 ),
               ),
@@ -158,7 +156,7 @@ class DailySpendCard extends ConsumerWidget {
                 height: 20,
                 width: 100,
                 decoration: BoxDecoration(
-                  color: AppColors.subtleGray,
+                  color: AppColors.getSubtle(context),
                   borderRadius: BorderRadius.circular(4),
                 ),
               ),
@@ -167,10 +165,10 @@ class DailySpendCard extends ConsumerWidget {
         ),
       ],
     ).animate(onPlay: (controller) => controller.repeat())
-        .shimmer(duration: 1200.ms, color: AppColors.lightGray);
+        .shimmer(duration: 1200.ms, color: AppColors.getBorder(context));
   }
 
-  Widget _buildError(ThemeData theme) {
+  Widget _buildError(BuildContext context, ThemeData theme) {
     return Row(
       children: [
         Container(
