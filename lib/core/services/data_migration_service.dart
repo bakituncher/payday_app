@@ -10,9 +10,6 @@ import 'package:payday/core/repositories/firebase/firebase_monthly_summary_repos
 import 'package:payday/core/repositories/firebase/firebase_savings_goal_repository.dart';
 import 'package:payday/core/repositories/firebase/firebase_subscription_repository.dart';
 
-import 'package:payday/core/providers/auth_providers.dart';
-import 'package:payday/core/providers/repository_providers.dart';
-
 /// Service responsible for migrating data from Local Storage to Firestore
 /// This is called when an Anonymous user converts to a Google/Apple account.
 class DataMigrationService {
@@ -109,7 +106,7 @@ class DataMigrationService {
         final firebaseSummaryRepo = FirebaseMonthlySummaryRepository();
         for (final summary in allSummaries) {
           final newSummary = summary.copyWith(userId: targetUserId);
-          await firebaseSummaryRepo.saveSummary(newSummary);
+          await firebaseSummaryRepo.saveMonthlySummary(newSummary);
         }
         print('Migrated ${allSummaries.length} monthly summaries');
       }

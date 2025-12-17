@@ -80,13 +80,13 @@ class FirebaseSubscriptionRepository implements SubscriptionRepository {
   @override
   Future<double> getTotalMonthlyCost(String userId) async {
       final subs = await getActiveSubscriptions(userId);
-      return subs.fold(0.0, (sum, sub) => sum + sub.amount);
+      return subs.fold<double>(0.0, (sum, sub) => sum + sub.amount);
   }
 
   @override
   Future<double> getTotalYearlyCost(String userId) async {
       final subs = await getActiveSubscriptions(userId);
-      return subs.fold(0.0, (sum, sub) => sum + (sub.amount * 12));
+      return subs.fold<double>(0.0, (sum, sub) => sum + (sub.amount * 12));
   }
 
   @override
@@ -125,7 +125,16 @@ class FirebaseSubscriptionRepository implements SubscriptionRepository {
   @override
   Future<SubscriptionSummary> analyzeSubscriptions(String userId) async {
     // Return empty/dummy summary
-    return SubscriptionSummary(totalCost: 0, activeCount: 0, categoryBreakdown: {});
+    return SubscriptionSummary(
+      userId: userId,
+      totalSubscriptions: 0,
+      totalMonthlySpend: 0.0,
+      totalYearlySpend: 0.0,
+      potentialMonthlySavings: 0.0,
+      potentialYearlySavings: 0.0,
+      subscriptionsToReview: 0,
+      subscriptionsToCancel: 0,
+    );
   }
   @override
   Future<List<Subscription>> getUnusedSubscriptions(String userId, int thresholdDays) async => [];
