@@ -6,6 +6,7 @@ import 'package:payday/core/theme/app_theme.dart';
 import 'package:payday/core/constants/app_constants.dart';
 import 'package:payday/core/models/user_settings.dart';
 import 'package:payday/core/providers/repository_providers.dart';
+import 'package:payday/core/utils/currency_formatter.dart';
 import 'package:payday/shared/widgets/payday_button.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
@@ -26,6 +27,13 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   DateTime _nextPayday = DateTime.now().add(const Duration(days: 30));
   final _incomeController = TextEditingController();
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Cihazın yerel ayarlarından para birimini otomatik seç
+    _selectedCurrency = CurrencyFormatter.getLocalCurrencyCode();
+  }
 
   @override
   void dispose() {
@@ -54,8 +62,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
                     colors: [
-                      AppColors.primaryPink.withOpacity(0.1),
-                      AppColors.primaryPink.withOpacity(0.0),
+                      AppColors.primaryPink.withValues(alpha: 0.1),
+                      AppColors.primaryPink.withValues(alpha: 0.0),
                     ],
                   ),
                 ),
@@ -71,8 +79,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
                     colors: [
-                      AppColors.secondaryPurple.withOpacity(0.08),
-                      AppColors.secondaryPurple.withOpacity(0.0),
+                      AppColors.secondaryPurple.withValues(alpha: 0.08),
+                      AppColors.secondaryPurple.withValues(alpha: 0.0),
                     ],
                   ),
                 ),
@@ -85,7 +93,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 Padding(
                   padding: const EdgeInsets.all(AppSpacing.lg),
                   child: Row(
-                    children: List.generate(4, (index) {
+                    children: List.generate(3, (index) {
                       final isActive = index <= _currentPage;
                       final isCurrent = index == _currentPage;
                       return Expanded(
@@ -100,7 +108,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                             boxShadow: isCurrent
                                 ? [
                                     BoxShadow(
-                                      color: AppColors.primaryPink.withOpacity(0.4),
+                                      color: AppColors.primaryPink.withValues(alpha: 0.4),
                                       blurRadius: 4,
                                     ),
                                   ]
@@ -119,7 +127,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Step ${_currentPage + 1} of 4',
+                        'Step ${_currentPage + 1} of 3',
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: AppColors.mediumGray,
                           fontWeight: FontWeight.w500,
@@ -156,7 +164,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     },
                     children: [
                       _buildWelcomePage(theme),
-                      _buildCurrencyPage(theme),
                       _buildPayCyclePage(theme),
                       _buildIncomePage(theme),
                     ],
@@ -167,12 +174,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 Padding(
                   padding: const EdgeInsets.all(AppSpacing.lg),
                   child: PaydayButton(
-                    text: _currentPage == 3 ? 'Get Started' : 'Continue',
+                    text: _currentPage == 2 ? 'Get Started' : 'Continue',
                     onPressed: _isLoading ? null : _nextPage,
                     isLoading: _isLoading,
                     width: double.infinity,
-                    icon: _currentPage == 3 ? Icons.check_rounded : null,
-                    trailingIcon: _currentPage < 3 ? Icons.arrow_forward_rounded : null,
+                    icon: _currentPage == 2 ? Icons.check_rounded : null,
+                    trailingIcon: _currentPage < 2 ? Icons.arrow_forward_rounded : null,
                   ),
                 ),
               ],
@@ -280,7 +287,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           Container(
             padding: const EdgeInsets.all(AppSpacing.md),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(AppRadius.md),
             ),
             child: Icon(icon, color: color, size: 24),
@@ -314,122 +321,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         .slideX(begin: 0.1, end: 0);
   }
 
-  Widget _buildCurrencyPage(ThemeData theme) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppSpacing.xl),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const SizedBox(height: AppSpacing.xl),
-          Container(
-            padding: const EdgeInsets.all(AppSpacing.lg),
-            decoration: BoxDecoration(
-              color: AppColors.subtleGray,
-              shape: BoxShape.circle,
-            ),
-            child: Text('💵', style: const TextStyle(fontSize: 48)),
-          )
-              .animate()
-              .scale(duration: 400.ms, curve: Curves.elasticOut),
-          const SizedBox(height: AppSpacing.xl),
-          Text(
-            'Select Your Currency',
-            style: theme.textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.w800,
-              letterSpacing: -0.5,
-            ),
-            textAlign: TextAlign.center,
-          )
-              .animate()
-              .fadeIn(duration: 300.ms, delay: 100.ms),
-          const SizedBox(height: AppSpacing.sm),
-          Text(
-            'Choose the currency you get paid in',
-            style: theme.textTheme.bodyLarge?.copyWith(
-              color: AppColors.mediumGray,
-            ),
-            textAlign: TextAlign.center,
-          )
-              .animate()
-              .fadeIn(duration: 300.ms, delay: 150.ms),
-          const SizedBox(height: AppSpacing.xxl),
-          _buildCurrencyOption(theme, AppConstants.currencyUSD, 'US Dollar', '🇺🇸', 0),
-          const SizedBox(height: AppSpacing.md),
-          _buildCurrencyOption(theme, AppConstants.currencyAUD, 'Australian Dollar', '🇦🇺', 1),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCurrencyOption(ThemeData theme, String currency, String name, String flag, int index) {
-    final isSelected = _selectedCurrency == currency;
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.selectionClick();
-        setState(() {
-          _selectedCurrency = currency;
-        });
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.lightPink : AppColors.cardWhite,
-          borderRadius: BorderRadius.circular(AppRadius.xl),
-          border: Border.all(
-            color: isSelected ? AppColors.primaryPink : AppColors.lightGray,
-            width: isSelected ? 2 : 1,
-          ),
-          boxShadow: isSelected ? AppColors.cardShadow : null,
-        ),
-        child: Row(
-          children: [
-            Text(flag, style: const TextStyle(fontSize: 36)),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    name,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  Text(
-                    currency,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: AppColors.mediumGray,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.all(2),
-              decoration: BoxDecoration(
-                color: isSelected ? AppColors.primaryPink : Colors.transparent,
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: isSelected ? AppColors.primaryPink : AppColors.lightGray,
-                  width: 2,
-                ),
-              ),
-              child: Icon(
-                Icons.check_rounded,
-                color: isSelected ? Colors.white : Colors.transparent,
-                size: 18,
-              ),
-            ),
-          ],
-        ),
-      ),
-    )
-        .animate()
-        .fadeIn(duration: 300.ms, delay: (200 + index * 100).ms)
-        .slideY(begin: 0.1, end: 0);
-  }
 
   Widget _buildPayCyclePage(ThemeData theme) {
     return SingleChildScrollView(
@@ -493,7 +384,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: AppColors.primaryPink.withOpacity(0.1),
+                        color: AppColors.primaryPink.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(AppRadius.sm),
                       ),
                       child: Icon(
@@ -684,7 +575,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   child: Row(
                     children: [
                       Text(
-                        _selectedCurrency == 'AUD' ? 'A\$' : '\$',
+                        CurrencyFormatter.getSymbol(_selectedCurrency),
                         style: theme.textTheme.headlineLarge?.copyWith(
                           fontWeight: FontWeight.w800,
                           color: AppColors.primaryPink,
@@ -706,7 +597,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                             hintText: '0.00',
                             hintStyle: theme.textTheme.headlineLarge?.copyWith(
                               fontWeight: FontWeight.w500,
-                              color: AppColors.mediumGray.withOpacity(0.3),
+                              color: AppColors.mediumGray.withValues(alpha: 0.3),
                             ),
                             border: InputBorder.none,
                             contentPadding: const EdgeInsets.symmetric(
@@ -734,14 +625,14 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             decoration: BoxDecoration(
               color: AppColors.infoLight,
               borderRadius: BorderRadius.circular(AppRadius.lg),
-              border: Border.all(color: AppColors.info.withOpacity(0.3)),
+              border: Border.all(color: AppColors.info.withValues(alpha: 0.3)),
             ),
             child: Row(
               children: [
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: AppColors.info.withOpacity(0.15),
+                    color: AppColors.info.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(AppRadius.sm),
                   ),
                   child: Icon(Icons.lightbulb_outline_rounded, color: AppColors.info, size: 20),
@@ -751,7 +642,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   child: Text(
                     'We\'ll use this to calculate how much you can safely spend each day until payday',
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: AppColors.darkCharcoal.withOpacity(0.8),
+                      color: AppColors.darkCharcoal.withValues(alpha: 0.8),
                       height: 1.4,
                     ),
                   ),
@@ -802,7 +693,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   Future<void> _nextPage() async {
-    if (_currentPage == 3) {
+    if (_currentPage == 2) {
       // Validate income
       if (_incomeController.text.isEmpty || double.tryParse(_incomeController.text) == null) {
         ScaffoldMessenger.of(context).showSnackBar(
