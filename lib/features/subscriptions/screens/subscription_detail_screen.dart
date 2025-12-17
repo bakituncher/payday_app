@@ -430,13 +430,17 @@ class SubscriptionDetailScreen extends ConsumerWidget {
   }
 
   void _handleMenuAction(BuildContext context, WidgetRef ref, String action) async {
+    // userId'yi abonelik nesnesinden alıyoruz
+    final userId = subscription.userId;
+
     switch (action) {
       case 'edit':
         // TODO: Navigate to edit screen
         break;
 
       case 'pause':
-        await ref.read(subscriptionNotifierProvider.notifier).pauseSubscription(subscription.id);
+        // userId parametresini ekledik
+        await ref.read(subscriptionNotifierProvider.notifier).pauseSubscription(subscription.id, userId);
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -450,7 +454,8 @@ class SubscriptionDetailScreen extends ConsumerWidget {
         break;
 
       case 'resume':
-        await ref.read(subscriptionNotifierProvider.notifier).resumeSubscription(subscription.id);
+        // userId parametresini ekledik
+        await ref.read(subscriptionNotifierProvider.notifier).resumeSubscription(subscription.id, userId);
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -470,7 +475,8 @@ class SubscriptionDetailScreen extends ConsumerWidget {
           message: 'This will mark ${subscription.name} as cancelled. You can resume it later.',
         );
         if (confirmed == true) {
-          await ref.read(subscriptionNotifierProvider.notifier).cancelSubscription(subscription.id);
+          // userId parametresini ekledik
+          await ref.read(subscriptionNotifierProvider.notifier).cancelSubscription(subscription.id, userId);
           if (context.mounted) {
             Navigator.of(context).pop();
           }
@@ -485,7 +491,8 @@ class SubscriptionDetailScreen extends ConsumerWidget {
           isDestructive: true,
         );
         if (confirmed == true) {
-          await ref.read(subscriptionNotifierProvider.notifier).deleteSubscription(subscription.id);
+          // userId parametresini ekledik
+          await ref.read(subscriptionNotifierProvider.notifier).deleteSubscription(subscription.id, userId);
           if (context.mounted) {
             Navigator.of(context).pop();
           }

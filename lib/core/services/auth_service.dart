@@ -12,10 +12,23 @@ class AuthService {
   // Get current user
   User? get currentUser => _auth.currentUser;
 
+  // Check if current user is anonymous
+  bool get isAnonymous => currentUser?.isAnonymous ?? false;
+
   // Auth state changes stream
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 
-  // Sign in with Google
+  // Sign in Anonymously
+  Future<UserCredential> signInAnonymously() async {
+    try {
+      return await _auth.signInAnonymously();
+    } catch (e) {
+      print('Error signing in anonymously: $e');
+      rethrow;
+    }
+  }
+
+  // Sign in with Google (or Link if anonymous)
   Future<UserCredential?> signInWithGoogle() async {
     try {
       // Trigger the authentication flow
@@ -35,6 +48,26 @@ class AuthService {
         idToken: googleAuth.idToken,
       );
 
+      // Check if we are anonymous and link instead
+      if (currentUser != null && currentUser!.isAnonymous) {
+        try {
+          return await currentUser!.linkWithCredential(credential);
+        } on FirebaseAuthException catch (e) {
+          if (e.code == 'credential-already-in-use') {
+             // If account exists, we can't link.
+             // Logic: Sign in with the existing account?
+             // Or throw error?
+             // For now, let's try to sign in normally, effectively switching users.
+             // Note: This will NOT migrate data if not handled before switching.
+             // But usually "credential-already-in-use" means they have another account.
+             // The prompt implies "anonymous login should turn into google login", which implies creating/linking.
+             // If it exists, we just switch.
+             return await _auth.signInWithCredential(credential);
+          }
+          rethrow;
+        }
+      }
+
       // Sign in to Firebase with the Google credential
       return await _auth.signInWithCredential(credential);
     } catch (e) {
@@ -43,41 +76,60 @@ class AuthService {
     }
   }
 
-  // Sign in with Apple
+  // Sign in with Apple (or Link if anonymous)
   Future<UserCredential?> signInWithApple() async {
     try {
       if (Platform.isAndroid) {
         // --- ANDROID İÇİN ÇÖZÜM (Firebase Provider Kullan) ---
-        // Bu yöntem, "Missing initial state" hatasını %100 çözer.
-        // Çünkü akışı Firebase başlatır ve bitirir.
         final provider = AppleAuthProvider();
         provider.addScope('email');
         provider.addScope('name');
 
-        // Bu satır Android'de otomatik olarak tarayıcıyı açar,
-        // Service ID'ni kullanır ve hatasız giriş yapar.
+        if (currentUser != null && currentUser!.isAnonymous) {
+           try {
+             return await currentUser!.linkWithProvider(provider);
+           } on FirebaseAuthException catch (e) {
+             if (e.code == 'credential-already-in-use') {
+               return await _auth.signInWithProvider(provider);
+             }
+             rethrow;
+           }
+        }
+
         return await _auth.signInWithProvider(provider);
       } else {
-        // --- iOS İÇİN NATIVE YÖNTEM (Mevcut Çalışan Yöntem) ---
-        // Request credential for the currently signed in Apple account
+        // --- iOS İÇİN NATIVE YÖNTEM ---
         final appleCredential = await SignInWithApple.getAppleIDCredential(
           scopes: [
             AppleIDAuthorizationScopes.email,
             AppleIDAuthorizationScopes.fullName,
           ],
-          // iOS'te web options'a gerek yok
         );
 
-        // Create an OAuth credential
         final oauthCredential = OAuthProvider("apple.com").credential(
           idToken: appleCredential.identityToken,
           accessToken: appleCredential.authorizationCode,
         );
 
-        // Sign in to Firebase with the Apple credential
+        if (currentUser != null && currentUser!.isAnonymous) {
+          try {
+            final userCredential = await currentUser!.linkWithCredential(oauthCredential);
+             // Update display name if linked
+             if (appleCredential.givenName != null) {
+                final fullName = '${appleCredential.givenName} ${appleCredential.familyName}';
+                await userCredential.user?.updateDisplayName(fullName);
+             }
+             return userCredential;
+          } on FirebaseAuthException catch (e) {
+             if (e.code == 'credential-already-in-use') {
+               return await _auth.signInWithCredential(oauthCredential);
+             }
+             rethrow;
+          }
+        }
+
         final userCredential = await _auth.signInWithCredential(oauthCredential);
 
-        // Update display name if it's the first sign in and we have the name
         if (userCredential.additionalUserInfo?.isNewUser == true) {
           final fullName = appleCredential.givenName != null && appleCredential.familyName != null
               ? '${appleCredential.givenName} ${appleCredential.familyName}'

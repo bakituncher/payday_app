@@ -381,7 +381,7 @@ class _AllTransactionsScreenState extends ConsumerState<AllTransactionsScreen> {
   Future<void> _deleteTransaction(Transaction transaction) async {
     try {
       final repository = ref.read(transactionRepositoryProvider);
-      await repository.deleteTransaction(transaction.id);
+      await repository.deleteTransaction(transaction.id, transaction.userId);
 
       ref.invalidate(currentCycleTransactionsProvider);
       ref.invalidate(totalExpensesProvider);

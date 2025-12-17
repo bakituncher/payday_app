@@ -55,14 +55,14 @@ class MockSubscriptionRepository implements SubscriptionRepository {
   }
 
   @override
-  Future<void> deleteSubscription(String subscriptionId) async {
+  Future<void> deleteSubscription(String subscriptionId, String userId) async {
     await Future.delayed(const Duration(milliseconds: 200));
     _subscriptions.removeWhere((s) => s.id == subscriptionId);
     _reminders.removeWhere((r) => r.subscriptionId == subscriptionId);
   }
 
   @override
-  Future<void> cancelSubscription(String subscriptionId) async {
+  Future<void> cancelSubscription(String subscriptionId, String userId) async {
     await Future.delayed(const Duration(milliseconds: 200));
     final index = _subscriptions.indexWhere((s) => s.id == subscriptionId);
     if (index != -1) {
@@ -75,7 +75,7 @@ class MockSubscriptionRepository implements SubscriptionRepository {
   }
 
   @override
-  Future<void> pauseSubscription(String subscriptionId) async {
+  Future<void> pauseSubscription(String subscriptionId, String userId) async {
     await Future.delayed(const Duration(milliseconds: 200));
     final index = _subscriptions.indexWhere((s) => s.id == subscriptionId);
     if (index != -1) {
@@ -87,7 +87,7 @@ class MockSubscriptionRepository implements SubscriptionRepository {
   }
 
   @override
-  Future<void> resumeSubscription(String subscriptionId) async {
+  Future<void> resumeSubscription(String subscriptionId, String userId) async {
     await Future.delayed(const Duration(milliseconds: 200));
     final index = _subscriptions.indexWhere((s) => s.id == subscriptionId);
     if (index != -1) {

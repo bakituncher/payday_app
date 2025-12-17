@@ -630,7 +630,7 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
                     onPressed: () async {
                       HapticFeedback.mediumImpact();
                       await ref.read(subscriptionNotifierProvider.notifier)
-                          .cancelSubscription(analysis.subscriptionId);
+                          .cancelSubscription(analysis.subscriptionId, analysis.userId);
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(

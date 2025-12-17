@@ -82,7 +82,7 @@ class LocalTransactionRepository implements TransactionRepository {
   }
 
   @override
-  Future<void> deleteTransaction(String transactionId) async {
+  Future<void> deleteTransaction(String transactionId, String userId) async {
     await _loadTransactions();
     _cachedTransactions!.removeWhere((t) => t.id == transactionId);
     await _saveTransactions();
