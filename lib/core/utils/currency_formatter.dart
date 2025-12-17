@@ -1,7 +1,6 @@
 /// Utility functions for formatting currency
 import 'dart:ui' as ui;
 import 'package:intl/intl.dart';
-import 'package:payday/core/services/currency_service.dart';
 
 class CurrencyFormatter {
   /// Format amount with currency symbol
@@ -52,6 +51,28 @@ class CurrencyFormatter {
   /// Get currency symbol publicly
   static String getSymbol(String currencyCode) {
     return _getCurrencySymbol(currencyCode);
+  }
+
+  /// Get decimal digits for currency
+  /// Some currencies like JPY don't use decimal places
+  static int _getDecimalDigits(String currencyCode) {
+    switch (currencyCode.toUpperCase()) {
+      case 'JPY': // Japanese Yen
+      case 'KRW': // Korean Won
+      case 'VND': // Vietnamese Dong
+      case 'CLP': // Chilean Peso
+      case 'ISK': // Icelandic Krona
+        return 0;
+      case 'BHD': // Bahraini Dinar
+      case 'IQD': // Iraqi Dinar
+      case 'JOD': // Jordanian Dinar
+      case 'KWD': // Kuwaiti Dinar
+      case 'OMR': // Omani Rial
+      case 'TND': // Tunisian Dinar
+        return 3;
+      default:
+        return 2;
+    }
   }
 
   /// Get local currency code from device locale
