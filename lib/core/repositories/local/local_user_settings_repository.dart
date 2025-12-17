@@ -1,7 +1,7 @@
 /// Local implementation of UserSettingsRepository using SharedPreferences
 /// This replaces MockUserSettingsRepository with cleaner implementation
-import 'package:payday_flutter/core/models/user_settings.dart';
-import 'package:payday_flutter/core/repositories/user_settings_repository.dart';
+import 'package:payday/core/models/user_settings.dart';
+import 'package:payday/core/repositories/user_settings_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LocalUserSettingsRepository implements UserSettingsRepository {

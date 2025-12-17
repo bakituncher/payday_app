@@ -1,8 +1,8 @@
 /// Countdown Card - The Hero Feature - Premium Industry-Grade Design
 import 'package:flutter/material.dart';
-import 'package:payday_flutter/core/theme/app_theme.dart';
-import 'package:payday_flutter/core/utils/currency_formatter.dart';
-import 'package:payday_flutter/shared/widgets/countdown_timer.dart';
+import 'package:payday/core/theme/app_theme.dart';
+import 'package:payday/core/utils/currency_formatter.dart';
+import 'package:payday/shared/widgets/countdown_timer.dart';
 
 class CountdownCard extends StatelessWidget {
   final DateTime nextPayday;

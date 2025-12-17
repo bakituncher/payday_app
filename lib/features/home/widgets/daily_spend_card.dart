@@ -1,9 +1,9 @@
 /// Daily Allowable Spend Card - Premium Compact Design
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:payday_flutter/core/theme/app_theme.dart';
-import 'package:payday_flutter/core/utils/currency_formatter.dart';
-import 'package:payday_flutter/features/home/providers/home_providers.dart';
+import 'package:payday/core/theme/app_theme.dart';
+import 'package:payday/core/utils/currency_formatter.dart';
+import 'package:payday/features/home/providers/home_providers.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 class DailySpendCard extends ConsumerWidget {

@@ -1,5 +1,5 @@
-name: payday_flutter
-description: "A new Flutter project."
+name: payday
+description: "Payday - Modern expense tracking application."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -44,11 +44,15 @@ dependencies:
   firebase_auth: ^5.3.1
   cloud_firestore: ^5.4.4
   firebase_analytics: ^11.3.3
+  google_sign_in: ^6.2.1
+  sign_in_with_apple: ^6.1.1
 
   # UI & Design
   google_fonts: ^6.2.1
   flutter_animate: ^4.5.0
   shimmer: ^3.0.0
+  font_awesome_flutter: ^10.7.0
+  flutter_svg: ^2.0.10+1
 
   # Utilities
   intl: ^0.19.0
@@ -88,9 +92,8 @@ flutter:
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
-  # assets:
-  #   - images/a_dot_burr.jpeg
-  #   - images/a_dot_ham.jpeg
+  assets:
+    - assets/google_logo.svg
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

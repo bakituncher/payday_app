@@ -2,11 +2,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:payday_flutter/core/theme/app_theme.dart';
-import 'package:payday_flutter/core/constants/app_constants.dart';
-import 'package:payday_flutter/core/models/user_settings.dart';
-import 'package:payday_flutter/core/providers/repository_providers.dart';
-import 'package:payday_flutter/shared/widgets/payday_button.dart';
+import 'package:payday/core/theme/app_theme.dart';
+import 'package:payday/core/constants/app_constants.dart';
+import 'package:payday/core/models/user_settings.dart';
+import 'package:payday/core/providers/repository_providers.dart';
+import 'package:payday/shared/widgets/payday_button.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 class OnboardingScreen extends ConsumerStatefulWidget {

@@ -1,8 +1,8 @@
 /// Mock implementation of MonthlySummaryRepository
 /// For development and testing - data persists in memory only
-import 'package:payday_flutter/core/models/monthly_summary.dart';
-import 'package:payday_flutter/core/models/budget_goal.dart';
-import 'package:payday_flutter/core/repositories/monthly_summary_repository.dart';
+import 'package:payday/core/models/monthly_summary.dart';
+import 'package:payday/core/models/budget_goal.dart';
+import 'package:payday/core/repositories/monthly_summary_repository.dart';
 
 class MockMonthlySummaryRepository implements MonthlySummaryRepository {
   final Map<String, MonthlySummary> _summaries = {};

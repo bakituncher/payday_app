@@ -1,12 +1,12 @@
 /// Subscription feature providers
 /// Industry-grade state management with Riverpod
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:payday_flutter/core/models/subscription.dart';
-import 'package:payday_flutter/core/models/subscription_analysis.dart';
-import 'package:payday_flutter/core/models/bill_reminder.dart';
-import 'package:payday_flutter/core/providers/repository_providers.dart';
-import 'package:payday_flutter/core/services/date_cycle_service.dart';
-import 'package:payday_flutter/features/insights/providers/monthly_summary_providers.dart';
+import 'package:payday/core/models/subscription.dart';
+import 'package:payday/core/models/subscription_analysis.dart';
+import 'package:payday/core/models/bill_reminder.dart';
+import 'package:payday/core/providers/repository_providers.dart';
+import 'package:payday/core/services/date_cycle_service.dart';
+import 'package:payday/features/insights/providers/monthly_summary_providers.dart';
 
 /// All subscriptions for current user
 final subscriptionsProvider = FutureProvider<List<Subscription>>((ref) async {

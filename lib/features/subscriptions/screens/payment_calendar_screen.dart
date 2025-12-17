@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:payday_flutter/core/theme/app_theme.dart';
-import 'package:payday_flutter/core/models/subscription.dart';
-import 'package:payday_flutter/features/subscriptions/providers/subscription_providers.dart';
+import 'package:payday/core/theme/app_theme.dart';
+import 'package:payday/core/models/subscription.dart';
+import 'package:payday/features/subscriptions/providers/subscription_providers.dart';
 import 'package:intl/intl.dart';
 
 class PaymentCalendarScreen extends ConsumerStatefulWidget {

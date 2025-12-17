@@ -1,10 +1,10 @@
 /// Leftover Allocation Service
 /// Handles the actual allocation of leftover money to different purposes
-import 'package:payday_flutter/core/models/monthly_summary.dart';
-import 'package:payday_flutter/core/models/savings_goal.dart';
-import 'package:payday_flutter/core/repositories/savings_goal_repository.dart';
-import 'package:payday_flutter/core/repositories/monthly_summary_repository.dart';
-import 'package:payday_flutter/core/repositories/user_settings_repository.dart';
+import 'package:payday/core/models/monthly_summary.dart';
+import 'package:payday/core/models/savings_goal.dart';
+import 'package:payday/core/repositories/savings_goal_repository.dart';
+import 'package:payday/core/repositories/monthly_summary_repository.dart';
+import 'package:payday/core/repositories/user_settings_repository.dart';
 
 class LeftoverAllocationService {
   final SavingsGoalRepository _savingsGoalRepository;

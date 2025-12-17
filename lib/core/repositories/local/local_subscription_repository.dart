@@ -2,10 +2,10 @@
 /// Data persists across app restarts
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:payday_flutter/core/models/subscription.dart';
-import 'package:payday_flutter/core/models/subscription_analysis.dart';
-import 'package:payday_flutter/core/models/bill_reminder.dart';
-import 'package:payday_flutter/core/repositories/subscription_repository.dart';
+import 'package:payday/core/models/subscription.dart';
+import 'package:payday/core/models/subscription_analysis.dart';
+import 'package:payday/core/models/bill_reminder.dart';
+import 'package:payday/core/repositories/subscription_repository.dart';
 
 class LocalSubscriptionRepository implements SubscriptionRepository {
   static const String _subscriptionsKey = 'local_subscriptions';

@@ -1,4 +1,4 @@
-package com.codenzi.payday.payday_flutter
+package com.codenzi.payday
 
 import io.flutter.embedding.android.FlutterActivity
 

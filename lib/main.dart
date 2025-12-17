@@ -7,19 +7,26 @@
 /// State Management: Riverpod
 /// Backend: Firebase (Mock repositories for now)
 
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart'; // Bu dosyayı flutterfire configure ile oluşturmuştuk
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:payday_flutter/core/theme/app_theme.dart';
-import 'package:payday_flutter/features/home/screens/home_screen.dart';
-import 'package:payday_flutter/features/onboarding/screens/onboarding_screen.dart';
-import 'package:payday_flutter/features/subscriptions/screens/subscriptions_screen.dart';
-import 'package:payday_flutter/features/insights/screens/monthly_summary_screen.dart';
-import 'package:payday_flutter/core/providers/repository_providers.dart';
+import 'package:payday/core/theme/app_theme.dart';
+import 'package:payday/features/home/screens/home_screen.dart';
+import 'package:payday/features/onboarding/screens/onboarding_screen.dart';
+import 'package:payday/features/subscriptions/screens/subscriptions_screen.dart';
+import 'package:payday/features/insights/screens/monthly_summary_screen.dart';
+import 'package:payday/core/providers/repository_providers.dart';
 
 void main() async {
   // Ensure Flutter bindings are initialized
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Firebase'i başlat
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
   // Set system UI overlay style
   SystemChrome.setSystemUIOverlayStyle(

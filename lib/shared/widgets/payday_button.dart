@@ -1,7 +1,7 @@
 /// Custom Payday branded button - Premium Industry-Grade Design
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:payday_flutter/core/theme/app_theme.dart';
+import 'package:payday/core/theme/app_theme.dart';
 
 enum PaydayButtonStyle { primary, secondary, outlined, ghost }
 enum PaydayButtonSize { small, medium, large }

@@ -2,8 +2,8 @@
 /// Data persists across app restarts
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:payday_flutter/core/models/savings_goal.dart';
-import 'package:payday_flutter/core/repositories/savings_goal_repository.dart';
+import 'package:payday/core/models/savings_goal.dart';
+import 'package:payday/core/repositories/savings_goal_repository.dart';
 
 class LocalSavingsGoalRepository implements SavingsGoalRepository {
   static const String _storageKey = 'local_savings_goals';

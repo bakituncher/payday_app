@@ -1,6 +1,6 @@
 /// Date Cycle Service
 /// Handles automatic updating of payday and subscription billing dates
-import 'package:payday_flutter/core/models/subscription.dart';
+import 'package:payday/core/models/subscription.dart';
 
 class DateCycleService {
   /// Check if payday has passed and calculate next payday

@@ -1,8 +1,8 @@
 /// Notification Service for bill reminders and subscription alerts
 /// Industry-grade implementation with local notifications support
 import 'package:flutter/foundation.dart';
-import 'package:payday_flutter/core/models/bill_reminder.dart';
-import 'package:payday_flutter/core/models/subscription.dart';
+import 'package:payday/core/models/bill_reminder.dart';
+import 'package:payday/core/models/subscription.dart';
 
 /// Notification types for the app
 enum NotificationType {

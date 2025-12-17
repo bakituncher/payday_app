@@ -2,7 +2,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:payday_flutter/core/theme/app_theme.dart';
+import 'package:payday/core/theme/app_theme.dart';
 
 class CountdownTimer extends StatefulWidget {
   final DateTime targetDate;

@@ -1,5 +1,5 @@
 /// Repository interface for user settings operations
-import 'package:payday_flutter/core/models/user_settings.dart';
+import 'package:payday/core/models/user_settings.dart';
 
 abstract class UserSettingsRepository {
   /// Get user settings

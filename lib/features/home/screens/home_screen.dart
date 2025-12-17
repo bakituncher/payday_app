@@ -2,18 +2,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:payday_flutter/core/theme/app_theme.dart';
-import 'package:payday_flutter/features/home/providers/home_providers.dart';
-import 'package:payday_flutter/features/insights/providers/monthly_summary_providers.dart';
-import 'package:payday_flutter/features/home/widgets/countdown_card.dart';
-import 'package:payday_flutter/features/home/widgets/daily_spend_card.dart';
-import 'package:payday_flutter/features/home/widgets/budget_progress_card.dart';
-import 'package:payday_flutter/features/home/widgets/recent_transactions_card.dart';
-import 'package:payday_flutter/features/home/widgets/active_subscriptions_card.dart';
-import 'package:payday_flutter/features/home/widgets/monthly_summary_card.dart';
-import 'package:payday_flutter/features/transactions/screens/add_transaction_screen.dart';
-import 'package:payday_flutter/features/settings/screens/settings_screen.dart';
-import 'package:payday_flutter/shared/widgets/payday_button.dart';
+import 'package:payday/core/theme/app_theme.dart';
+import 'package:payday/features/home/providers/home_providers.dart';
+import 'package:payday/features/insights/providers/monthly_summary_providers.dart';
+import 'package:payday/features/home/widgets/countdown_card.dart';
+import 'package:payday/features/home/widgets/daily_spend_card.dart';
+import 'package:payday/features/home/widgets/budget_progress_card.dart';
+import 'package:payday/features/home/widgets/recent_transactions_card.dart';
+import 'package:payday/features/home/widgets/active_subscriptions_card.dart';
+import 'package:payday/features/home/widgets/monthly_summary_card.dart';
+import 'package:payday/features/transactions/screens/add_transaction_screen.dart';
+import 'package:payday/features/settings/screens/settings_screen.dart';
+import 'package:payday/shared/widgets/payday_button.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 class HomeScreen extends ConsumerWidget {

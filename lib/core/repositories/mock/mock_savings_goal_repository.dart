@@ -1,6 +1,6 @@
 /// Mock implementation of SavingsGoalRepository for UI testing
-import 'package:payday_flutter/core/models/savings_goal.dart';
-import 'package:payday_flutter/core/repositories/savings_goal_repository.dart';
+import 'package:payday/core/models/savings_goal.dart';
+import 'package:payday/core/repositories/savings_goal_repository.dart';
 
 class MockSavingsGoalRepository implements SavingsGoalRepository {
   // In-memory storage
