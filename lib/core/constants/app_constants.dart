@@ -8,29 +8,21 @@ class AppConstants {
   static const String marketUS = 'US';
   static const String marketAU = 'AU';
 
-  // Currencies
-  static const String currencyUSD = 'USD';
-  static const String currencyAUD = 'AUD';
-  static const String currencyEUR = 'EUR';
-  static const String currencyGBP = 'GBP';
-  static const String currencyTRY = 'TRY';
+  // Default Currency
+  static const String defaultCurrency = 'USD';
 
-  // Currency Symbols
-  static const Map<String, String> currencySymbols = {
-    currencyUSD: '\$',
-    currencyAUD: 'A\$',
-    currencyEUR: '€',
-    currencyGBP: '£',
-    currencyTRY: '₺',
-  };
-
-  // Currencies List for UI
-  static const List<Map<String, String>> currencies = [
-    {'code': 'USD', 'symbol': '\$', 'name': 'US Dollar'},
-    {'code': 'EUR', 'symbol': '€', 'name': 'Euro'},
-    {'code': 'GBP', 'symbol': '£', 'name': 'British Pound'},
-    {'code': 'AUD', 'symbol': 'A\$', 'name': 'Australian Dollar'},
-    {'code': 'TRY', 'symbol': '₺', 'name': 'Turkish Lira'},
+  // Popular Currencies (for quick selection)
+  static const List<String> popularCurrencies = [
+    'USD', // US Dollar
+    'EUR', // Euro
+    'GBP', // British Pound
+    'JPY', // Japanese Yen
+    'AUD', // Australian Dollar
+    'CAD', // Canadian Dollar
+    'CHF', // Swiss Franc
+    'CNY', // Chinese Yuan
+    'TRY', // Turkish Lira
+    'INR', // Indian Rupee
   ];
 
   // Pay Cycles

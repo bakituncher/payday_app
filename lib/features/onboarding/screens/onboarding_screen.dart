@@ -2,8 +2,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:currency_picker/currency_picker.dart';
 import 'package:payday/core/theme/app_theme.dart';
 import 'package:payday/core/constants/app_constants.dart';
+import 'package:payday/core/services/currency_service.dart';
 import 'package:payday/core/models/user_settings.dart';
 import 'package:payday/core/providers/repository_providers.dart';
 import 'package:payday/shared/widgets/payday_button.dart';
@@ -21,7 +23,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   int _currentPage = 0;
 
   // Form data
-  String _selectedCurrency = AppConstants.currencyUSD;
+  String _selectedCurrency = AppConstants.defaultCurrency;
   String _selectedPayCycle = AppConstants.payCycleMonthly;
   DateTime _nextPayday = DateTime.now().add(const Duration(days: 30));
   final _incomeController = TextEditingController();
@@ -54,8 +56,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
                     colors: [
-                      AppColors.primaryPink.withOpacity(0.1),
-                      AppColors.primaryPink.withOpacity(0.0),
+                      AppColors.primaryPink.withValues(alpha: 0.1),
+                      AppColors.primaryPink.withValues(alpha: 0.0),
                     ],
                   ),
                 ),
@@ -71,8 +73,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
                     colors: [
-                      AppColors.secondaryPurple.withOpacity(0.08),
-                      AppColors.secondaryPurple.withOpacity(0.0),
+                      AppColors.secondaryPurple.withValues(alpha: 0.08),
+                      AppColors.secondaryPurple.withValues(alpha: 0.0),
                     ],
                   ),
                 ),
@@ -100,7 +102,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                             boxShadow: isCurrent
                                 ? [
                                     BoxShadow(
-                                      color: AppColors.primaryPink.withOpacity(0.4),
+                                      color: AppColors.primaryPink.withValues(alpha: 0.4),
                                       blurRadius: 4,
                                     ),
                                   ]
@@ -280,7 +282,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           Container(
             padding: const EdgeInsets.all(AppSpacing.md),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(AppRadius.md),
             ),
             child: Icon(icon, color: color, size: 24),
@@ -315,6 +317,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   Widget _buildCurrencyPage(ThemeData theme) {
+    final currencyService = CurrencyUtilityService();
+    final selectedCurrency = currencyService.findByCode(_selectedCurrency);
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(AppSpacing.xl),
       child: Column(
@@ -327,7 +332,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               color: AppColors.subtleGray,
               shape: BoxShape.circle,
             ),
-            child: Text('💵', style: const TextStyle(fontSize: 48)),
+            child: Text(selectedCurrency?.flag ?? '💵', style: const TextStyle(fontSize: 48)),
           )
               .animate()
               .scale(duration: 400.ms, curve: Curves.elasticOut),
@@ -353,82 +358,205 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               .animate()
               .fadeIn(duration: 300.ms, delay: 150.ms),
           const SizedBox(height: AppSpacing.xxl),
-          _buildCurrencyOption(theme, AppConstants.currencyUSD, 'US Dollar', '🇺🇸', 0),
+
+          // Selected currency card
+          GestureDetector(
+            onTap: _showCurrencyPicker,
+            child: Container(
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              decoration: BoxDecoration(
+                gradient: AppColors.pinkGradient,
+                borderRadius: BorderRadius.circular(AppRadius.xl),
+                boxShadow: AppColors.elevatedShadow,
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 64,
+                    height: 64,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                    ),
+                    child: Center(
+                      child: Text(
+                        selectedCurrency?.flag ?? '🌍',
+                        style: const TextStyle(fontSize: 36),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          selectedCurrency?.name ?? 'Select Currency',
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${selectedCurrency?.code ?? ''} ${selectedCurrency?.symbol ?? ''}',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: Colors.white.withValues(alpha: 0.9),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    color: Colors.white,
+                    size: 32,
+                  ),
+                ],
+              ),
+            ),
+          )
+              .animate()
+              .fadeIn(duration: 300.ms, delay: 200.ms)
+              .slideY(begin: 0.1, end: 0),
+
+          const SizedBox(height: AppSpacing.lg),
+
+          // Popular currencies hint
+          Text(
+            'Popular currencies',
+            style: theme.textTheme.titleSmall?.copyWith(
+              color: AppColors.mediumGray,
+              fontWeight: FontWeight.w600,
+            ),
+          )
+              .animate()
+              .fadeIn(duration: 300.ms, delay: 300.ms),
+
           const SizedBox(height: AppSpacing.md),
-          _buildCurrencyOption(theme, AppConstants.currencyAUD, 'Australian Dollar', '🇦🇺', 1),
+
+          // Quick select popular currencies
+          Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
+            children: AppConstants.popularCurrencies.take(6).map((code) {
+              final currency = currencyService.findByCode(code);
+              if (currency == null) return const SizedBox.shrink();
+
+              final isSelected = _selectedCurrency == code;
+              return GestureDetector(
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  setState(() {
+                    _selectedCurrency = code;
+                  });
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                    vertical: AppSpacing.sm,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? AppColors.lightPink
+                        : AppColors.cardWhite,
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
+                    border: Border.all(
+                      color: isSelected
+                          ? AppColors.primaryPink
+                          : AppColors.lightGray,
+                      width: isSelected ? 2 : 1,
+                    ),
+                    boxShadow: isSelected ? AppColors.cardShadow : null,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        currency.flag ?? '🌍',
+                        style: const TextStyle(fontSize: 20),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        currency.code,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                          color: isSelected
+                              ? AppColors.primaryPink
+                              : AppColors.darkCharcoal,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }).toList(),
+          )
+              .animate()
+              .fadeIn(duration: 300.ms, delay: 400.ms),
         ],
       ),
     );
   }
 
-  Widget _buildCurrencyOption(ThemeData theme, String currency, String name, String flag, int index) {
-    final isSelected = _selectedCurrency == currency;
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.selectionClick();
-        setState(() {
-          _selectedCurrency = currency;
-        });
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.lightPink : AppColors.cardWhite,
-          borderRadius: BorderRadius.circular(AppRadius.xl),
-          border: Border.all(
-            color: isSelected ? AppColors.primaryPink : AppColors.lightGray,
-            width: isSelected ? 2 : 1,
-          ),
-          boxShadow: isSelected ? AppColors.cardShadow : null,
+  void _showCurrencyPicker() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    showCurrencyPicker(
+      context: context,
+      theme: CurrencyPickerThemeData(
+        backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
+        titleTextStyle: TextStyle(
+          color: isDark ? AppColors.darkTextPrimary : AppColors.darkCharcoal,
+          fontSize: 20,
+          fontWeight: FontWeight.w600,
         ),
-        child: Row(
-          children: [
-            Text(flag, style: const TextStyle(fontSize: 36)),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    name,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  Text(
-                    currency,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: AppColors.mediumGray,
-                    ),
-                  ),
-                ],
-              ),
+        subtitleTextStyle: TextStyle(
+          color: isDark ? AppColors.darkTextSecondary : AppColors.mediumGray,
+          fontSize: 14,
+        ),
+        bottomSheetHeight: MediaQuery.of(context).size.height * 0.75,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(24),
+          ),
+        ),
+        inputDecoration: InputDecoration(
+          hintText: 'Search currency...',
+          hintStyle: TextStyle(
+            color: isDark ? AppColors.darkTextSecondary : AppColors.mediumGray,
+          ),
+          prefixIcon: const Icon(
+            Icons.search,
+            color: AppColors.primaryPink,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            borderSide: BorderSide(
+              color: isDark ? AppColors.darkBorder : AppColors.lightGray,
             ),
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.all(2),
-              decoration: BoxDecoration(
-                color: isSelected ? AppColors.primaryPink : Colors.transparent,
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: isSelected ? AppColors.primaryPink : AppColors.lightGray,
-                  width: 2,
-                ),
-              ),
-              child: Icon(
-                Icons.check_rounded,
-                color: isSelected ? Colors.white : Colors.transparent,
-                size: 18,
-              ),
-            ),
-          ],
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            borderSide: const BorderSide(color: AppColors.primaryPink, width: 2),
+          ),
+          filled: true,
+          fillColor: isDark ? AppColors.darkBackground : AppColors.lightGray,
         ),
       ),
-    )
-        .animate()
-        .fadeIn(duration: 300.ms, delay: (200 + index * 100).ms)
-        .slideY(begin: 0.1, end: 0);
+      favorite: AppConstants.popularCurrencies,
+      showFlag: true,
+      showCurrencyName: true,
+      showCurrencyCode: true,
+      onSelect: (Currency currency) {
+        HapticFeedback.mediumImpact();
+        setState(() {
+          _selectedCurrency = currency.code;
+        });
+      },
+    );
   }
 
   Widget _buildPayCyclePage(ThemeData theme) {
@@ -488,12 +616,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
+                  Row(
                   children: [
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: AppColors.primaryPink.withOpacity(0.1),
+                        color: AppColors.primaryPink.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(AppRadius.sm),
                       ),
                       child: Icon(
@@ -626,6 +754,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   Widget _buildIncomePage(ThemeData theme) {
+    final currencyService = CurrencyUtilityService();
+    final currencySymbol = currencyService.getSymbol(_selectedCurrency);
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(AppSpacing.xl),
       child: Column(
@@ -684,7 +815,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   child: Row(
                     children: [
                       Text(
-                        _selectedCurrency == 'AUD' ? 'A\$' : '\$',
+                        currencySymbol,
                         style: theme.textTheme.headlineLarge?.copyWith(
                           fontWeight: FontWeight.w800,
                           color: AppColors.primaryPink,
@@ -706,7 +837,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                             hintText: '0.00',
                             hintStyle: theme.textTheme.headlineLarge?.copyWith(
                               fontWeight: FontWeight.w500,
-                              color: AppColors.mediumGray.withOpacity(0.3),
+                              color: AppColors.mediumGray.withValues(alpha: 0.3),
                             ),
                             border: InputBorder.none,
                             contentPadding: const EdgeInsets.symmetric(
@@ -734,14 +865,14 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             decoration: BoxDecoration(
               color: AppColors.infoLight,
               borderRadius: BorderRadius.circular(AppRadius.lg),
-              border: Border.all(color: AppColors.info.withOpacity(0.3)),
+              border: Border.all(color: AppColors.info.withValues(alpha: 0.3)),
             ),
             child: Row(
               children: [
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: AppColors.info.withOpacity(0.15),
+                    color: AppColors.info.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(AppRadius.sm),
                   ),
                   child: Icon(Icons.lightbulb_outline_rounded, color: AppColors.info, size: 20),
@@ -751,7 +882,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   child: Text(
                     'We\'ll use this to calculate how much you can safely spend each day until payday',
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: AppColors.darkCharcoal.withOpacity(0.8),
+                      color: AppColors.darkCharcoal.withValues(alpha: 0.8),
                       height: 1.4,
                     ),
                   ),
