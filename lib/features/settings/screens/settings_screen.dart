@@ -913,38 +913,48 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ),
           ),
           const SizedBox(height: AppSpacing.md),
-          Wrap(
-            spacing: AppSpacing.sm,
-            runSpacing: AppSpacing.sm,
-            children: AppConstants.payCycleOptions.map((cycle) {
+          Row(
+            children: AppConstants.payCycleOptions.asMap().entries.map((entry) {
+              final index = entry.key;
+              final cycle = entry.value;
               final isSelected = _selectedPayCycle == cycle;
-              return GestureDetector(
-                onTap: () {
-                  HapticFeedback.lightImpact();
-                  setState(() {
-                    _selectedPayCycle = cycle;
-                  });
-                },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.md,
-                    vertical: AppSpacing.sm,
+              return Expanded(
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    right: index < AppConstants.payCycleOptions.length - 1
+                        ? AppSpacing.sm
+                        : 0,
                   ),
-                  decoration: BoxDecoration(
-                    gradient: isSelected ? AppColors.pinkGradient : null,
-                    color: isSelected ? null : AppColors.getSubtle(context),
-                    borderRadius: BorderRadius.circular(AppRadius.round),
-                    border: Border.all(
-                      color: isSelected ? AppColors.primaryPink : Colors.transparent,
-                      width: 2,
-                    ),
-                  ),
-                  child: Text(
-                    cycle,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: isSelected ? Colors.white : AppColors.getTextPrimary(context),
-                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                  child: GestureDetector(
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      setState(() {
+                        _selectedPayCycle = cycle;
+                      });
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.sm,
+                        vertical: AppSpacing.sm,
+                      ),
+                      decoration: BoxDecoration(
+                        gradient: isSelected ? AppColors.pinkGradient : null,
+                        color: isSelected ? null : AppColors.getSubtle(context),
+                        borderRadius: BorderRadius.circular(AppRadius.round),
+                        border: Border.all(
+                          color: isSelected ? AppColors.primaryPink : Colors.transparent,
+                          width: 2,
+                        ),
+                      ),
+                      child: Text(
+                        cycle,
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: isSelected ? Colors.white : AppColors.getTextPrimary(context),
+                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                        ),
+                      ),
                     ),
                   ),
                 ),
