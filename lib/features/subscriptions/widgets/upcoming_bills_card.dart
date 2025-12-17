@@ -15,13 +15,15 @@ class UpcomingBillsCard extends ConsumerWidget {
     final subscriptionsDueAsync = ref.watch(subscriptionsDueSoonProvider);
     final theme = Theme.of(context);
     final currencyFormat = NumberFormat.currency(symbol: '\$');
+    final isDark = theme.brightness == Brightness.dark;
 
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColors.cardWhite,
+        color: AppColors.getCardBackground(context),
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        boxShadow: AppColors.cardShadow,
+        boxShadow: isDark ? null : AppColors.cardShadow,
+        border: isDark ? Border.all(color: AppColors.darkBorder, width: 1) : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -35,10 +37,10 @@ class UpcomingBillsCard extends ConsumerWidget {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: AppColors.warning.withOpacity(0.1),
+                      color: AppColors.warning.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(AppRadius.sm),
                     ),
-                    child: Icon(
+                    child: const Icon(
                       Icons.event_note_rounded,
                       color: AppColors.warning,
                       size: 20,
@@ -49,7 +51,7 @@ class UpcomingBillsCard extends ConsumerWidget {
                     'Upcoming Bills',
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w700,
-                      color: AppColors.darkCharcoal,
+                      color: AppColors.getTextPrimary(context),
                     ),
                   ),
                 ],
@@ -57,7 +59,7 @@ class UpcomingBillsCard extends ConsumerWidget {
               Text(
                 'Next 7 days',
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: AppColors.mediumGray,
+                  color: AppColors.getTextSecondary(context),
                 ),
               ),
             ],
@@ -87,7 +89,7 @@ class UpcomingBillsCard extends ConsumerWidget {
                             width: 40,
                             height: 40,
                             decoration: BoxDecoration(
-                              color: AppColors.subtleGray,
+                              color: isDark ? AppColors.darkSurfaceVariant : AppColors.subtleGray,
                               borderRadius: BorderRadius.circular(AppRadius.sm),
                             ),
                             child: Center(
@@ -109,7 +111,7 @@ class UpcomingBillsCard extends ConsumerWidget {
                                   subscription.name,
                                   style: theme.textTheme.bodyMedium?.copyWith(
                                     fontWeight: FontWeight.w600,
-                                    color: AppColors.darkCharcoal,
+                                    color: AppColors.getTextPrimary(context),
                                   ),
                                 ),
                                 Text(
@@ -117,7 +119,7 @@ class UpcomingBillsCard extends ConsumerWidget {
                                   style: theme.textTheme.bodySmall?.copyWith(
                                     color: daysUntil <= 2
                                         ? AppColors.warning
-                                        : AppColors.mediumGray,
+                                        : AppColors.getTextSecondary(context),
                                     fontWeight: daysUntil <= 2
                                         ? FontWeight.w600
                                         : FontWeight.normal,
@@ -132,7 +134,7 @@ class UpcomingBillsCard extends ConsumerWidget {
                             currencyFormat.format(subscription.amount),
                             style: theme.textTheme.bodyLarge?.copyWith(
                               fontWeight: FontWeight.w700,
-                              color: AppColors.darkCharcoal,
+                              color: AppColors.getTextPrimary(context),
                             ),
                           ),
                         ],
@@ -148,7 +150,7 @@ class UpcomingBillsCard extends ConsumerWidget {
                       },
                       child: Text(
                         '+${subscriptions.length - 3} more bills',
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: AppColors.primaryPink,
                           fontWeight: FontWeight.w600,
                         ),
@@ -176,42 +178,47 @@ class UpcomingBillsCard extends ConsumerWidget {
         2,
         (index) => Padding(
           padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-          child: Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: AppColors.subtleGray,
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                ),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: 100,
-                      height: 14,
-                      decoration: BoxDecoration(
-                        color: AppColors.subtleGray,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
+          child: Builder(
+            builder: (context) {
+              final isDark = Theme.of(context).brightness == Brightness.dark;
+              return Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: isDark ? AppColors.darkSurfaceVariant : AppColors.subtleGray,
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
                     ),
-                    const SizedBox(height: 4),
-                    Container(
-                      width: 60,
-                      height: 12,
-                      decoration: BoxDecoration(
-                        color: AppColors.subtleGray,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: 100,
+                          height: 14,
+                          decoration: BoxDecoration(
+                            color: isDark ? AppColors.darkSurfaceVariant : AppColors.subtleGray,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Container(
+                          width: 60,
+                          height: 12,
+                          decoration: BoxDecoration(
+                            color: isDark ? AppColors.darkSurfaceVariant : AppColors.subtleGray,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
-            ],
+                  ),
+                ],
+              );
+            }
           ),
         ),
       ),
@@ -223,7 +230,7 @@ class UpcomingBillsCard extends ConsumerWidget {
       child: Text(
         'Could not load upcoming bills',
         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-          color: AppColors.mediumGray,
+          color: AppColors.getTextSecondary(context),
         ),
       ),
     );
@@ -234,7 +241,7 @@ class UpcomingBillsCard extends ConsumerWidget {
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
       child: Row(
         children: [
-          Icon(
+          const Icon(
             Icons.check_circle_outline_rounded,
             color: AppColors.success,
             size: 24,

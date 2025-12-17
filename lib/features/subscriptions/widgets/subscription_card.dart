@@ -35,11 +35,11 @@ class SubscriptionCard extends ConsumerWidget {
         margin: const EdgeInsets.only(bottom: AppSpacing.sm),
         padding: const EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
-          color: AppColors.cardWhite,
+          color: AppColors.getCardBackground(context),
           borderRadius: BorderRadius.circular(AppRadius.lg),
-          boxShadow: AppColors.cardShadow,
+          boxShadow: AppColors.getCardShadow(context),
           border: subscription.isDueSoon(3)
-              ? Border.all(color: AppColors.warning.withOpacity(0.5), width: 1.5)
+              ? Border.all(color: AppColors.warning.withValues(alpha: 0.5), width: 1.5)
               : null,
         ),
         child: Row(
@@ -49,7 +49,7 @@ class SubscriptionCard extends ConsumerWidget {
               width: 52,
               height: 52,
               decoration: BoxDecoration(
-                color: _getCategoryColor(subscription.category).withOpacity(0.1),
+                color: _getCategoryColor(subscription.category).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(AppRadius.md),
               ),
               child: Center(
@@ -74,7 +74,7 @@ class SubscriptionCard extends ConsumerWidget {
                           subscription.name,
                           style: theme.textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.w600,
-                            color: AppColors.darkCharcoal,
+                            color: AppColors.getTextPrimary(context),
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -87,7 +87,7 @@ class SubscriptionCard extends ConsumerWidget {
                             vertical: 2,
                           ),
                           decoration: BoxDecoration(
-                            color: _getStatusColor(subscription.status).withOpacity(0.1),
+                            color: _getStatusColor(subscription.status).withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(AppRadius.sm),
                           ),
                           child: Text(
@@ -107,7 +107,7 @@ class SubscriptionCard extends ConsumerWidget {
                       Text(
                         subscription.frequencyText,
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: AppColors.mediumGray,
+                          color: AppColors.getTextSecondary(context),
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -115,7 +115,7 @@ class SubscriptionCard extends ConsumerWidget {
                         width: 4,
                         height: 4,
                         decoration: BoxDecoration(
-                          color: AppColors.lightGray,
+                          color: AppColors.getBorder(context),
                           shape: BoxShape.circle,
                         ),
                       ),
@@ -123,7 +123,7 @@ class SubscriptionCard extends ConsumerWidget {
                       Text(
                         _getDueDateText(daysUntil),
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: daysUntil <= 3 ? AppColors.warning : AppColors.mediumGray,
+                          color: daysUntil <= 3 ? AppColors.warning : AppColors.getTextSecondary(context),
                           fontWeight: daysUntil <= 3 ? FontWeight.w600 : FontWeight.normal,
                         ),
                       ),
@@ -143,14 +143,14 @@ class SubscriptionCard extends ConsumerWidget {
                   currencyFormat.format(subscription.amount),
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
-                    color: AppColors.darkCharcoal,
+                    color: AppColors.getTextPrimary(context),
                   ),
                 ),
                 if (subscription.frequency != RecurrenceFrequency.monthly)
                   Text(
                     '${currencyFormat.format(subscription.monthlyCost)}/mo',
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: AppColors.mediumGray,
+                      color: AppColors.getTextSecondary(context),
                     ),
                   ),
               ],

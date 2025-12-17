@@ -129,6 +129,9 @@ class LocalMonthlySummaryRepository implements MonthlySummaryRepository {
       ..sort((a, b) => a.month.compareTo(b.month));
   }
 
+  // Alias for DataMigrationService compatibility
+  Future<List<MonthlySummary>> getSummariesForYear(String userId, int year) => getYearlySummaries(userId, year);
+
   @override
   Future<List<MonthlySummary>> getRecentSummaries(String userId, int count) async {
     final summaries = await _loadSummaries();

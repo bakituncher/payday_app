@@ -2,8 +2,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:currency_picker/currency_picker.dart';
 import 'package:payday/core/theme/app_theme.dart';
 import 'package:payday/core/constants/app_constants.dart';
+import 'package:payday/core/services/currency_service.dart';
 import 'package:payday/core/models/user_settings.dart';
 import 'package:payday/core/providers/repository_providers.dart';
 import 'package:payday/core/utils/currency_formatter.dart';
@@ -22,7 +24,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   int _currentPage = 0;
 
   // Form data
-  String _selectedCurrency = AppConstants.currencyUSD;
+  String _selectedCurrency = AppConstants.defaultCurrency;
   String _selectedPayCycle = AppConstants.payCycleMonthly;
   DateTime _nextPayday = DateTime.now().add(const Duration(days: 30));
   final _incomeController = TextEditingController();
@@ -47,7 +49,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundWhite,
+      backgroundColor: AppColors.getBackground(context),
       body: SafeArea(
         child: Stack(
           children: [
@@ -379,7 +381,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
+                  Row(
                   children: [
                     Container(
                       padding: const EdgeInsets.all(8),
@@ -517,6 +519,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   Widget _buildIncomePage(ThemeData theme) {
+    final currencyService = CurrencyUtilityService();
+    final currencySymbol = currencyService.getSymbol(_selectedCurrency);
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(AppSpacing.xl),
       child: Column(

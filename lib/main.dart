@@ -18,6 +18,8 @@ import 'package:payday/features/onboarding/screens/onboarding_screen.dart';
 import 'package:payday/features/subscriptions/screens/subscriptions_screen.dart';
 import 'package:payday/features/insights/screens/monthly_summary_screen.dart';
 import 'package:payday/core/providers/repository_providers.dart';
+import 'package:payday/core/providers/theme_providers.dart';
+import 'package:payday/core/providers/auth_providers.dart';
 
 void main() async {
   // Ensure Flutter bindings are initialized
@@ -53,11 +55,39 @@ void main() async {
 }
 
 /// Main Application Widget
-class PaydayApp extends ConsumerWidget {
+class PaydayApp extends ConsumerStatefulWidget {
   const PaydayApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<PaydayApp> createState() => _PaydayAppState();
+}
+
+class _PaydayAppState extends ConsumerState<PaydayApp> {
+
+  @override
+  void initState() {
+    super.initState();
+    // Start anonymous auth if needed
+    _initializeAuth();
+  }
+
+  Future<void> _initializeAuth() async {
+    final authService = ref.read(authServiceProvider);
+    if (authService.currentUser == null) {
+      print('No user signed in. Signing in anonymously...');
+      try {
+        await authService.signInAnonymously();
+        print('Signed in anonymously.');
+      } catch (e) {
+        print('Error signing in anonymously: $e');
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final themeMode = ref.watch(themeModeProvider);
+
     return MaterialApp(
       // App Info
       title: 'Payday',
@@ -66,7 +96,7 @@ class PaydayApp extends ConsumerWidget {
       // Theme
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.light, // Force light mode for now
+      themeMode: themeMode,
 
       // Routes
       initialRoute: '/',
@@ -175,9 +205,10 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundWhite,
+      backgroundColor: AppColors.getBackground(context),
       body: Stack(
         children: [
           // Background decorations
@@ -191,8 +222,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    AppColors.primaryPink.withOpacity(0.15),
-                    AppColors.primaryPink.withOpacity(0.0),
+                    AppColors.primaryPink.withValues(alpha: isDark ? 0.08 : 0.15),
+                    AppColors.primaryPink.withValues(alpha: 0.0),
                   ],
                 ),
               ),
@@ -208,8 +239,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    AppColors.secondaryPurple.withOpacity(0.12),
-                    AppColors.secondaryPurple.withOpacity(0.0),
+                    AppColors.secondaryPurple.withValues(alpha: isDark ? 0.06 : 0.12),
+                    AppColors.secondaryPurple.withValues(alpha: 0.0),
                   ],
                 ),
               ),
@@ -238,13 +269,13 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                               borderRadius: BorderRadius.circular(40),
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppColors.primaryPink.withOpacity(0.5),
+                                  color: AppColors.primaryPink.withValues(alpha: 0.5),
                                   blurRadius: 40,
                                   spreadRadius: 0,
                                   offset: const Offset(0, 15),
                                 ),
                                 BoxShadow(
-                                  color: AppColors.secondaryPurple.withOpacity(0.3),
+                                  color: AppColors.secondaryPurple.withValues(alpha: 0.3),
                                   blurRadius: 60,
                                   spreadRadius: -10,
                                   offset: const Offset(0, 25),
@@ -276,7 +307,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                       'Payday',
                       style: theme.textTheme.displaySmall?.copyWith(
                         fontWeight: FontWeight.w800,
-                        color: AppColors.darkCharcoal,
+                        color: AppColors.getTextPrimary(context),
                         letterSpacing: -1,
                       ),
                     ),
@@ -293,7 +324,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                     child: Text(
                       'Your Money Countdown Starts Now',
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: AppColors.mediumGray,
+                        color: AppColors.getTextSecondary(context),
                         fontWeight: FontWeight.w500,
                       ),
                     ),

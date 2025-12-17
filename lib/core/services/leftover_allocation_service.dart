@@ -67,7 +67,7 @@ class LeftoverAllocationService {
   ) async {
     if (targetGoalId != null) {
       // Add to specific savings goal
-      await _savingsGoalRepository.addMoneyToGoal(targetGoalId, amount);
+      await _savingsGoalRepository.addMoneyToGoal(targetGoalId, amount, userId);
       return AllocationResult(
         success: true,
         message: 'Added \$${amount.toStringAsFixed(2)} to your savings goal',
@@ -99,7 +99,7 @@ class LeftoverAllocationService {
         );
       } else {
         // Add to first (most recent) savings goal
-        await _savingsGoalRepository.addMoneyToGoal(goals.first.id, amount);
+        await _savingsGoalRepository.addMoneyToGoal(goals.first.id, amount, userId);
         return AllocationResult(
           success: true,
           message: 'Added \$${amount.toStringAsFixed(2)} to ${goals.first.name}',
@@ -122,7 +122,7 @@ class LeftoverAllocationService {
     ).firstOrNull;
 
     if (emergencyFund != null) {
-      await _savingsGoalRepository.addMoneyToGoal(emergencyFund.id, amount);
+      await _savingsGoalRepository.addMoneyToGoal(emergencyFund.id, amount, userId);
       return AllocationResult(
         success: true,
         message: 'Added \$${amount.toStringAsFixed(2)} to Emergency Fund',
@@ -166,7 +166,7 @@ class LeftoverAllocationService {
     ).firstOrNull;
 
     if (investmentGoal != null) {
-      await _savingsGoalRepository.addMoneyToGoal(investmentGoal.id, amount);
+      await _savingsGoalRepository.addMoneyToGoal(investmentGoal.id, amount, userId);
       return AllocationResult(
         success: true,
         message: 'Added \$${amount.toStringAsFixed(2)} to Investment Fund',
@@ -207,7 +207,7 @@ class LeftoverAllocationService {
     ).firstOrNull;
 
     if (debtGoal != null) {
-      await _savingsGoalRepository.addMoneyToGoal(debtGoal.id, amount);
+      await _savingsGoalRepository.addMoneyToGoal(debtGoal.id, amount, userId);
       return AllocationResult(
         success: true,
         message: 'Allocated \$${amount.toStringAsFixed(2)} to Debt Payoff',
@@ -253,7 +253,7 @@ class LeftoverAllocationService {
       ).firstOrNull;
 
       if (rolloverGoal != null) {
-        await _savingsGoalRepository.addMoneyToGoal(rolloverGoal.id, amount);
+        await _savingsGoalRepository.addMoneyToGoal(rolloverGoal.id, amount, userId);
         return AllocationResult(
           success: true,
           message: 'Rolled over \$${amount.toStringAsFixed(2)} to next month',
@@ -303,7 +303,7 @@ class LeftoverAllocationService {
     ).firstOrNull;
 
     if (treatGoal != null) {
-      await _savingsGoalRepository.addMoneyToGoal(treatGoal.id, amount);
+      await _savingsGoalRepository.addMoneyToGoal(treatGoal.id, amount, userId);
       return AllocationResult(
         success: true,
         message: 'Added \$${amount.toStringAsFixed(2)} to Fun Fund',

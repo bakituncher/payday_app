@@ -29,13 +29,13 @@ class MockSavingsGoalRepository implements SavingsGoalRepository {
   }
 
   @override
-  Future<void> deleteSavingsGoal(String goalId) async {
+  Future<void> deleteSavingsGoal(String goalId, String userId) async {
     await Future.delayed(const Duration(milliseconds: 200));
     _goals.removeWhere((g) => g.id == goalId);
   }
 
   @override
-  Future<void> addMoneyToGoal(String goalId, double amount) async {
+  Future<void> addMoneyToGoal(String goalId, double amount, String userId) async {
     await Future.delayed(const Duration(milliseconds: 200));
     final index = _goals.indexWhere((g) => g.id == goalId);
     if (index != -1) {
@@ -47,7 +47,7 @@ class MockSavingsGoalRepository implements SavingsGoalRepository {
   }
 
   @override
-  Future<void> withdrawMoneyFromGoal(String goalId, double amount) async {
+  Future<void> withdrawMoneyFromGoal(String goalId, double amount, String userId) async {
     await Future.delayed(const Duration(milliseconds: 200));
     final index = _goals.indexWhere((g) => g.id == goalId);
     if (index != -1) {

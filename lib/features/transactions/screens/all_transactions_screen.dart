@@ -33,9 +33,9 @@ class _AllTransactionsScreenState extends ConsumerState<AllTransactionsScreen> {
     final transactionsAsync = ref.watch(currentCycleTransactionsProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundWhite,
+      backgroundColor: AppColors.getBackground(context),
       appBar: AppBar(
-        backgroundColor: AppColors.backgroundWhite,
+        backgroundColor: AppColors.getBackground(context),
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
@@ -381,7 +381,7 @@ class _AllTransactionsScreenState extends ConsumerState<AllTransactionsScreen> {
   Future<void> _deleteTransaction(Transaction transaction) async {
     try {
       final repository = ref.read(transactionRepositoryProvider);
-      await repository.deleteTransaction(transaction.id);
+      await repository.deleteTransaction(transaction.id, transaction.userId);
 
       ref.invalidate(currentCycleTransactionsProvider);
       ref.invalidate(totalExpensesProvider);

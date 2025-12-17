@@ -1,22 +1,37 @@
 /// Utility functions for formatting currency
 import 'dart:ui' as ui;
 import 'package:intl/intl.dart';
+import 'package:payday/core/services/currency_service.dart';
 
 class CurrencyFormatter {
   /// Format amount with currency symbol
   static String format(double amount, String currencyCode) {
+    final symbol = _getCurrencySymbol(currencyCode);
     final formatter = NumberFormat.currency(
-      symbol: _getCurrencySymbol(currencyCode),
-      decimalDigits: 2,
+      symbol: symbol,
+      decimalDigits: _getDecimalDigits(currencyCode),
     );
     return formatter.format(amount);
   }
 
+  /// Format amount with compact notation (e.g., 1.2K, 3.4M)
+  static String formatCompact(double amount, String currencyCode) {
+    final symbol = _getCurrencySymbol(currencyCode);
+
+    if (amount.abs() >= 1000000) {
+      return '$symbol${(amount / 1000000).toStringAsFixed(1)}M';
+    } else if (amount.abs() >= 1000) {
+      return '$symbol${(amount / 1000).toStringAsFixed(1)}K';
+    }
+
+    return format(amount, currencyCode);
+  }
+
   /// Format amount without currency symbol
-  static String formatWithoutSymbol(double amount) {
+  static String formatWithoutSymbol(double amount, {int decimals = 2}) {
     final formatter = NumberFormat.currency(
       symbol: '',
-      decimalDigits: 2,
+      decimalDigits: decimals,
     );
     return formatter.format(amount).trim();
   }
@@ -51,6 +66,20 @@ class CurrencyFormatter {
   static double parse(String value) {
     final cleaned = value.replaceAll(RegExp(r'[^\d.]'), '');
     return double.tryParse(cleaned) ?? 0.0;
+  }
+
+  /// Format with thousand separators
+  static String formatWithSeparators(double amount, String currencyCode) {
+    final symbol = _getCurrencySymbol(currencyCode);
+    final decimals = _getDecimalDigits(currencyCode);
+
+    final formatter = NumberFormat.currency(
+      symbol: symbol,
+      decimalDigits: decimals,
+      locale: 'en_US', // Use US locale for consistent thousand separators
+    );
+
+    return formatter.format(amount);
   }
 }
 
