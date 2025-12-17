@@ -5,7 +5,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:payday/core/theme/app_theme.dart';
 import 'package:payday/features/subscriptions/providers/subscription_providers.dart';
-import 'package:intl/intl.dart';
+import 'package:payday/core/providers/currency_providers.dart';
+import 'package:payday/core/utils/currency_formatter.dart';
 
 class UpcomingBillsCard extends ConsumerWidget {
   const UpcomingBillsCard({super.key});
@@ -14,7 +15,7 @@ class UpcomingBillsCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final subscriptionsDueAsync = ref.watch(subscriptionsDueSoonProvider);
     final theme = Theme.of(context);
-    final currencyFormat = NumberFormat.currency(symbol: '\$');
+    final currencyCode = ref.watch(currencyCodeProvider);
     final isDark = theme.brightness == Brightness.dark;
 
     return Container(
@@ -131,7 +132,7 @@ class UpcomingBillsCard extends ConsumerWidget {
 
                           // Amount
                           Text(
-                            currencyFormat.format(subscription.amount),
+                            CurrencyFormatter.format(subscription.amount, currencyCode),
                             style: theme.textTheme.bodyLarge?.copyWith(
                               fontWeight: FontWeight.w700,
                               color: AppColors.getTextPrimary(context),

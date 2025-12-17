@@ -6,6 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:payday/core/theme/app_theme.dart';
 import 'package:payday/core/models/subscription.dart';
 import 'package:payday/features/subscriptions/screens/subscription_detail_screen.dart';
+import 'package:payday/core/providers/currency_providers.dart';
+import 'package:payday/core/utils/currency_formatter.dart';
 import 'package:intl/intl.dart';
 
 class SubscriptionCard extends ConsumerWidget {
@@ -19,7 +21,7 @@ class SubscriptionCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final currencyFormat = NumberFormat.currency(symbol: '\$');
+    final currencyCode = ref.watch(currencyCodeProvider);
     final daysUntil = subscription.daysUntilBilling;
 
     return GestureDetector(
@@ -140,7 +142,7 @@ class SubscriptionCard extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  currencyFormat.format(subscription.amount),
+                  CurrencyFormatter.format(subscription.amount, currencyCode),
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
                     color: AppColors.getTextPrimary(context),
@@ -148,7 +150,7 @@ class SubscriptionCard extends ConsumerWidget {
                 ),
                 if (subscription.frequency != RecurrenceFrequency.monthly)
                   Text(
-                    '${currencyFormat.format(subscription.monthlyCost)}/mo',
+                    '${CurrencyFormatter.format(subscription.monthlyCost, currencyCode)}/mo',
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: AppColors.getTextSecondary(context),
                     ),

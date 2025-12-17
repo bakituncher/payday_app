@@ -6,7 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:payday/core/theme/app_theme.dart';
 import 'package:payday/features/subscriptions/providers/subscription_providers.dart';
 import 'package:payday/features/subscriptions/screens/subscriptions_screen.dart';
-import 'package:intl/intl.dart';
+import 'package:payday/core/providers/currency_providers.dart';
+import 'package:payday/core/utils/currency_formatter.dart';
 
 class ActiveSubscriptionsCard extends ConsumerWidget {
   const ActiveSubscriptionsCard({super.key});
@@ -17,7 +18,8 @@ class ActiveSubscriptionsCard extends ConsumerWidget {
     final totalMonthlyCostAsync = ref.watch(totalMonthlyCostProvider);
     final subscriptionsDueAsync = ref.watch(subscriptionsDueSoonProvider);
     final theme = Theme.of(context);
-    final currencyFormat = NumberFormat.currency(symbol: '\$');
+    final currencyCode = ref.watch(currencyCodeProvider);
+    final currencySymbol = ref.watch(currencySymbolProvider);
     final isDark = theme.brightness == Brightness.dark;
 
     return GestureDetector(
@@ -108,14 +110,14 @@ class ActiveSubscriptionsCard extends ConsumerWidget {
                             ),
                           ),
                           error: (_, __) => Text(
-                            '\$0.00',
+                            '${currencySymbol}0.00',
                             style: theme.textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.w700,
                               color: AppColors.getTextPrimary(context),
                             ),
                           ),
                           data: (cost) => Text(
-                            currencyFormat.format(cost),
+                            CurrencyFormatter.format(cost, currencyCode),
                             style: theme.textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.w700,
                               color: AppColors.getTextPrimary(context),
@@ -277,7 +279,7 @@ class ActiveSubscriptionsCard extends ConsumerWidget {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            currencyFormat.format(sub.amount),
+                            CurrencyFormatter.format(sub.amount, currencyCode),
                             style: theme.textTheme.bodyMedium?.copyWith(
                               fontWeight: FontWeight.w600,
                               color: AppColors.getTextPrimary(context),

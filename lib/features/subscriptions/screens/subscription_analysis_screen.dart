@@ -7,7 +7,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:payday/core/theme/app_theme.dart';
 import 'package:payday/core/models/subscription_analysis.dart';
 import 'package:payday/features/subscriptions/providers/subscription_providers.dart';
-import 'package:intl/intl.dart';
+import 'package:payday/core/providers/currency_providers.dart';
+import 'package:payday/core/utils/currency_formatter.dart';
 
 class SubscriptionAnalysisScreen extends ConsumerWidget {
   const SubscriptionAnalysisScreen({super.key});
@@ -34,7 +35,7 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
     SubscriptionSummary summary,
   ) {
     final theme = Theme.of(context);
-    final currencyFormat = NumberFormat.currency(symbol: '\$');
+    final currencyCode = ref.watch(currencyCodeProvider);
     final isDark = theme.brightness == Brightness.dark;
 
     return CustomScrollView(
@@ -129,7 +130,7 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Text(
-                            currencyFormat.format(summary.potentialMonthlySavings),
+                            CurrencyFormatter.format(summary.potentialMonthlySavings, currencyCode),
                             style: theme.textTheme.displaySmall?.copyWith(
                               color: Colors.white,
                               fontWeight: FontWeight.w800,
@@ -176,7 +177,7 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
                               ],
                             ),
                             Text(
-                              currencyFormat.format(summary.potentialYearlySavings),
+                              CurrencyFormatter.format(summary.potentialYearlySavings, currencyCode),
                               style: theme.textTheme.titleMedium?.copyWith(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w700,
@@ -266,7 +267,7 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
                                   ),
                                 ),
                                 Text(
-                                  currencyFormat.format(entry.value),
+                                  CurrencyFormatter.format(entry.value, currencyCode),
                                   style: theme.textTheme.bodyMedium?.copyWith(
                                     fontWeight: FontWeight.w700,
                                     color: AppColors.getTextPrimary(context),
@@ -392,7 +393,7 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
     int index,
   ) {
     final theme = Theme.of(context);
-    final currencyFormat = NumberFormat.currency(symbol: '\$');
+    final currencyCode = ref.watch(currencyCodeProvider);
     final isDark = theme.brightness == Brightness.dark;
 
     return Container(
@@ -438,7 +439,7 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${currencyFormat.format(analysis.monthlyAmount)}/month',
+                      '${CurrencyFormatter.format(analysis.monthlyAmount, currencyCode)}/month',
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: AppColors.getTextSecondary(context),
                       ),
@@ -591,7 +592,7 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
                     ),
                   ),
                   Text(
-                    '${currencyFormat.format(analysis.potentialSavings)}/month',
+                    '${CurrencyFormatter.format(analysis.potentialSavings, currencyCode)}/month',
                     style: theme.textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                       color: AppColors.success,

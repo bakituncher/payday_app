@@ -7,6 +7,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:payday/core/theme/app_theme.dart';
 import 'package:payday/core/models/subscription.dart';
 import 'package:payday/features/subscriptions/providers/subscription_providers.dart';
+import 'package:payday/core/providers/currency_providers.dart';
+import 'package:payday/core/utils/currency_formatter.dart';
 import 'package:intl/intl.dart';
 
 class PaymentCalendarScreen extends ConsumerStatefulWidget {
@@ -75,7 +77,7 @@ class _PaymentCalendarScreenState extends ConsumerState<PaymentCalendarScreen> {
 
   Widget _buildContent(BuildContext context, List<Subscription> subscriptions) {
     final theme = Theme.of(context);
-    final currencyFormat = NumberFormat.currency(symbol: '\$');
+    final currencyCode = ref.watch(currencyCodeProvider);
 
     // Get payments for selected date
     final selectedDatePayments = subscriptions.where((sub) {
@@ -127,7 +129,7 @@ class _PaymentCalendarScreenState extends ConsumerState<PaymentCalendarScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        currencyFormat.format(monthTotal),
+                        CurrencyFormatter.format(monthTotal, currencyCode),
                         style: theme.textTheme.headlineMedium?.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.w800,
@@ -322,7 +324,7 @@ class _PaymentCalendarScreenState extends ConsumerState<PaymentCalendarScreen> {
                     ),
                   ),
                   Text(
-                    currencyFormat.format(sub.amount),
+                    CurrencyFormatter.format(sub.amount, currencyCode),
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                       color: AppColors.darkCharcoal,

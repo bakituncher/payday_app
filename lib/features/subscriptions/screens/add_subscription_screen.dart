@@ -8,6 +8,7 @@ import 'package:payday/core/theme/app_theme.dart';
 import 'package:payday/core/models/subscription.dart';
 import 'package:payday/features/subscriptions/providers/subscription_providers.dart';
 import 'package:payday/core/providers/repository_providers.dart';
+import 'package:payday/core/providers/currency_providers.dart';
 import 'package:uuid/uuid.dart';
 
 class AddSubscriptionScreen extends ConsumerStatefulWidget {
@@ -392,9 +393,9 @@ class _AddSubscriptionScreenState extends ConsumerState<AddSubscriptionScreen> {
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             decoration: _buildInputDecoration(
               '0.00',
-              prefixIcon: const Text(
-                '\$',
-                style: TextStyle(
+              prefixIcon: Text(
+                ref.watch(currencySymbolProvider),
+                style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
                   color: AppColors.darkCharcoal,

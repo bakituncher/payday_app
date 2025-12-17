@@ -7,6 +7,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:payday/core/theme/app_theme.dart';
 import 'package:payday/core/models/subscription.dart';
 import 'package:payday/features/subscriptions/providers/subscription_providers.dart';
+import 'package:payday/core/providers/currency_providers.dart';
+import 'package:payday/core/utils/currency_formatter.dart';
 import 'package:intl/intl.dart';
 
 class SubscriptionDetailScreen extends ConsumerWidget {
@@ -20,7 +22,7 @@ class SubscriptionDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final currencyFormat = NumberFormat.currency(symbol: '\$');
+    final currencyCode = ref.watch(currencyCodeProvider);
     final dateFormat = DateFormat('MMM d, yyyy');
 
     return Scaffold(
@@ -152,7 +154,7 @@ class SubscriptionDetailScreen extends ConsumerWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  currencyFormat.format(subscription.amount),
+                                  CurrencyFormatter.format(subscription.amount, currencyCode),
                                   style: theme.textTheme.headlineMedium?.copyWith(
                                     fontWeight: FontWeight.w800,
                                     color: AppColors.darkCharcoal,
@@ -178,7 +180,7 @@ class SubscriptionDetailScreen extends ConsumerWidget {
                               child: Column(
                                 children: [
                                   Text(
-                                    currencyFormat.format(subscription.yearlyCost),
+                                    CurrencyFormatter.format(subscription.yearlyCost, currencyCode),
                                     style: theme.textTheme.titleMedium?.copyWith(
                                       fontWeight: FontWeight.w700,
                                       color: AppColors.primaryPink,
