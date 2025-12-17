@@ -144,6 +144,7 @@ class SubscriptionNotifier extends StateNotifier<AsyncValue<void>> {
       _ref.invalidate(activeSubscriptionsProvider);
       _ref.invalidate(filteredSubscriptionsProvider);
       _ref.invalidate(totalMonthlyCostProvider);
+      _ref.invalidate(totalYearlyCostProvider);
       _ref.invalidate(subscriptionsDueSoonProvider);
       _ref.invalidate(currentMonthlySummaryProvider); // Update monthly summary
 
@@ -167,6 +168,7 @@ class SubscriptionNotifier extends StateNotifier<AsyncValue<void>> {
       _ref.invalidate(activeSubscriptionsProvider);
       _ref.invalidate(filteredSubscriptionsProvider);
       _ref.invalidate(totalMonthlyCostProvider);
+      _ref.invalidate(totalYearlyCostProvider);
       _ref.invalidate(selectedSubscriptionProvider);
       _ref.invalidate(currentMonthlySummaryProvider); // Update monthly summary
 
@@ -191,6 +193,7 @@ class SubscriptionNotifier extends StateNotifier<AsyncValue<void>> {
       _ref.invalidate(activeSubscriptionsProvider);
       _ref.invalidate(filteredSubscriptionsProvider);
       _ref.invalidate(totalMonthlyCostProvider);
+      _ref.invalidate(totalYearlyCostProvider);
       _ref.invalidate(subscriptionsDueSoonProvider);
       _ref.invalidate(currentMonthlySummaryProvider); // Update monthly summary
 
