@@ -27,12 +27,12 @@ class MonthlySummaryCard extends ConsumerWidget {
       child: Container(
         padding: const EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
-          color: AppColors.cardWhite,
+          color: AppColors.getCardBackground(context),
           borderRadius: BorderRadius.circular(AppRadius.lg),
-          boxShadow: AppColors.cardShadow,
+          boxShadow: AppColors.getCardShadow(context),
         ),
         child: summaryAsync.when(
-          loading: () => _buildLoadingState(),
+          loading: () => _buildLoadingState(context),
           error: (_, __) => _buildErrorState(context),
           data: (summary) {
             if (summary == null) {
@@ -81,13 +81,13 @@ class MonthlySummaryCard extends ConsumerWidget {
                       '${summary.monthName} Summary',
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w700,
-                        color: AppColors.darkCharcoal,
+                        color: AppColors.getTextPrimary(context),
                       ),
                     ),
                     Text(
                       'Tap to see details',
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: AppColors.mediumGray,
+                        color: AppColors.getTextSecondary(context),
                       ),
                     ),
                   ],
@@ -96,7 +96,7 @@ class MonthlySummaryCard extends ConsumerWidget {
             ),
             Icon(
               Icons.chevron_right_rounded,
-              color: AppColors.mediumGray,
+              color: AppColors.getTextSecondary(context),
             ),
           ],
         ),
@@ -111,7 +111,7 @@ class MonthlySummaryCard extends ConsumerWidget {
               child: Container(
                 padding: const EdgeInsets.all(AppSpacing.sm),
                 decoration: BoxDecoration(
-                  color: _getHealthColor(summary.healthStatus).withOpacity(0.1),
+                  color: _getHealthColor(summary.healthStatus).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
                 child: Row(
@@ -128,7 +128,7 @@ class MonthlySummaryCard extends ConsumerWidget {
                           Text(
                             'Health',
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color: AppColors.mediumGray,
+                              color: AppColors.getTextSecondary(context),
                             ),
                           ),
                           Text(
@@ -153,12 +153,12 @@ class MonthlySummaryCard extends ConsumerWidget {
               child: Container(
                 padding: const EdgeInsets.all(AppSpacing.sm),
                 decoration: BoxDecoration(
-                  color: AppColors.subtleGray,
+                  color: AppColors.getSubtle(context),
                   borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
                 child: Row(
                   children: [
-                    Icon(
+                    const Icon(
                       Icons.savings_rounded,
                       color: AppColors.success,
                       size: 20,
@@ -171,7 +171,7 @@ class MonthlySummaryCard extends ConsumerWidget {
                           Text(
                             'Saved',
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color: AppColors.mediumGray,
+                              color: AppColors.getTextSecondary(context),
                             ),
                           ),
                           Text(
@@ -200,10 +200,10 @@ class MonthlySummaryCard extends ConsumerWidget {
               vertical: AppSpacing.sm,
             ),
             decoration: BoxDecoration(
-              color: AppColors.success.withOpacity(0.1),
+              color: AppColors.success.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(AppRadius.md),
               border: Border.all(
-                color: AppColors.success.withOpacity(0.3),
+                color: AppColors.success.withValues(alpha: 0.3),
               ),
             ),
             child: Row(
@@ -243,7 +243,7 @@ class MonthlySummaryCard extends ConsumerWidget {
     );
   }
 
-  Widget _buildLoadingState() {
+  Widget _buildLoadingState(BuildContext context) {
     return Column(
       children: [
         Row(
@@ -252,7 +252,7 @@ class MonthlySummaryCard extends ConsumerWidget {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: AppColors.subtleGray,
+                color: AppColors.getSubtle(context),
                 borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
             ),
@@ -261,7 +261,7 @@ class MonthlySummaryCard extends ConsumerWidget {
               width: 120,
               height: 16,
               decoration: BoxDecoration(
-                color: AppColors.subtleGray,
+                color: AppColors.getSubtle(context),
                 borderRadius: BorderRadius.circular(4),
               ),
             ),
@@ -274,7 +274,7 @@ class MonthlySummaryCard extends ConsumerWidget {
               child: Container(
                 height: 60,
                 decoration: BoxDecoration(
-                  color: AppColors.subtleGray,
+                  color: AppColors.getSubtle(context),
                   borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
               ),
@@ -284,7 +284,7 @@ class MonthlySummaryCard extends ConsumerWidget {
               child: Container(
                 height: 60,
                 decoration: BoxDecoration(
-                  color: AppColors.subtleGray,
+                  color: AppColors.getSubtle(context),
                   borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
               ),
@@ -335,13 +335,13 @@ class MonthlySummaryCard extends ConsumerWidget {
                 'Monthly Summary',
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w700,
-                  color: AppColors.darkCharcoal,
+                  color: AppColors.getTextPrimary(context),
                 ),
               ),
               Text(
                 'Start tracking to see your summary',
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: AppColors.mediumGray,
+                  color: AppColors.getTextSecondary(context),
                 ),
               ),
             ],
@@ -349,7 +349,7 @@ class MonthlySummaryCard extends ConsumerWidget {
         ),
         Icon(
           Icons.chevron_right_rounded,
-          color: AppColors.mediumGray,
+          color: AppColors.getTextSecondary(context),
         ),
       ],
     );

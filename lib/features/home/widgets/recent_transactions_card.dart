@@ -27,9 +27,9 @@ class RecentTransactionsCard extends ConsumerWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.cardWhite,
+        color: AppColors.getCardBackground(context),
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        boxShadow: AppColors.cardShadow,
+        boxShadow: AppColors.getCardShadow(context),
       ),
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.md),
@@ -48,8 +48,8 @@ class RecentTransactionsCard extends ConsumerWidget {
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            AppColors.secondaryPurple.withOpacity(0.15),
-                            AppColors.primaryPink.withOpacity(0.1),
+                            AppColors.secondaryPurple.withValues(alpha: 0.15),
+                            AppColors.primaryPink.withValues(alpha: 0.1),
                           ],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
@@ -67,7 +67,7 @@ class RecentTransactionsCard extends ConsumerWidget {
                       'Recent',
                       style: theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w700,
-                        color: AppColors.darkCharcoal,
+                        color: AppColors.getTextPrimary(context),
                       ),
                     ),
                   ],
@@ -97,11 +97,11 @@ class RecentTransactionsCard extends ConsumerWidget {
 
             // Transactions List
             transactionsAsync.when(
-              loading: () => _buildShimmerList(),
+              loading: () => _buildShimmerList(context),
               error: (error, stack) => _buildError(theme),
               data: (transactions) {
                 if (transactions.isEmpty) {
-                  return _buildEmptyState(theme);
+                  return _buildEmptyState(context, theme);
                 }
 
                 // Show only last 3 transactions for compact view
@@ -129,7 +129,7 @@ class RecentTransactionsCard extends ConsumerWidget {
     );
   }
 
-  Widget _buildEmptyState(ThemeData theme) {
+  Widget _buildEmptyState(BuildContext context, ThemeData theme) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
       child: Row(
@@ -138,13 +138,13 @@ class RecentTransactionsCard extends ConsumerWidget {
           Icon(
             Icons.receipt_long_rounded,
             size: 20,
-            color: AppColors.mediumGray,
+            color: AppColors.getTextSecondary(context),
           ),
           const SizedBox(width: AppSpacing.sm),
           Text(
             'No transactions yet',
             style: theme.textTheme.bodySmall?.copyWith(
-              color: AppColors.mediumGray,
+              color: AppColors.getTextSecondary(context),
             ),
           ),
         ],
@@ -152,7 +152,7 @@ class RecentTransactionsCard extends ConsumerWidget {
     );
   }
 
-  Widget _buildShimmerList() {
+  Widget _buildShimmerList(BuildContext context) {
     return Column(
       children: List.generate(3, (index) => Padding(
         padding: const EdgeInsets.symmetric(vertical: 4),
@@ -162,7 +162,7 @@ class RecentTransactionsCard extends ConsumerWidget {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: AppColors.subtleGray,
+                color: AppColors.getSurfaceVariant(context),
                 borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
             ),
@@ -175,7 +175,7 @@ class RecentTransactionsCard extends ConsumerWidget {
                     height: 12,
                     width: 80,
                     decoration: BoxDecoration(
-                      color: AppColors.subtleGray,
+                      color: AppColors.getSurfaceVariant(context),
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),
@@ -184,7 +184,7 @@ class RecentTransactionsCard extends ConsumerWidget {
                     height: 12,
                     width: 60,
                     decoration: BoxDecoration(
-                      color: AppColors.subtleGray,
+                      color: AppColors.getSurfaceVariant(context),
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),
@@ -195,7 +195,7 @@ class RecentTransactionsCard extends ConsumerWidget {
               height: 14,
               width: 50,
               decoration: BoxDecoration(
-                color: AppColors.subtleGray,
+                color: AppColors.getSurfaceVariant(context),
                 borderRadius: BorderRadius.circular(4),
               ),
             ),
@@ -203,7 +203,7 @@ class RecentTransactionsCard extends ConsumerWidget {
         ),
       )),
     ).animate(onPlay: (controller) => controller.repeat())
-        .shimmer(duration: 1200.ms, color: AppColors.lightGray);
+        .shimmer(duration: 1200.ms, color: AppColors.getBorder(context));
   }
 
   Widget _buildError(ThemeData theme) {
@@ -239,7 +239,7 @@ class RecentTransactionsCard extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: AppColors.error.withOpacity(0.1),
+                color: AppColors.error.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
               child: const Icon(
@@ -349,7 +349,7 @@ class _TransactionTile extends StatelessWidget {
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: AppSpacing.md),
         decoration: BoxDecoration(
-          color: AppColors.error.withOpacity(0.1),
+          color: AppColors.error.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(AppRadius.sm),
         ),
         child: const Icon(
@@ -368,7 +368,7 @@ class _TransactionTile extends StatelessWidget {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: AppColors.lightPink.withOpacity(0.6),
+                  color: AppColors.primaryPink.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
                 child: Center(
@@ -391,13 +391,13 @@ class _TransactionTile extends StatelessWidget {
                       transaction.categoryName,
                       style: theme.textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.w600,
-                        color: AppColors.darkCharcoal,
+                        color: AppColors.getTextPrimary(context),
                       ),
                     ),
                     Text(
                       _formatDate(transaction.date),
                       style: theme.textTheme.labelSmall?.copyWith(
-                        color: AppColors.mediumGray,
+                        color: AppColors.getTextSecondary(context),
                       ),
                     ),
                   ],

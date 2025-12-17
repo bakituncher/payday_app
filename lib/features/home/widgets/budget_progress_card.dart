@@ -24,14 +24,14 @@ class BudgetProgressCard extends ConsumerWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.cardWhite,
+        color: AppColors.getCardBackground(context),
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        boxShadow: AppColors.cardShadow,
+        boxShadow: AppColors.getCardShadow(context),
       ),
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.md),
         child: totalExpensesAsync.when(
-          loading: () => _buildShimmer(),
+          loading: () => _buildShimmer(context),
           error: (error, stack) => _buildError(theme),
           data: (totalExpenses) {
             final remaining = incomeAmount - totalExpenses;
@@ -53,8 +53,8 @@ class BudgetProgressCard extends ConsumerWidget {
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               colors: [
-                                AppColors.primaryPink.withOpacity(0.15),
-                                AppColors.secondaryPurple.withOpacity(0.1),
+                                AppColors.primaryPink.withValues(alpha: 0.15),
+                                AppColors.secondaryPurple.withValues(alpha: 0.1),
                               ],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
@@ -72,7 +72,7 @@ class BudgetProgressCard extends ConsumerWidget {
                           'Budget',
                           style: theme.textTheme.titleSmall?.copyWith(
                             fontWeight: FontWeight.w700,
-                            color: AppColors.darkCharcoal,
+                            color: AppColors.getTextPrimary(context),
                           ),
                         ),
                       ],
@@ -98,7 +98,7 @@ class BudgetProgressCard extends ConsumerWidget {
                     Text(
                       '${(progressPercentage * 100).toInt()}% used',
                       style: theme.textTheme.labelSmall?.copyWith(
-                        color: AppColors.mediumGray,
+                        color: AppColors.getTextSecondary(context),
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -149,7 +149,7 @@ class BudgetProgressCard extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
       decoration: BoxDecoration(
-        color: AppColors.subtleGray,
+        color: AppColors.getSurfaceVariant(context),
         borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Row(
@@ -158,7 +158,7 @@ class BudgetProgressCard extends ConsumerWidget {
           Text(
             label,
             style: theme.textTheme.labelSmall?.copyWith(
-              color: AppColors.mediumGray,
+              color: AppColors.getTextSecondary(context),
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -207,7 +207,7 @@ class BudgetProgressCard extends ConsumerWidget {
         vertical: 3,
       ),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(AppRadius.round),
       ),
       child: Text(
@@ -236,7 +236,7 @@ class BudgetProgressCard extends ConsumerWidget {
     }
   }
 
-  Widget _buildShimmer() {
+  Widget _buildShimmer(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -248,7 +248,7 @@ class BudgetProgressCard extends ConsumerWidget {
               height: 16,
               width: 80,
               decoration: BoxDecoration(
-                color: AppColors.subtleGray,
+                color: AppColors.getSurfaceVariant(context),
                 borderRadius: BorderRadius.circular(4),
               ),
             ),
@@ -256,7 +256,7 @@ class BudgetProgressCard extends ConsumerWidget {
               height: 18,
               width: 50,
               decoration: BoxDecoration(
-                color: AppColors.subtleGray,
+                color: AppColors.getSurfaceVariant(context),
                 borderRadius: BorderRadius.circular(9),
               ),
             ),
@@ -266,7 +266,7 @@ class BudgetProgressCard extends ConsumerWidget {
         Container(
           height: 8,
           decoration: BoxDecoration(
-            color: AppColors.subtleGray,
+            color: AppColors.getSurfaceVariant(context),
             borderRadius: BorderRadius.circular(4),
           ),
         ),
@@ -277,7 +277,7 @@ class BudgetProgressCard extends ConsumerWidget {
               child: Container(
                 height: 28,
                 decoration: BoxDecoration(
-                  color: AppColors.subtleGray,
+                  color: AppColors.getSurfaceVariant(context),
                   borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
               ),
@@ -287,7 +287,7 @@ class BudgetProgressCard extends ConsumerWidget {
               child: Container(
                 height: 28,
                 decoration: BoxDecoration(
-                  color: AppColors.subtleGray,
+                  color: AppColors.getSurfaceVariant(context),
                   borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
               ),
@@ -296,7 +296,7 @@ class BudgetProgressCard extends ConsumerWidget {
         ),
       ],
     ).animate(onPlay: (controller) => controller.repeat())
-        .shimmer(duration: 1200.ms, color: AppColors.lightGray);
+        .shimmer(duration: 1200.ms, color: AppColors.getBorder(context));
   }
 
   Widget _buildError(ThemeData theme) {
@@ -351,7 +351,7 @@ class _AnimatedProgressBar extends StatelessWidget {
                   borderRadius: BorderRadius.circular(AppRadius.round),
                   boxShadow: [
                     BoxShadow(
-                      color: colors.first.withOpacity(0.4),
+                      color: colors.first.withValues(alpha: 0.4),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
@@ -376,7 +376,7 @@ class _AnimatedProgressBar extends StatelessWidget {
       case BudgetHealth.danger:
         return [const Color(0xFFEF4444), const Color(0xFFF87171)];
       case BudgetHealth.unknown:
-        return [AppColors.mediumGray, AppColors.mediumGray.withOpacity(0.7)];
+        return [AppColors.mediumGray, AppColors.mediumGray.withValues(alpha: 0.7)];
     }
   }
 }

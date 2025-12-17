@@ -24,7 +24,7 @@ class SubscriptionDetailScreen extends ConsumerWidget {
     final dateFormat = DateFormat('MMM d, yyyy');
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundWhite,
+      backgroundColor: AppColors.getBackground(context),
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
@@ -32,7 +32,7 @@ class SubscriptionDetailScreen extends ConsumerWidget {
           SliverAppBar(
             expandedHeight: 200,
             pinned: true,
-            backgroundColor: AppColors.backgroundWhite,
+            backgroundColor: AppColors.getBackground(context),
             elevation: 0,
             leading: Container(
               margin: const EdgeInsets.all(8),

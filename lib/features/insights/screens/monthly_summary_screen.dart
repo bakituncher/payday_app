@@ -17,7 +17,7 @@ class MonthlySummaryScreen extends ConsumerWidget {
     final summaryAsync = ref.watch(currentMonthlySummaryProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundWhite,
+      backgroundColor: AppColors.getBackground(context),
       body: SafeArea(
         child: summaryAsync.when(
           loading: () => const Center(
@@ -51,14 +51,14 @@ class MonthlySummaryScreen extends ConsumerWidget {
           expandedHeight: 0,
           floating: true,
           pinned: false,
-          backgroundColor: AppColors.backgroundWhite,
+          backgroundColor: AppColors.getBackground(context),
           elevation: 0,
           surfaceTintColor: Colors.transparent,
           leadingWidth: 56,
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_ios_new_rounded),
             onPressed: () => Navigator.of(context).pop(),
-            color: AppColors.darkCharcoal,
+            color: AppColors.getTextPrimary(context),
           ),
           titleSpacing: 0,
           title: Row(

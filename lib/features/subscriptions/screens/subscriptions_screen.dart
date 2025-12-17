@@ -20,9 +20,10 @@ class SubscriptionsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final subscriptionsAsync = ref.watch(filteredSubscriptionsProvider);
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundWhite,
+      backgroundColor: AppColors.getBackground(context),
       body: SafeArea(
         child: Stack(
           children: [
@@ -37,8 +38,8 @@ class SubscriptionsScreen extends ConsumerWidget {
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
                     colors: [
-                      AppColors.primaryPink.withOpacity(0.1),
-                      AppColors.primaryPink.withOpacity(0.0),
+                      AppColors.primaryPink.withValues(alpha: isDark ? 0.05 : 0.1),
+                      AppColors.primaryPink.withValues(alpha: 0.0),
                     ],
                   ),
                 ),
@@ -54,8 +55,8 @@ class SubscriptionsScreen extends ConsumerWidget {
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
                     colors: [
-                      AppColors.secondaryPurple.withOpacity(0.08),
-                      AppColors.secondaryPurple.withOpacity(0.0),
+                      AppColors.secondaryPurple.withValues(alpha: isDark ? 0.04 : 0.08),
+                      AppColors.secondaryPurple.withValues(alpha: 0.0),
                     ],
                   ),
                 ),
@@ -70,14 +71,14 @@ class SubscriptionsScreen extends ConsumerWidget {
                   expandedHeight: 0,
                   floating: true,
                   pinned: false,
-                  backgroundColor: AppColors.backgroundWhite,
+                  backgroundColor: AppColors.getBackground(context),
                   elevation: 0,
                   surfaceTintColor: Colors.transparent,
                   leadingWidth: 56,
                   leading: IconButton(
                     icon: const Icon(Icons.arrow_back_ios_new_rounded),
                     onPressed: () => Navigator.of(context).pop(),
-                    color: AppColors.darkCharcoal,
+                    color: AppColors.getTextPrimary(context),
                   ),
                   titleSpacing: 0,
                   title: Row(
@@ -90,7 +91,7 @@ class SubscriptionsScreen extends ConsumerWidget {
                           borderRadius: BorderRadius.circular(AppRadius.md),
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.primaryPink.withOpacity(0.3),
+                              color: AppColors.primaryPink.withValues(alpha: 0.3),
                               blurRadius: 8,
                               offset: const Offset(0, 2),
                             ),
@@ -107,7 +108,7 @@ class SubscriptionsScreen extends ConsumerWidget {
                         'Subscriptions',
                         style: theme.textTheme.headlineSmall?.copyWith(
                           fontWeight: FontWeight.w800,
-                          color: AppColors.darkCharcoal,
+                          color: AppColors.getTextPrimary(context),
                           letterSpacing: -0.5,
                         ),
                       ),
@@ -117,7 +118,7 @@ class SubscriptionsScreen extends ConsumerWidget {
                     Container(
                       margin: const EdgeInsets.only(right: AppSpacing.sm),
                       decoration: BoxDecoration(
-                        color: AppColors.subtleGray,
+                        color: isDark ? AppColors.darkSurfaceVariant : AppColors.subtleGray,
                         borderRadius: BorderRadius.circular(AppRadius.md),
                       ),
                       child: IconButton(
@@ -130,7 +131,7 @@ class SubscriptionsScreen extends ConsumerWidget {
                             ),
                           );
                         },
-                        color: AppColors.darkCharcoal,
+                        color: AppColors.getTextPrimary(context),
                         tooltip: 'Subscription Analysis',
                       ),
                     ),
@@ -141,7 +142,7 @@ class SubscriptionsScreen extends ConsumerWidget {
                         borderRadius: BorderRadius.circular(AppRadius.md),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.primaryPink.withOpacity(0.3),
+                            color: AppColors.primaryPink.withValues(alpha: 0.3),
                             blurRadius: 8,
                             offset: const Offset(0, 2),
                           ),
@@ -193,7 +194,7 @@ class SubscriptionsScreen extends ConsumerWidget {
                             'Your Subscriptions',
                             style: theme.textTheme.titleLarge?.copyWith(
                               fontWeight: FontWeight.w700,
-                              color: AppColors.darkCharcoal,
+                              color: AppColors.getTextPrimary(context),
                             ),
                           ),
                           TextButton(
@@ -201,7 +202,7 @@ class SubscriptionsScreen extends ConsumerWidget {
                               HapticFeedback.lightImpact();
                               // Navigate to all subscriptions
                             },
-                            child: Text(
+                            child: const Text(
                               'See All',
                               style: TextStyle(
                                 color: AppColors.primaryPink,
@@ -230,7 +231,7 @@ class SubscriptionsScreen extends ConsumerWidget {
                     padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
                     sliver: SliverList(
                       delegate: SliverChildBuilderDelegate(
-                        (context, index) => _buildLoadingCard(),
+                        (context, index) => _buildLoadingCard(context),
                         childCount: 3,
                       ),
                     ),
@@ -277,14 +278,16 @@ class SubscriptionsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildLoadingCard() {
+  Widget _buildLoadingCard(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       margin: const EdgeInsets.only(bottom: AppSpacing.sm),
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColors.cardWhite,
+        color: AppColors.getCardBackground(context),
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        boxShadow: AppColors.cardShadow,
+        boxShadow: isDark ? null : AppColors.cardShadow,
+        border: isDark ? Border.all(color: AppColors.darkBorder, width: 1) : null,
       ),
       child: Row(
         children: [
@@ -292,7 +295,7 @@ class SubscriptionsScreen extends ConsumerWidget {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: AppColors.subtleGray,
+              color: isDark ? AppColors.darkSurfaceVariant : AppColors.subtleGray,
               borderRadius: BorderRadius.circular(AppRadius.md),
             ),
           ),
@@ -305,7 +308,7 @@ class SubscriptionsScreen extends ConsumerWidget {
                   width: 120,
                   height: 16,
                   decoration: BoxDecoration(
-                    color: AppColors.subtleGray,
+                    color: isDark ? AppColors.darkSurfaceVariant : AppColors.subtleGray,
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ),
@@ -314,7 +317,7 @@ class SubscriptionsScreen extends ConsumerWidget {
                   width: 80,
                   height: 12,
                   decoration: BoxDecoration(
-                    color: AppColors.subtleGray,
+                    color: isDark ? AppColors.darkSurfaceVariant : AppColors.subtleGray,
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ),
@@ -327,12 +330,16 @@ class SubscriptionsScreen extends ConsumerWidget {
   }
 
   Widget _buildErrorState(BuildContext context, Object error) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       margin: const EdgeInsets.all(AppSpacing.md),
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: AppColors.errorLight,
+        color: isDark
+            ? AppColors.error.withValues(alpha: 0.1)
+            : AppColors.errorLight,
         borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: isDark ? Border.all(color: AppColors.error.withValues(alpha: 0.3), width: 1) : null,
       ),
       child: Column(
         children: [
@@ -350,7 +357,7 @@ class SubscriptionsScreen extends ConsumerWidget {
             error.toString(),
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: AppColors.mediumGray,
+              color: AppColors.getTextSecondary(context),
             ),
           ),
         ],
@@ -359,19 +366,21 @@ class SubscriptionsScreen extends ConsumerWidget {
   }
 
   Widget _buildEmptyState(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       margin: const EdgeInsets.all(AppSpacing.md),
       padding: const EdgeInsets.all(AppSpacing.xl),
       decoration: BoxDecoration(
-        color: AppColors.cardWhite,
+        color: AppColors.getCardBackground(context),
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        boxShadow: AppColors.cardShadow,
+        boxShadow: isDark ? null : AppColors.cardShadow,
+        border: isDark ? Border.all(color: AppColors.darkBorder, width: 1) : null,
       ),
       child: Column(
         children: [
           Container(
             padding: const EdgeInsets.all(AppSpacing.lg),
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               gradient: AppColors.pinkGradient,
               shape: BoxShape.circle,
             ),
@@ -386,7 +395,7 @@ class SubscriptionsScreen extends ConsumerWidget {
             'No subscriptions yet',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.w700,
-              color: AppColors.darkCharcoal,
+              color: AppColors.getTextPrimary(context),
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
@@ -394,7 +403,7 @@ class SubscriptionsScreen extends ConsumerWidget {
             'Add your Netflix, Spotify, Gym and other subscriptions to track your recurring expenses.',
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: AppColors.mediumGray,
+              color: AppColors.getTextSecondary(context),
             ),
           ),
           const SizedBox(height: AppSpacing.lg),

@@ -33,9 +33,9 @@ class _AllTransactionsScreenState extends ConsumerState<AllTransactionsScreen> {
     final transactionsAsync = ref.watch(currentCycleTransactionsProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundWhite,
+      backgroundColor: AppColors.getBackground(context),
       appBar: AppBar(
-        backgroundColor: AppColors.backgroundWhite,
+        backgroundColor: AppColors.getBackground(context),
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded),

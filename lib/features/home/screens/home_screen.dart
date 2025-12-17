@@ -38,10 +38,10 @@ class HomeScreen extends ConsumerWidget {
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundWhite,
+      backgroundColor: AppColors.getBackground(context),
       body: SafeArea(
         child: userSettingsAsync.when(
-          loading: () => _buildLoadingState(),
+          loading: () => _buildLoadingState(context),
           error: (error, stack) => _buildErrorState(context, error),
           data: (settings) {
             if (settings == null) {
@@ -61,8 +61,8 @@ class HomeScreen extends ConsumerWidget {
                       shape: BoxShape.circle,
                       gradient: RadialGradient(
                         colors: [
-                          AppColors.primaryPink.withOpacity(0.1),
-                          AppColors.primaryPink.withOpacity(0.0),
+                          AppColors.primaryPink.withValues(alpha: 0.1),
+                          AppColors.primaryPink.withValues(alpha: 0.0),
                         ],
                       ),
                     ),
@@ -78,8 +78,8 @@ class HomeScreen extends ConsumerWidget {
                       shape: BoxShape.circle,
                       gradient: RadialGradient(
                         colors: [
-                          AppColors.secondaryPurple.withOpacity(0.08),
-                          AppColors.secondaryPurple.withOpacity(0.0),
+                          AppColors.secondaryPurple.withValues(alpha: 0.08),
+                          AppColors.secondaryPurple.withValues(alpha: 0.0),
                         ],
                       ),
                     ),
@@ -99,7 +99,7 @@ class HomeScreen extends ConsumerWidget {
                       expandedHeight: 0,
                       floating: true,
                       pinned: false,
-                      backgroundColor: AppColors.backgroundWhite,
+                      backgroundColor: AppColors.getBackground(context),
                       elevation: 0,
                       surfaceTintColor: Colors.transparent,
                       title: Row(
@@ -111,7 +111,7 @@ class HomeScreen extends ConsumerWidget {
                               borderRadius: BorderRadius.circular(AppRadius.md),
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppColors.primaryPink.withOpacity(0.3),
+                                  color: AppColors.primaryPink.withValues(alpha: 0.3),
                                   blurRadius: 8,
                                   offset: const Offset(0, 2),
                                 ),
@@ -128,7 +128,7 @@ class HomeScreen extends ConsumerWidget {
                             'Payday',
                             style: theme.textTheme.headlineSmall?.copyWith(
                               fontWeight: FontWeight.w800,
-                              color: AppColors.darkCharcoal,
+                              color: AppColors.getTextPrimary(context),
                               letterSpacing: -0.5,
                             ),
                           ),
@@ -138,7 +138,7 @@ class HomeScreen extends ConsumerWidget {
                         Container(
                           margin: const EdgeInsets.only(right: AppSpacing.sm),
                           decoration: BoxDecoration(
-                            color: AppColors.subtleGray,
+                            color: AppColors.getSubtle(context),
                             borderRadius: BorderRadius.circular(AppRadius.md),
                           ),
                           child: IconButton(
@@ -147,13 +147,13 @@ class HomeScreen extends ConsumerWidget {
                               HapticFeedback.lightImpact();
                               // TODO: Navigate to notifications
                             },
-                            color: AppColors.darkCharcoal,
+                            color: AppColors.getTextPrimary(context),
                           ),
                         ),
                         Container(
                           margin: const EdgeInsets.only(right: AppSpacing.md),
                           decoration: BoxDecoration(
-                            color: AppColors.subtleGray,
+                            color: AppColors.getSubtle(context),
                             borderRadius: BorderRadius.circular(AppRadius.md),
                           ),
                           child: IconButton(
@@ -167,7 +167,7 @@ class HomeScreen extends ConsumerWidget {
                                 ),
                               );
                             },
-                            color: AppColors.darkCharcoal,
+                            color: AppColors.getTextPrimary(context),
                           ),
                         ),
                       ],
@@ -277,7 +277,7 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildLoadingState() {
+  Widget _buildLoadingState(BuildContext context) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -301,7 +301,7 @@ class HomeScreen extends ConsumerWidget {
           Text(
             'Loading your finances...',
             style: TextStyle(
-              color: AppColors.mediumGray,
+              color: AppColors.getTextSecondary(context),
               fontSize: 14,
               fontWeight: FontWeight.w500,
             ),
@@ -343,7 +343,7 @@ class HomeScreen extends ConsumerWidget {
               Text(
                 error.toString(),
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: AppColors.mediumGray,
+                  color: AppColors.getTextSecondary(context),
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -456,7 +456,7 @@ class _GreetingSection extends StatelessWidget {
               greeting.text,
               style: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.w700,
-                color: AppColors.darkCharcoal,
+                color: AppColors.getTextPrimary(context),
               ),
             ),
           ],
@@ -465,7 +465,7 @@ class _GreetingSection extends StatelessWidget {
         Text(
           'Here\'s your financial overview',
           style: theme.textTheme.bodyMedium?.copyWith(
-            color: AppColors.mediumGray,
+            color: AppColors.getTextSecondary(context),
           ),
         ),
       ],
@@ -506,7 +506,10 @@ class _PremiumFABState extends State<_PremiumFAB> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
         transform: _isPressed
-            ? (Matrix4.identity()..scale(0.95))
+            ? (Matrix4.identity()
+              ..setEntry(0, 0, 0.95)
+              ..setEntry(1, 1, 0.95)
+              ..setEntry(2, 2, 0.95))
             : Matrix4.identity(),
         child: Container(
           padding: const EdgeInsets.symmetric(
@@ -518,7 +521,7 @@ class _PremiumFABState extends State<_PremiumFAB> {
             borderRadius: BorderRadius.circular(AppRadius.round),
             boxShadow: [
               BoxShadow(
-                color: AppColors.primaryPink.withOpacity(_isPressed ? 0.3 : 0.5),
+                color: AppColors.primaryPink.withValues(alpha: _isPressed ? 0.3 : 0.5),
                 blurRadius: _isPressed ? 15 : 25,
                 offset: Offset(0, _isPressed ? 4 : 8),
               ),
@@ -530,7 +533,7 @@ class _PremiumFABState extends State<_PremiumFAB> {
               Container(
                 padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: Colors.white.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: const Icon(

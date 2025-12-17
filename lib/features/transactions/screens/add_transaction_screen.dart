@@ -40,21 +40,25 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
     final theme = Theme.of(context);
     final mediaQuery = MediaQuery.of(context);
     final userSettings = ref.watch(userSettingsProvider).value;
+    final isDark = theme.brightness == Brightness.dark;
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.cardWhite,
+        color: AppColors.getCardBackground(context),
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(AppRadius.xl),
           topRight: Radius.circular(AppRadius.xl),
         ),
-        boxShadow: [
+        boxShadow: isDark ? null : [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 20,
             offset: const Offset(0, -5),
           ),
         ],
+        border: isDark ? Border(
+          top: BorderSide(color: AppColors.darkBorder, width: 1),
+        ) : null,
       ),
       child: Padding(
         padding: EdgeInsets.only(
@@ -75,7 +79,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                       width: 48,
                       height: 5,
                       decoration: BoxDecoration(
-                        color: AppColors.lightGray,
+                        color: AppColors.getBorder(context),
                         borderRadius: BorderRadius.circular(AppRadius.round),
                       ),
                     ),
@@ -96,7 +100,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                               borderRadius: BorderRadius.circular(AppRadius.md),
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppColors.primaryPink.withOpacity(0.3),
+                                  color: AppColors.primaryPink.withValues(alpha: 0.3),
                                   blurRadius: 8,
                                   offset: const Offset(0, 2),
                                 ),
@@ -114,13 +118,14 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                             style: theme.textTheme.headlineSmall?.copyWith(
                               fontWeight: FontWeight.w800,
                               letterSpacing: -0.5,
+                              color: AppColors.getTextPrimary(context),
                             ),
                           ),
                         ],
                       ),
                       Container(
                         decoration: BoxDecoration(
-                          color: AppColors.subtleGray,
+                          color: isDark ? AppColors.darkSurfaceVariant : AppColors.subtleGray,
                           borderRadius: BorderRadius.circular(AppRadius.md),
                         ),
                         child: IconButton(
@@ -129,7 +134,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                             HapticFeedback.lightImpact();
                             Navigator.pop(context);
                           },
-                          color: AppColors.mediumGray,
+                          color: AppColors.getTextSecondary(context),
                         ),
                       ),
                     ],
@@ -145,7 +150,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                     'Amount',
                     style: theme.textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w600,
-                      color: AppColors.mediumGray,
+                      color: AppColors.getTextSecondary(context),
                     ),
                   )
                       .animate()
@@ -153,16 +158,16 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                   const SizedBox(height: AppSpacing.sm),
                   Container(
                     decoration: BoxDecoration(
-                      color: AppColors.subtleGray,
+                      color: isDark ? AppColors.darkSurfaceVariant : AppColors.subtleGray,
                       borderRadius: BorderRadius.circular(AppRadius.lg),
-                      border: Border.all(color: AppColors.lightGray),
+                      border: Border.all(color: AppColors.getBorder(context)),
                     ),
                     child: TextFormField(
                       controller: _amountController,
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
                       style: theme.textTheme.headlineMedium?.copyWith(
                         fontWeight: FontWeight.w700,
-                        color: AppColors.darkCharcoal,
+                        color: AppColors.getTextPrimary(context),
                       ),
                       inputFormatters: [
                         FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
@@ -171,7 +176,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                         hintText: '0.00',
                         hintStyle: theme.textTheme.headlineMedium?.copyWith(
                           fontWeight: FontWeight.w500,
-                          color: AppColors.mediumGray.withOpacity(0.5),
+                          color: AppColors.getTextSecondary(context).withValues(alpha: 0.5),
                         ),
                         prefixIcon: Container(
                           padding: const EdgeInsets.only(left: 20, right: 12),
@@ -214,7 +219,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                     'Category',
                     style: theme.textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w600,
-                      color: AppColors.mediumGray,
+                      color: AppColors.getTextSecondary(context),
                     ),
                   )
                       .animate()
@@ -233,6 +238,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                         category['id']!,
                         isSelected,
                         theme,
+                        isDark,
                       )
                           .animate()
                           .fadeIn(duration: 200.ms, delay: (250 + index * 30).ms)
@@ -258,7 +264,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                     'Note (Optional)',
                     style: theme.textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w600,
-                      color: AppColors.mediumGray,
+                      color: AppColors.getTextSecondary(context),
                     ),
                   )
                       .animate()
@@ -266,9 +272,9 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                   const SizedBox(height: AppSpacing.sm),
                   Container(
                     decoration: BoxDecoration(
-                      color: AppColors.subtleGray,
+                      color: isDark ? AppColors.darkSurfaceVariant : AppColors.subtleGray,
                       borderRadius: BorderRadius.circular(AppRadius.lg),
-                      border: Border.all(color: AppColors.lightGray),
+                      border: Border.all(color: AppColors.getBorder(context)),
                     ),
                     child: TextFormField(
                       controller: _noteController,
@@ -276,11 +282,11 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                       decoration: InputDecoration(
                         hintText: 'Add a note...',
                         hintStyle: theme.textTheme.bodyLarge?.copyWith(
-                          color: AppColors.mediumGray.withOpacity(0.5),
+                          color: AppColors.getTextSecondary(context).withValues(alpha: 0.5),
                         ),
-                        prefixIcon: const Icon(
+                        prefixIcon: Icon(
                           Icons.edit_note_rounded,
-                          color: AppColors.mediumGray,
+                          color: AppColors.getTextSecondary(context),
                         ),
                         border: InputBorder.none,
                         contentPadding: const EdgeInsets.symmetric(
@@ -288,7 +294,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                           vertical: AppSpacing.md,
                         ),
                         counterStyle: theme.textTheme.labelSmall?.copyWith(
-                          color: AppColors.mediumGray,
+                          color: AppColors.getTextSecondary(context),
                         ),
                       ),
                     ),
@@ -326,6 +332,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
     String id,
     bool isSelected,
     ThemeData theme,
+    bool isDark,
   ) {
     return GestureDetector(
       onTap: () {
@@ -341,7 +348,9 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
           vertical: AppSpacing.sm,
         ),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.lightPink : AppColors.subtleGray,
+          color: isSelected
+              ? (isDark ? AppColors.primaryPink.withValues(alpha: 0.2) : AppColors.lightPink)
+              : (isDark ? AppColors.darkSurfaceVariant : AppColors.subtleGray),
           borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(
             color: isSelected ? AppColors.primaryPink : Colors.transparent,
@@ -350,7 +359,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: AppColors.primaryPink.withOpacity(0.2),
+                    color: AppColors.primaryPink.withValues(alpha: 0.2),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -366,12 +375,14 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
               name,
               style: theme.textTheme.bodyMedium?.copyWith(
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                color: isSelected ? AppColors.primaryPink : AppColors.darkCharcoal,
+                color: isSelected
+                    ? AppColors.primaryPink
+                    : (isDark ? AppColors.darkTextPrimary : AppColors.darkCharcoal),
               ),
             ),
             if (isSelected) ...[
               const SizedBox(width: AppSpacing.xs),
-              Icon(
+              const Icon(
                 Icons.check_circle_rounded,
                 size: 16,
                 color: AppColors.primaryPink,

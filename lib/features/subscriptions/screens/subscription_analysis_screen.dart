@@ -17,7 +17,7 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
     final analysisAsync = ref.watch(subscriptionAnalysisProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundWhite,
+      backgroundColor: AppColors.getBackground(context),
       body: SafeArea(
         child: analysisAsync.when(
           loading: () => _buildLoadingState(),
@@ -35,6 +35,7 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
   ) {
     final theme = Theme.of(context);
     final currencyFormat = NumberFormat.currency(symbol: '\$');
+    final isDark = theme.brightness == Brightness.dark;
 
     return CustomScrollView(
       physics: const BouncingScrollPhysics(),
@@ -44,14 +45,14 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
           expandedHeight: 0,
           floating: true,
           pinned: false,
-          backgroundColor: AppColors.backgroundWhite,
+          backgroundColor: AppColors.getBackground(context),
           elevation: 0,
           surfaceTintColor: Colors.transparent,
           leadingWidth: 56,
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_ios_new_rounded),
             onPressed: () => Navigator.of(context).pop(),
-            color: AppColors.darkCharcoal,
+            color: AppColors.getTextPrimary(context),
           ),
           titleSpacing: 0,
           title: Row(
@@ -60,10 +61,10 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.success.withOpacity(0.1),
+                  color: AppColors.success.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
-                child: Icon(
+                child: const Icon(
                   Icons.analytics_rounded,
                   color: AppColors.success,
                   size: 20,
@@ -74,7 +75,7 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
                 'Savings Analysis',
                 style: theme.textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.w800,
-                  color: AppColors.darkCharcoal,
+                  color: AppColors.getTextPrimary(context),
                   letterSpacing: -0.5,
                 ),
               ),
@@ -97,7 +98,7 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
                     borderRadius: BorderRadius.circular(AppRadius.xl),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.primaryPink.withOpacity(0.3),
+                        color: AppColors.primaryPink.withValues(alpha: 0.3),
                         blurRadius: 20,
                         offset: const Offset(0, 8),
                       ),
@@ -110,14 +111,14 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
                         children: [
                           Icon(
                             Icons.savings_rounded,
-                            color: Colors.white.withOpacity(0.9),
+                            color: Colors.white.withValues(alpha: 0.9),
                             size: 28,
                           ),
                           const SizedBox(width: AppSpacing.sm),
                           Text(
                             'Potential Savings',
                             style: theme.textTheme.titleMedium?.copyWith(
-                              color: Colors.white.withOpacity(0.9),
+                              color: Colors.white.withValues(alpha: 0.9),
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -141,7 +142,7 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
                             child: Text(
                               '/month',
                               style: theme.textTheme.bodyLarge?.copyWith(
-                                color: Colors.white.withOpacity(0.7),
+                                color: Colors.white.withValues(alpha: 0.7),
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -152,7 +153,7 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
                       Container(
                         padding: const EdgeInsets.all(AppSpacing.md),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.15),
+                          color: Colors.white.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(AppRadius.md),
                         ),
                         child: Row(
@@ -162,14 +163,14 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
                               children: [
                                 Icon(
                                   Icons.calendar_month_rounded,
-                                  color: Colors.white.withOpacity(0.8),
+                                  color: Colors.white.withValues(alpha: 0.8),
                                   size: 18,
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
                                   'Yearly potential:',
                                   style: theme.textTheme.bodyMedium?.copyWith(
-                                    color: Colors.white.withOpacity(0.8),
+                                    color: Colors.white.withValues(alpha: 0.8),
                                   ),
                                 ),
                               ],
@@ -232,7 +233,7 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
                   'Spending by Category',
                   style: theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w700,
-                    color: AppColors.darkCharcoal,
+                    color: AppColors.getTextPrimary(context),
                   ),
                 ),
                 const SizedBox(height: AppSpacing.md),
@@ -240,9 +241,10 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
                 Container(
                   padding: const EdgeInsets.all(AppSpacing.md),
                   decoration: BoxDecoration(
-                    color: AppColors.cardWhite,
+                    color: AppColors.getCardBackground(context),
                     borderRadius: BorderRadius.circular(AppRadius.lg),
-                    boxShadow: AppColors.cardShadow,
+                    boxShadow: isDark ? null : AppColors.cardShadow,
+                    border: isDark ? Border.all(color: AppColors.darkBorder, width: 1) : null,
                   ),
                   child: Column(
                     children: summary.spendByCategory.entries.map((entry) {
@@ -260,14 +262,14 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
                                   _formatCategoryName(entry.key),
                                   style: theme.textTheme.bodyMedium?.copyWith(
                                     fontWeight: FontWeight.w500,
-                                    color: AppColors.darkCharcoal,
+                                    color: AppColors.getTextPrimary(context),
                                   ),
                                 ),
                                 Text(
                                   currencyFormat.format(entry.value),
                                   style: theme.textTheme.bodyMedium?.copyWith(
                                     fontWeight: FontWeight.w700,
-                                    color: AppColors.darkCharcoal,
+                                    color: AppColors.getTextPrimary(context),
                                   ),
                                 ),
                               ],
@@ -278,7 +280,7 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
                               child: LinearProgressIndicator(
                                 value: percentage / 100,
                                 minHeight: 8,
-                                backgroundColor: AppColors.subtleGray,
+                                backgroundColor: isDark ? AppColors.darkSurfaceVariant : AppColors.subtleGray,
                                 valueColor: AlwaysStoppedAnimation(
                                   _getCategoryColor(entry.key),
                                 ),
@@ -298,14 +300,14 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
                   'Recommendations',
                   style: theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w700,
-                    color: AppColors.darkCharcoal,
+                    color: AppColors.getTextPrimary(context),
                   ),
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 Text(
                   'Based on typical usage patterns in US & EU markets',
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: AppColors.mediumGray,
+                    color: AppColors.getTextSecondary(context),
                   ),
                 ),
                 const SizedBox(height: AppSpacing.md),
@@ -345,19 +347,21 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
     required String value,
     required Color color,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColors.cardWhite,
+        color: AppColors.getCardBackground(context),
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        boxShadow: AppColors.cardShadow,
+        boxShadow: isDark ? null : AppColors.cardShadow,
+        border: isDark ? Border.all(color: AppColors.darkBorder, width: 1) : null,
       ),
       child: Column(
         children: [
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
             child: Icon(icon, color: color, size: 20),
@@ -367,13 +371,13 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
             value,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.w800,
-              color: AppColors.darkCharcoal,
+              color: AppColors.getTextPrimary(context),
             ),
           ),
           Text(
             label,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: AppColors.mediumGray,
+              color: AppColors.getTextSecondary(context),
             ),
           ),
         ],
@@ -389,19 +393,22 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
   ) {
     final theme = Theme.of(context);
     final currencyFormat = NumberFormat.currency(symbol: '\$');
+    final isDark = theme.brightness == Brightness.dark;
 
     return Container(
       margin: const EdgeInsets.only(bottom: AppSpacing.sm),
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColors.cardWhite,
+        color: AppColors.getCardBackground(context),
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        boxShadow: AppColors.cardShadow,
+        boxShadow: isDark ? null : AppColors.cardShadow,
         border: analysis.recommendation == RecommendationType.cancel
-            ? Border.all(color: AppColors.error.withOpacity(0.3))
+            ? Border.all(color: AppColors.error.withValues(alpha: 0.3))
             : analysis.recommendation == RecommendationType.review
-                ? Border.all(color: AppColors.warning.withOpacity(0.3))
-                : null,
+                ? Border.all(color: AppColors.warning.withValues(alpha: 0.3))
+                : isDark
+                    ? Border.all(color: AppColors.darkBorder, width: 1)
+                    : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -419,7 +426,7 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
                           analysis.subscriptionName,
                           style: theme.textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.w700,
-                            color: AppColors.darkCharcoal,
+                            color: AppColors.getTextPrimary(context),
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -433,7 +440,7 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
                     Text(
                       '${currencyFormat.format(analysis.monthlyAmount)}/month',
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: AppColors.mediumGray,
+                        color: AppColors.getTextSecondary(context),
                       ),
                     ),
                   ],
@@ -445,7 +452,7 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
                   vertical: AppSpacing.xs,
                 ),
                 decoration: BoxDecoration(
-                  color: _getRecommendationColor(analysis.recommendation).withOpacity(0.1),
+                  color: _getRecommendationColor(analysis.recommendation).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(AppRadius.round),
                 ),
                 child: Text(
@@ -467,7 +474,7 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
               Text(
                 'Usage Score:',
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: AppColors.mediumGray,
+                  color: AppColors.getTextSecondary(context),
                 ),
               ),
               const SizedBox(width: 8),
@@ -477,7 +484,7 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
                   child: LinearProgressIndicator(
                     value: analysis.usageScore / 100,
                     minHeight: 6,
-                    backgroundColor: AppColors.subtleGray,
+                    backgroundColor: isDark ? AppColors.darkSurfaceVariant : AppColors.subtleGray,
                     valueColor: AlwaysStoppedAnimation(
                       _getUsageColor(analysis.usageScore),
                     ),
@@ -506,14 +513,14 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
                   Icon(
                     Icons.info_outline_rounded,
                     size: 16,
-                    color: AppColors.mediumGray,
+                    color: AppColors.getTextSecondary(context),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       reason,
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: AppColors.mediumGray,
+                        color: AppColors.getTextSecondary(context),
                       ),
                     ),
                   ),
@@ -528,15 +535,16 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(AppSpacing.sm),
               decoration: BoxDecoration(
-                color: AppColors.info.withOpacity(0.05),
+                color: AppColors.info.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(AppRadius.md),
+                border: isDark ? Border.all(color: AppColors.info.withValues(alpha: 0.2)) : null,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.lightbulb_outline, size: 16, color: AppColors.info),
+                      const Icon(Icons.lightbulb_outline, size: 16, color: AppColors.info),
                       const SizedBox(width: 6),
                       Text(
                         'Suggestions:',
@@ -553,7 +561,7 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
                     child: Text(
                       '• $alt',
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: AppColors.darkCharcoal,
+                        color: AppColors.getTextPrimary(context),
                       ),
                     ),
                   )),
@@ -568,13 +576,13 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(AppSpacing.sm),
               decoration: BoxDecoration(
-                color: AppColors.success.withOpacity(0.1),
+                color: AppColors.success.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(AppRadius.md),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.savings_outlined, size: 18, color: AppColors.success),
+                  const Icon(Icons.savings_outlined, size: 18, color: AppColors.success),
                   const SizedBox(width: 8),
                   Text(
                     'Potential savings: ',
@@ -664,14 +672,21 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.error_outline, size: 48, color: AppColors.error),
+          const Icon(Icons.error_outline, size: 48, color: AppColors.error),
           const SizedBox(height: 16),
           Text(
             'Could not load analysis',
-            style: Theme.of(context).textTheme.titleMedium,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: AppColors.getTextPrimary(context),
+            ),
           ),
           const SizedBox(height: 8),
-          Text(error.toString()),
+          Text(
+            error.toString(),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: AppColors.getTextSecondary(context),
+            ),
+          ),
         ],
       ),
     );
