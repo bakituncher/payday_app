@@ -66,14 +66,14 @@ class LocalSavingsGoalRepository implements SavingsGoalRepository {
   }
 
   @override
-  Future<void> deleteSavingsGoal(String goalId) async {
+  Future<void> deleteSavingsGoal(String goalId, String userId) async {
     await _loadGoals();
     _cachedGoals!.removeWhere((g) => g.id == goalId);
     await _saveGoals();
   }
 
   @override
-  Future<void> addMoneyToGoal(String goalId, double amount) async {
+  Future<void> addMoneyToGoal(String goalId, double amount, String userId) async {
     await _loadGoals();
     final index = _cachedGoals!.indexWhere((g) => g.id == goalId);
     if (index != -1) {
@@ -86,7 +86,7 @@ class LocalSavingsGoalRepository implements SavingsGoalRepository {
   }
 
   @override
-  Future<void> withdrawMoneyFromGoal(String goalId, double amount) async {
+  Future<void> withdrawMoneyFromGoal(String goalId, double amount, String userId) async {
     await _loadGoals();
     final index = _cachedGoals!.indexWhere((g) => g.id == goalId);
     if (index != -1) {

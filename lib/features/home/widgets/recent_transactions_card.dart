@@ -281,7 +281,8 @@ class RecentTransactionsCard extends ConsumerWidget {
     if (confirmed == true) {
       try {
         final repository = ref.read(transactionRepositoryProvider);
-        await repository.deleteTransaction(transaction.id);
+        // Pass userId from transaction object
+        await repository.deleteTransaction(transaction.id, transaction.userId);
 
         // Refresh data
         ref.invalidate(currentCycleTransactionsProvider);

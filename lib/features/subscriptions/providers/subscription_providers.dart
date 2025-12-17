@@ -170,7 +170,8 @@ class SubscriptionNotifier extends StateNotifier<AsyncValue<void>> {
     state = const AsyncValue.loading();
     try {
       final repository = _ref.read(subscriptionRepositoryProvider);
-      await repository.deleteSubscription(subscriptionId);
+      final userId = _ref.read(currentUserIdProvider);
+      await repository.deleteSubscription(subscriptionId, userId);
 
       // Cancel notification
       final notificationService = _ref.read(notificationServiceProvider);
@@ -193,7 +194,8 @@ class SubscriptionNotifier extends StateNotifier<AsyncValue<void>> {
     state = const AsyncValue.loading();
     try {
       final repository = _ref.read(subscriptionRepositoryProvider);
-      await repository.cancelSubscription(subscriptionId);
+      final userId = _ref.read(currentUserIdProvider);
+      await repository.cancelSubscription(subscriptionId, userId);
 
       // Cancel notification
       final notificationService = _ref.read(notificationServiceProvider);
@@ -216,7 +218,8 @@ class SubscriptionNotifier extends StateNotifier<AsyncValue<void>> {
     state = const AsyncValue.loading();
     try {
       final repository = _ref.read(subscriptionRepositoryProvider);
-      await repository.pauseSubscription(subscriptionId);
+      final userId = _ref.read(currentUserIdProvider);
+      await repository.pauseSubscription(subscriptionId, userId);
 
       _ref.invalidate(subscriptionsProvider);
       _ref.invalidate(activeSubscriptionsProvider);
@@ -231,7 +234,8 @@ class SubscriptionNotifier extends StateNotifier<AsyncValue<void>> {
     state = const AsyncValue.loading();
     try {
       final repository = _ref.read(subscriptionRepositoryProvider);
-      await repository.resumeSubscription(subscriptionId);
+      final userId = _ref.read(currentUserIdProvider);
+      await repository.resumeSubscription(subscriptionId, userId);
 
       _ref.invalidate(subscriptionsProvider);
       _ref.invalidate(activeSubscriptionsProvider);

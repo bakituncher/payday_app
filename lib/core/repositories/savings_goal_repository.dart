@@ -12,12 +12,12 @@ abstract class SavingsGoalRepository {
   Future<void> updateSavingsGoal(SavingsGoal goal);
 
   /// Delete a savings goal
-  Future<void> deleteSavingsGoal(String goalId);
+  Future<void> deleteSavingsGoal(String goalId, String userId);
 
   /// Add money to a savings goal
-  Future<void> addMoneyToGoal(String goalId, double amount);
+  Future<void> addMoneyToGoal(String goalId, double amount, String userId);
 
   /// Withdraw money from a savings goal
-  Future<void> withdrawMoneyFromGoal(String goalId, double amount);
+  Future<void> withdrawMoneyFromGoal(String goalId, double amount, String userId);
 }
 

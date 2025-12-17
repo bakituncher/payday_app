@@ -18,7 +18,7 @@ abstract class TransactionRepository {
   Future<void> updateTransaction(Transaction transaction);
 
   /// Delete a transaction
-  Future<void> deleteTransaction(String transactionId);
+  Future<void> deleteTransaction(String transactionId, String userId);
 
   /// Get total expenses for current cycle
   Future<double> getTotalExpensesForCycle(

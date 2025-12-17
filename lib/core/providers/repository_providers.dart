@@ -11,28 +11,58 @@ import 'package:payday/core/repositories/local/local_transaction_repository.dart
 import 'package:payday/core/repositories/local/local_savings_goal_repository.dart';
 import 'package:payday/core/repositories/local/local_subscription_repository.dart';
 import 'package:payday/core/repositories/local/local_monthly_summary_repository.dart';
+import 'package:payday/core/repositories/firebase/firebase_user_settings_repository.dart';
+import 'package:payday/core/repositories/firebase/firebase_transaction_repository.dart';
+import 'package:payday/core/repositories/firebase/firebase_savings_goal_repository.dart';
+import 'package:payday/core/repositories/firebase/firebase_subscription_repository.dart';
+import 'package:payday/core/repositories/firebase/firebase_monthly_summary_repository.dart';
+import 'package:payday/core/providers/auth_providers.dart';
 import 'package:payday/core/services/notification_service.dart';
 
 /// Repository Providers - Using Local implementations with SharedPreferences
 /// Data persists across app restarts
 
 final userSettingsRepositoryProvider = Provider<UserSettingsRepository>((ref) {
+  final user = ref.watch(currentUserProvider).asData?.value;
+  // If user is authenticated and NOT anonymous, use Firebase.
+  // Otherwise use Local.
+  // Exception: If we just linked, isAnonymous is false.
+  // This means we immediately switch to Firebase.
+  if (user != null && !user.isAnonymous) {
+    return FirebaseUserSettingsRepository();
+  }
   return LocalUserSettingsRepository();
 });
 
 final transactionRepositoryProvider = Provider<TransactionRepository>((ref) {
+  final user = ref.watch(currentUserProvider).asData?.value;
+  if (user != null && !user.isAnonymous) {
+    return FirebaseTransactionRepository();
+  }
   return LocalTransactionRepository();
 });
 
 final savingsGoalRepositoryProvider = Provider<SavingsGoalRepository>((ref) {
+  final user = ref.watch(currentUserProvider).asData?.value;
+  if (user != null && !user.isAnonymous) {
+    return FirebaseSavingsGoalRepository();
+  }
   return LocalSavingsGoalRepository();
 });
 
 final subscriptionRepositoryProvider = Provider<SubscriptionRepository>((ref) {
+  final user = ref.watch(currentUserProvider).asData?.value;
+  if (user != null && !user.isAnonymous) {
+    return FirebaseSubscriptionRepository();
+  }
   return LocalSubscriptionRepository();
 });
 
 final monthlySummaryRepositoryProvider = Provider<MonthlySummaryRepository>((ref) {
+  final user = ref.watch(currentUserProvider).asData?.value;
+  if (user != null && !user.isAnonymous) {
+    return FirebaseMonthlySummaryRepository();
+  }
   return LocalMonthlySummaryRepository();
 });
 
@@ -42,8 +72,10 @@ final notificationServiceProvider = Provider<NotificationService>((ref) {
 });
 
 /// Current User ID Provider
-/// Uses 'local_user' for local storage - will be replaced with Firebase Auth in production
 final currentUserIdProvider = Provider<String>((ref) {
-  return 'local_user';
+  final user = ref.watch(currentUserProvider).asData?.value;
+  // If user is logged in (including anonymous), use their UID.
+  // If no user, fallback to 'local_user' (shouldn't happen if we force anonymous auth)
+  return user?.uid ?? 'local_user';
 });
 

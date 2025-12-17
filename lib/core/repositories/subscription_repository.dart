@@ -21,16 +21,16 @@ abstract class SubscriptionRepository {
   Future<void> updateSubscription(Subscription subscription);
 
   /// Delete a subscription
-  Future<void> deleteSubscription(String subscriptionId);
+  Future<void> deleteSubscription(String subscriptionId, String userId);
 
   /// Cancel a subscription (soft delete)
-  Future<void> cancelSubscription(String subscriptionId);
+  Future<void> cancelSubscription(String subscriptionId, String userId);
 
   /// Pause a subscription
-  Future<void> pauseSubscription(String subscriptionId);
+  Future<void> pauseSubscription(String subscriptionId, String userId);
 
   /// Resume a paused subscription
-  Future<void> resumeSubscription(String subscriptionId);
+  Future<void> resumeSubscription(String subscriptionId, String userId);
 
   /// Get subscriptions due within specified days
   Future<List<Subscription>> getSubscriptionsDueSoon(String userId, int days);
