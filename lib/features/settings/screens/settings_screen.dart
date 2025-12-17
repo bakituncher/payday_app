@@ -129,22 +129,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     try {
       final authService = ref.read(authServiceProvider);
       final wasAnonymous = authService.isAnonymous;
+      // Capture the anonymous ID before it changes (or use 'local_user' if not signed in)
+      final sourceUserId = ref.read(currentUserIdProvider);
+
       final userCredential = await authService.signInWithGoogle();
 
       if (userCredential != null) {
-        // If user was anonymous and is now signed in (and not anonymous), it means we linked or upgraded.
-        // We should trigger data migration.
-        // However, if we linked, `isAnonymous` was true, now it is false (or true if link failed? no, link succeeds).
-        // If we were anonymous, we migrate data to the new UID.
         if (wasAnonymous && !userCredential.user!.isAnonymous) {
              try {
                 final migrationService = ref.read(dataMigrationServiceProvider);
-                await migrationService.migrateLocalToFirebase(userCredential.user!.uid);
+                await migrationService.migrateLocalToFirebase(userCredential.user!.uid, sourceUserId);
 
-                // Force refresh of providers to switch to Firebase
                 ref.invalidate(userSettingsRepositoryProvider);
                 ref.invalidate(transactionRepositoryProvider);
-                // ... invalidate others if needed
              } catch (e) {
                print("Migration error: $e");
                if (mounted) {
@@ -197,13 +194,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     try {
       final authService = ref.read(authServiceProvider);
       final wasAnonymous = authService.isAnonymous;
+      final sourceUserId = ref.read(currentUserIdProvider);
+
       final userCredential = await authService.signInWithApple();
 
       if (userCredential != null) {
          if (wasAnonymous && !userCredential.user!.isAnonymous) {
              try {
                 final migrationService = ref.read(dataMigrationServiceProvider);
-                await migrationService.migrateLocalToFirebase(userCredential.user!.uid);
+                await migrationService.migrateLocalToFirebase(userCredential.user!.uid, sourceUserId);
 
                 ref.invalidate(userSettingsRepositoryProvider);
                 ref.invalidate(transactionRepositoryProvider);

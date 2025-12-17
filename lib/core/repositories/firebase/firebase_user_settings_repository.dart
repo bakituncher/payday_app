@@ -45,4 +45,20 @@ class FirebaseUserSettingsRepository implements UserSettingsRepository {
      final settings = await getUserSettings(userId);
      return settings != null;
   }
+
+  @override
+  Future<void> updateIncomeAmount(double amount) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      await _getDoc(user.uid).update({'incomeAmount': amount, 'updatedAt': DateTime.now().toIso8601String()});
+    }
+  }
+
+  @override
+  Future<void> updateNextPayday(DateTime date) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      await _getDoc(user.uid).update({'nextPayday': date.toIso8601String(), 'updatedAt': DateTime.now().toIso8601String()});
+    }
+  }
 }

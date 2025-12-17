@@ -20,19 +20,19 @@ class DataMigrationService {
 
   DataMigrationService(this.ref);
 
-  Future<void> migrateLocalToFirebase(String userId) async {
-    print('Starting migration for user: $userId');
+  Future<void> migrateLocalToFirebase(String targetUserId, String sourceUserId) async {
+    print('Starting migration from $sourceUserId to $targetUserId');
 
     // 1. Migrate User Settings
     try {
       // Direct instantiation to avoid provider state conflict
       final localSettingsRepo = LocalUserSettingsRepository();
-      // We read from the "local_user" ID because that's where the anonymous data is stored
-      final settings = await localSettingsRepo.getUserSettings('local_user');
+      // We read from the source ID (likely anonymous UID)
+      final settings = await localSettingsRepo.getUserSettings(sourceUserId);
 
       if (settings != null) {
         // Create a copy with the new userId
-        final newSettings = settings.copyWith(userId: userId);
+        final newSettings = settings.copyWith(userId: targetUserId);
 
         final firebaseSettingsRepo = FirebaseUserSettingsRepository();
         await firebaseSettingsRepo.saveUserSettings(newSettings);
@@ -45,12 +45,12 @@ class DataMigrationService {
     // 2. Migrate Transactions
     try {
       final localTxRepo = LocalTransactionRepository();
-      final transactions = await localTxRepo.getTransactions('local_user');
+      final transactions = await localTxRepo.getTransactions(sourceUserId);
 
       if (transactions.isNotEmpty) {
         final firebaseTxRepo = FirebaseTransactionRepository();
         for (final tx in transactions) {
-          final newTx = tx.copyWith(userId: userId);
+          final newTx = tx.copyWith(userId: targetUserId);
           await firebaseTxRepo.addTransaction(newTx);
         }
         print('Migrated ${transactions.length} transactions');
@@ -62,12 +62,12 @@ class DataMigrationService {
     // 3. Migrate Savings Goals
     try {
       final localSavingsRepo = LocalSavingsGoalRepository();
-      final goals = await localSavingsRepo.getSavingsGoals('local_user');
+      final goals = await localSavingsRepo.getSavingsGoals(sourceUserId);
 
       if (goals.isNotEmpty) {
         final firebaseSavingsRepo = FirebaseSavingsGoalRepository();
         for (final goal in goals) {
-          final newGoal = goal.copyWith(userId: userId);
+          final newGoal = goal.copyWith(userId: targetUserId);
           await firebaseSavingsRepo.addSavingsGoal(newGoal);
         }
         print('Migrated ${goals.length} savings goals');
@@ -79,12 +79,12 @@ class DataMigrationService {
     // 4. Migrate Subscriptions
     try {
       final localSubRepo = LocalSubscriptionRepository();
-      final subscriptions = await localSubRepo.getSubscriptions('local_user');
+      final subscriptions = await localSubRepo.getSubscriptions(sourceUserId);
 
       if (subscriptions.isNotEmpty) {
         final firebaseSubRepo = FirebaseSubscriptionRepository();
         for (final sub in subscriptions) {
-          final newSub = sub.copyWith(userId: userId);
+          final newSub = sub.copyWith(userId: targetUserId);
           await firebaseSubRepo.addSubscription(newSub);
         }
         print('Migrated ${subscriptions.length} subscriptions');
@@ -99,16 +99,16 @@ class DataMigrationService {
       // Note: Local repo doesn't expose getAllSummaries easily in interface but let's assume we fetch meaningful years.
       // Or we iterate current year.
       final now = DateTime.now();
-      final summaries = await localSummaryRepo.getSummariesForYear('local_user', now.year);
+      final summaries = await localSummaryRepo.getSummariesForYear(sourceUserId, now.year);
       // Also check previous year just in case
-      final prevSummaries = await localSummaryRepo.getSummariesForYear('local_user', now.year - 1);
+      final prevSummaries = await localSummaryRepo.getSummariesForYear(sourceUserId, now.year - 1);
 
       final allSummaries = [...summaries, ...prevSummaries];
 
       if (allSummaries.isNotEmpty) {
         final firebaseSummaryRepo = FirebaseMonthlySummaryRepository();
         for (final summary in allSummaries) {
-          final newSummary = summary.copyWith(userId: userId);
+          final newSummary = summary.copyWith(userId: targetUserId);
           await firebaseSummaryRepo.saveSummary(newSummary);
         }
         print('Migrated ${allSummaries.length} monthly summaries');
