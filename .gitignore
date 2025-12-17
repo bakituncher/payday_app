@@ -72,3 +72,4 @@ out/
 doc/api/
 coverage/
 *.log
+/ios/GoogleService-Info.plist
