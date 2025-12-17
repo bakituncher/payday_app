@@ -1,128 +1,42 @@
-/// Utility functions for formatting currency
 import 'dart:ui' as ui;
 import 'package:intl/intl.dart';
-import 'package:currency_picker/currency_picker.dart';
 
 class CurrencyFormatter {
-  /// Format amount with currency symbol
+  /// Cihazın konumundan/dilinden otomatik para birimi kodunu alır (örn: TRY, USD)
+  static String getLocalCurrencyCode() {
+    try {
+      final String locale = ui.PlatformDispatcher.instance.locale.toString();
+      final format = NumberFormat.simpleCurrency(locale: locale);
+      return format.currencyName ?? 'USD';
+    } catch (_) {
+      return 'USD';
+    }
+  }
+
+  /// Para birimi koduna göre sembolü getirir (örn: TRY -> ₺, USD -> $)
+  static String getSymbol(String currencyCode) {
+    try {
+      final format = NumberFormat.simpleCurrency(name: currencyCode);
+      return format.currencySymbol;
+    } catch (_) {
+      return currencyCode; // Hata durumunda kodu döndür (örn: USD)
+    }
+  }
+
+  /// Miktarı formatlar: 1234.5 -> ₺1,234.50 veya 1.234,50 ₺
+  /// Not: '₺' sembolünün başta mı sonda mı olacağını intl paketi dile göre otomatik ayarlar.
   static String format(double amount, String currencyCode) {
-    final symbol = _getCurrencySymbol(currencyCode);
+    // Para birimi koduna göre en uygun formatı oluşturur
     final formatter = NumberFormat.currency(
-      symbol: symbol,
+      symbol: getSymbol(currencyCode),
       decimalDigits: _getDecimalDigits(currencyCode),
     );
     return formatter.format(amount);
   }
 
-  /// Format amount with compact notation (e.g., 1.2K, 3.4M)
-  static String formatCompact(double amount, String currencyCode) {
-    final symbol = _getCurrencySymbol(currencyCode);
-
-    if (amount.abs() >= 1000000) {
-      return '$symbol${(amount / 1000000).toStringAsFixed(1)}M';
-    } else if (amount.abs() >= 1000) {
-      return '$symbol${(amount / 1000).toStringAsFixed(1)}K';
-    }
-
-    return format(amount, currencyCode);
-  }
-
-  /// Format amount without currency symbol
-  static String formatWithoutSymbol(double amount, {int decimals = 2}) {
-    final formatter = NumberFormat.currency(
-      symbol: '',
-      decimalDigits: decimals,
-    );
-    return formatter.format(amount).trim();
-  }
-
-  /// Get currency symbol from code
-  /// Uses currency_picker package for accurate symbols (₺, $, €, etc.)
-  static String _getCurrencySymbol(String currencyCode) {
-    try {
-      // currency_picker paketinden sembolü al - daha doğru semboller (₺, $, € gibi)
-      final currencies = CurrencyService().getAll();
-      final currency = currencies.firstWhere(
-        (c) => c.code == currencyCode,
-        orElse: () => currencies.first,
-      );
-      return currency.symbol;
-    } catch (e) {
-      // Fallback: Intl paketini kullan
-      try {
-        final format = NumberFormat.simpleCurrency(name: currencyCode);
-        return format.currencySymbol;
-      } catch (e) {
-        // Son çare: kod kendisi
-        return currencyCode;
-      }
-    }
-  }
-
-  /// Get currency symbol publicly
-  static String getSymbol(String currencyCode) {
-    return _getCurrencySymbol(currencyCode);
-  }
-
-  /// Get decimal digits for currency
-  /// Some currencies like JPY don't use decimal places
+  /// Bazı para birimleri (JPY gibi) kuruş/ondalık kullanmaz
   static int _getDecimalDigits(String currencyCode) {
-    try {
-      // currency_picker'dan ondalık basamak sayısını al
-      final currencies = CurrencyService().getAll();
-      final currency = currencies.firstWhere(
-        (c) => c.code == currencyCode,
-        orElse: () => currencies.first,
-      );
-      return currency.decimalDigits;
-    } catch (e) {
-      // Fallback: Manuel kontrol
-      switch (currencyCode.toUpperCase()) {
-        case 'JPY': // Japanese Yen
-        case 'KRW': // Korean Won
-        case 'VND': // Vietnamese Dong
-        case 'CLP': // Chilean Peso
-        case 'ISK': // Icelandic Krona
-          return 0;
-        case 'BHD': // Bahraini Dinar
-        case 'IQD': // Iraqi Dinar
-        case 'JOD': // Jordanian Dinar
-        case 'KWD': // Kuwaiti Dinar
-        case 'OMR': // Omani Rial
-        case 'TND': // Tunisian Dinar
-          return 3;
-        default:
-          return 2;
-      }
-    }
-  }
-
-  /// Get local currency code from device locale
-  static String getLocalCurrencyCode() {
-    // Cihazın mevcut yerel ayarını alır (örn: tr_TR, en_US)
-    final String locale = ui.PlatformDispatcher.instance.locale.toString();
-    final format = NumberFormat.simpleCurrency(locale: locale);
-    return format.currencyName ?? 'USD'; // Varsayılan olarak USD döner
-  }
-
-  /// Parse currency string to double
-  static double parse(String value) {
-    final cleaned = value.replaceAll(RegExp(r'[^\d.]'), '');
-    return double.tryParse(cleaned) ?? 0.0;
-  }
-
-  /// Format with thousand separators
-  static String formatWithSeparators(double amount, String currencyCode) {
-    final symbol = _getCurrencySymbol(currencyCode);
-    final decimals = _getDecimalDigits(currencyCode);
-
-    final formatter = NumberFormat.currency(
-      symbol: symbol,
-      decimalDigits: decimals,
-      locale: 'en_US', // Use US locale for consistent thousand separators
-    );
-
-    return formatter.format(amount);
+    const noDecimalCurrencies = ['JPY', 'KRW', 'VND', 'CLP', 'ISK'];
+    return noDecimalCurrencies.contains(currencyCode.toUpperCase()) ? 0 : 2;
   }
 }
-

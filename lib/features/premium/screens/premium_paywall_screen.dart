@@ -80,8 +80,8 @@ class _PremiumPaywallScreenState extends ConsumerState<PremiumPaywallScreen>
 
   /// Get localized price with user's currency
   String _getLocalizedPrice(double usdPrice) {
-    final currencyCode = ref.read(syncCurrencyCodeProvider);
-    final currencySymbol = ref.read(syncCurrencySymbolProvider);
+    final currencyCode = ref.read(currencyCodeProvider);
+    final currencySymbol = ref.read(currencySymbolProvider);
 
     // Simple conversion rates (in real app, use actual exchange rates API)
     final conversionRates = {
@@ -103,8 +103,8 @@ class _PremiumPaywallScreenState extends ConsumerState<PremiumPaywallScreen>
 
   /// Get localized monthly price description
   String _getLocalizedMonthlyPrice(double usdMonthlyPrice) {
-    final currencyCode = ref.read(syncCurrencyCodeProvider);
-    final currencySymbol = ref.read(syncCurrencySymbolProvider);
+    final currencyCode = ref.read(currencyCodeProvider);
+    final currencySymbol = ref.read(currencySymbolProvider);
 
     final conversionRates = {
       'USD': 1.0,
