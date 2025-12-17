@@ -18,42 +18,108 @@ class FirebaseMonthlySummaryRepository implements MonthlySummaryRepository {
 
   @override
   Future<MonthlySummary?> getMonthlySummary(String userId, int year, int month) async {
-    final snapshot = await _getCollection(userId)
-        .where('year', isEqualTo: year)
-        .where('month', isEqualTo: month)
-        .limit(1)
-        .get();
+    try {
+      final snapshot = await _getCollection(userId)
+          .where('year', isEqualTo: year)
+          .where('month', isEqualTo: month)
+          .limit(1)
+          .get();
 
-    if (snapshot.docs.isNotEmpty) {
-      return MonthlySummary.fromJson(snapshot.docs.first.data());
+      if (snapshot.docs.isNotEmpty) {
+        final data = snapshot.docs.first.data();
+        return MonthlySummary.fromJson(data);
+      }
+    } catch (e) {
+      print('Error loading monthly summary: $e');
+      // Return null if deserialization fails
     }
     return null;
   }
 
   @override
   Future<List<MonthlySummary>> getYearlySummaries(String userId, int year) async {
-    final snapshot = await _getCollection(userId)
-        .where('year', isEqualTo: year)
-        .get();
+    try {
+      final snapshot = await _getCollection(userId)
+          .where('year', isEqualTo: year)
+          .get();
 
-    return snapshot.docs.map((d) => MonthlySummary.fromJson(d.data())).toList();
+      return snapshot.docs
+          .map((d) {
+            try {
+              return MonthlySummary.fromJson(d.data());
+            } catch (e) {
+              print('Error parsing summary ${d.id}: $e');
+              return null;
+            }
+          })
+          .whereType<MonthlySummary>()
+          .toList();
+    } catch (e) {
+      print('Error loading yearly summaries: $e');
+      return [];
+    }
   }
 
   @override
   Future<List<MonthlySummary>> getRecentSummaries(String userId, int count) async {
-    final snapshot = await _getCollection(userId)
-        .orderBy('year', descending: true)
-        .orderBy('month', descending: true)
-        .limit(count)
-        .get();
+    try {
+      final snapshot = await _getCollection(userId)
+          .orderBy('year', descending: true)
+          .orderBy('month', descending: true)
+          .limit(count)
+          .get();
 
-    return snapshot.docs.map((d) => MonthlySummary.fromJson(d.data())).toList();
+      return snapshot.docs
+          .map((d) {
+            try {
+              return MonthlySummary.fromJson(d.data());
+            } catch (e) {
+              print('Error parsing summary ${d.id}: $e');
+              return null;
+            }
+          })
+          .whereType<MonthlySummary>()
+          .toList();
+    } catch (e) {
+      print('Error loading recent summaries: $e');
+      return [];
+    }
   }
 
   @override
   Future<void> saveMonthlySummary(MonthlySummary summary) async {
-    // Assuming summary.id is set, or we construct it
-    await _getCollection(summary.userId).doc(summary.id).set(summary.toJson());
+    // Convert to JSON and ensure proper serialization
+    final json = summary.toJson();
+
+    // Ensure insights are properly converted to JSON
+    if (json['insights'] != null) {
+      json['insights'] = (json['insights'] as List)
+          .map((insight) {
+            if (insight is Map<String, dynamic>) {
+              return insight;
+            } else {
+              // If it's a SpendingInsight object, convert it
+              return (insight as SpendingInsight).toJson();
+            }
+          })
+          .toList();
+    }
+
+    // Ensure leftoverSuggestions are properly converted to JSON
+    if (json['leftoverSuggestions'] != null) {
+      json['leftoverSuggestions'] = (json['leftoverSuggestions'] as List)
+          .map((suggestion) {
+            if (suggestion is Map<String, dynamic>) {
+              return suggestion;
+            } else {
+              // If it's a LeftoverSuggestion object, convert it
+              return (suggestion as LeftoverSuggestion).toJson();
+            }
+          })
+          .toList();
+    }
+
+    await _getCollection(summary.userId).doc(summary.id).set(json);
   }
 
   @override
