@@ -84,5 +84,24 @@ class MockUserSettingsRepository implements UserSettingsRepository {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getBool('onboarding_completed') ?? prefs.containsKey('user_currency');
   }
+
+  @override
+  Future<void> deleteAllUserData(String userId) async {
+    await Future.delayed(const Duration(milliseconds: 200));
+
+    final prefs = await SharedPreferences.getInstance();
+
+    // Clear all user-related keys
+    await prefs.remove('user_id');
+    await prefs.remove('user_currency');
+    await prefs.remove('user_pay_cycle');
+    await prefs.remove('next_payday');
+    await prefs.remove('income_amount');
+    await prefs.remove('onboarding_completed');
+
+    // Clear cache
+    _cachedSettings = null;
+    _initialized = false;
+  }
 }
 

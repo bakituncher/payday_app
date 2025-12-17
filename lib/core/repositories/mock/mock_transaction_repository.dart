@@ -75,5 +75,11 @@ class MockTransactionRepository implements TransactionRepository {
     await Future.delayed(const Duration(milliseconds: 100));
     return _transactions.where((t) => t.userId == userId).length;
   }
+
+  @override
+  Future<void> deleteAllUserTransactions(String userId) async {
+    await Future.delayed(const Duration(milliseconds: 200));
+    _transactions.removeWhere((t) => t.userId == userId);
+  }
 }
 

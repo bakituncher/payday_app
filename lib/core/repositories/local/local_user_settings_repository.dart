@@ -103,6 +103,33 @@ class LocalUserSettingsRepository implements UserSettingsRepository {
            prefs.containsKey('user_currency');
   }
 
+  @override
+  Future<void> deleteAllUserData(String userId) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    // Clear all user-related keys
+    await prefs.remove('user_id');
+    await prefs.remove('user_currency');
+    await prefs.remove('user_pay_cycle');
+    await prefs.remove('next_payday');
+    await prefs.remove('income_amount');
+    await prefs.remove('user_market');
+    await prefs.remove('notifications_enabled');
+    await prefs.remove('payday_reminders');
+    await prefs.remove('bill_reminders');
+    await prefs.remove('bill_reminder_days');
+    await prefs.remove('subscription_alerts');
+    await prefs.remove('weekly_subscription_summary');
+    await prefs.remove('unused_subscription_alerts');
+    await prefs.remove('unused_threshold_days');
+    await prefs.remove('settings_created_at');
+    await prefs.remove('onboarding_completed');
+
+    // Clear cache
+    _cachedSettings = null;
+    _initialized = false;
+  }
+
   /// Clear cache to force reload from storage
   void clearCache() {
     _cachedSettings = null;

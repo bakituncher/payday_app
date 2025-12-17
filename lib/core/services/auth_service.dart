@@ -161,6 +161,25 @@ class AuthService {
     }
   }
 
+  // Delete Account
+  Future<void> deleteAccount() async {
+    try {
+      final user = currentUser;
+      if (user == null) {
+        throw Exception('No user is currently signed in');
+      }
+
+      // Delete the user account
+      await user.delete();
+
+      // Sign out from Google Sign In if needed
+      await _googleSignIn.signOut();
+    } catch (e) {
+      print('Error deleting account: $e');
+      rethrow;
+    }
+  }
+
   // Check if Apple Sign In is available
   Future<bool> isAppleSignInAvailable() async {
     try {

@@ -31,5 +31,8 @@ abstract class TransactionRepository {
 
   /// Get transaction count for a user
   Future<int> getTransactionCount(String userId);
+
+  /// Delete all transactions for a user
+  Future<void> deleteAllUserTransactions(String userId);
 }
 

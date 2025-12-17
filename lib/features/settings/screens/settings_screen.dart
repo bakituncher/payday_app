@@ -353,6 +353,224 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     }
   }
 
+  Future<void> _showDeleteAccountDialog() async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+          ),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.error.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                ),
+                child: const Icon(
+                  Icons.warning_rounded,
+                  color: AppColors.error,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Text(
+                  'Hesabı Sil',
+                  style: TextStyle(
+                    color: isDark ? AppColors.darkTextPrimary : AppColors.darkCharcoal,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Hesabınızı silmek üzeresiniz. Bu işlem geri alınamaz!',
+                style: TextStyle(
+                  color: isDark ? AppColors.darkTextPrimary : AppColors.darkCharcoal,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              Text(
+                'Aşağıdaki veriler kalıcı olarak silinecek:',
+                style: TextStyle(
+                  color: isDark ? AppColors.darkTextSecondary : AppColors.mediumGray,
+                  fontSize: 14,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              _buildDeleteWarningItem('Tüm işlemler ve harcamalar'),
+              _buildDeleteWarningItem('Finansal ayarlar ve tercihleri'),
+              _buildDeleteWarningItem('Hesap bilgileri'),
+              _buildDeleteWarningItem('Premium abonelik durumu'),
+              const SizedBox(height: AppSpacing.md),
+              Container(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                decoration: BoxDecoration(
+                  color: AppColors.error.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.info_outline_rounded,
+                      color: AppColors.error,
+                      size: 20,
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: Text(
+                        'Bu işlem geri alınamaz!',
+                        style: TextStyle(
+                          color: AppColors.error,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(
+                'İptal',
+                style: TextStyle(
+                  color: isDark ? AppColors.darkTextSecondary : AppColors.mediumGray,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _handleDeleteAccount();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.error,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.lg,
+                  vertical: AppSpacing.sm,
+                ),
+              ),
+              child: const Text(
+                'Hesabı Sil',
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildDeleteWarningItem(String text) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        children: [
+          Icon(
+            Icons.close_rounded,
+            color: AppColors.error,
+            size: 18,
+          ),
+          const SizedBox(width: AppSpacing.xs),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                color: isDark ? AppColors.darkTextSecondary : AppColors.mediumGray,
+                fontSize: 14,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _handleDeleteAccount() async {
+    setState(() => _isSigningIn = true);
+
+    try {
+      final authService = ref.read(authServiceProvider);
+      final user = authService.currentUser;
+
+      if (user == null) {
+        throw Exception('No user is currently signed in');
+      }
+
+      // Delete all user data from repositories
+      final userSettingsRepo = ref.read(userSettingsRepositoryProvider);
+      final transactionRepo = ref.read(transactionRepositoryProvider);
+
+      // Delete user settings and transactions
+      await Future.wait([
+        userSettingsRepo.deleteAllUserData(user.uid),
+        transactionRepo.deleteAllUserTransactions(user.uid),
+      ]);
+
+      // Finally, delete the auth account
+      await authService.deleteAccount();
+
+      if (mounted) {
+        HapticFeedback.mediumImpact();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.white),
+                SizedBox(width: 8),
+                Text('Hesabınız başarıyla silindi'),
+              ],
+            ),
+            backgroundColor: AppColors.success,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(12)),
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Hesap silinirken hata oluştu: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSigningIn = false);
+      }
+    }
+  }
+
   Future<void> _saveSettings() async {
     if (_incomeController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -633,6 +851,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               width: double.infinity,
               onPressed: _handleSignOut,
               style: PaydayButtonStyle.outlined,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            // Delete Account Button
+            PaydayButton(
+              text: 'Hesabı Sil',
+              icon: Icons.delete_forever_rounded,
+              isLoading: _isSigningIn,
+              width: double.infinity,
+              onPressed: _showDeleteAccountDialog,
+              style: PaydayButtonStyle.outlined,
+              textColor: AppColors.error,
             ),
           ] else ...[
             // Sign In Options
