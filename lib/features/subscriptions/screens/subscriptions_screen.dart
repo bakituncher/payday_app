@@ -116,26 +116,6 @@ class SubscriptionsScreen extends ConsumerWidget {
                   ),
                   actions: [
                     Container(
-                      margin: const EdgeInsets.only(right: AppSpacing.sm),
-                      decoration: BoxDecoration(
-                        color: isDark ? AppColors.darkSurfaceVariant : AppColors.subtleGray,
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                      ),
-                      child: IconButton(
-                        icon: const Icon(Icons.analytics_outlined),
-                        onPressed: () {
-                          HapticFeedback.lightImpact();
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const SubscriptionAnalysisScreen(),
-                            ),
-                          );
-                        },
-                        color: AppColors.getTextPrimary(context),
-                        tooltip: 'Subscription Analysis',
-                      ),
-                    ),
-                    Container(
                       margin: const EdgeInsets.only(right: AppSpacing.md),
                       decoration: BoxDecoration(
                         gradient: AppColors.pinkGradient,
@@ -197,17 +177,27 @@ class SubscriptionsScreen extends ConsumerWidget {
                               color: AppColors.getTextPrimary(context),
                             ),
                           ),
-                          TextButton(
+                          TextButton.icon(
                             onPressed: () {
                               HapticFeedback.lightImpact();
-                              // Navigate to all subscriptions
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => const SubscriptionAnalysisScreen(),
+                                ),
+                              );
                             },
-                            child: const Text(
-                              'See All',
+                            icon: const Icon(
+                              Icons.analytics_outlined,
+                              size: 18,
+                            ),
+                            label: const Text(
+                              'Analysis',
                               style: TextStyle(
-                                color: AppColors.primaryPink,
                                 fontWeight: FontWeight.w600,
                               ),
+                            ),
+                            style: TextButton.styleFrom(
+                              foregroundColor: AppColors.primaryPink,
                             ),
                           ),
                         ],
