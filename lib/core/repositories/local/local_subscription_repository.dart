@@ -125,7 +125,7 @@ class LocalSubscriptionRepository implements SubscriptionRepository {
   }
 
   @override
-  Future<void> deleteSubscription(String subscriptionId) async {
+  Future<void> deleteSubscription(String subscriptionId, String userId) async {
     await _loadSubscriptions();
     await _loadReminders();
     _cachedSubscriptions!.removeWhere((s) => s.id == subscriptionId);
@@ -135,7 +135,7 @@ class LocalSubscriptionRepository implements SubscriptionRepository {
   }
 
   @override
-  Future<void> cancelSubscription(String subscriptionId) async {
+  Future<void> cancelSubscription(String subscriptionId, String userId) async {
     await _loadSubscriptions();
     final index = _cachedSubscriptions!.indexWhere((s) => s.id == subscriptionId);
     if (index != -1) {
@@ -149,7 +149,7 @@ class LocalSubscriptionRepository implements SubscriptionRepository {
   }
 
   @override
-  Future<void> pauseSubscription(String subscriptionId) async {
+  Future<void> pauseSubscription(String subscriptionId, String userId) async {
     await _loadSubscriptions();
     final index = _cachedSubscriptions!.indexWhere((s) => s.id == subscriptionId);
     if (index != -1) {
@@ -162,7 +162,7 @@ class LocalSubscriptionRepository implements SubscriptionRepository {
   }
 
   @override
-  Future<void> resumeSubscription(String subscriptionId) async {
+  Future<void> resumeSubscription(String subscriptionId, String userId) async {
     await _loadSubscriptions();
     final index = _cachedSubscriptions!.indexWhere((s) => s.id == subscriptionId);
     if (index != -1) {

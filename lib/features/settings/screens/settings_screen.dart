@@ -13,6 +13,7 @@ import 'package:payday/core/providers/theme_providers.dart';
 import 'package:payday/features/home/providers/home_providers.dart';
 import 'package:payday/features/insights/providers/monthly_summary_providers.dart';
 import 'package:payday/features/premium/screens/premium_paywall_screen.dart';
+import 'package:payday/core/services/data_migration_service.dart';
 import 'package:payday/shared/widgets/payday_button.dart';
 import 'package:intl/intl.dart';
 
@@ -127,28 +128,52 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
     try {
       final authService = ref.read(authServiceProvider);
+      final wasAnonymous = authService.isAnonymous;
       final userCredential = await authService.signInWithGoogle();
 
-      if (userCredential != null && mounted) {
-        HapticFeedback.mediumImpact();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.check_circle, color: Colors.white),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text('Signed in as ${userCredential.user?.displayName ?? userCredential.user?.email}'),
-                ),
-              ],
+      if (userCredential != null) {
+        // If user was anonymous and is now signed in (and not anonymous), it means we linked or upgraded.
+        // We should trigger data migration.
+        // However, if we linked, `isAnonymous` was true, now it is false (or true if link failed? no, link succeeds).
+        // If we were anonymous, we migrate data to the new UID.
+        if (wasAnonymous && !userCredential.user!.isAnonymous) {
+             try {
+                final migrationService = ref.read(dataMigrationServiceProvider);
+                await migrationService.migrateLocalToFirebase(userCredential.user!.uid);
+
+                // Force refresh of providers to switch to Firebase
+                ref.invalidate(userSettingsRepositoryProvider);
+                ref.invalidate(transactionRepositoryProvider);
+                // ... invalidate others if needed
+             } catch (e) {
+               print("Migration error: $e");
+               if (mounted) {
+                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Data migration failed: $e")));
+               }
+             }
+        }
+
+        if (mounted) {
+          HapticFeedback.mediumImpact();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.check_circle, color: Colors.white),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text('Signed in as ${userCredential.user?.displayName ?? userCredential.user?.email}'),
+                  ),
+                ],
+              ),
+              backgroundColor: AppColors.success,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
-            backgroundColor: AppColors.success,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-        );
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -171,28 +196,46 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
     try {
       final authService = ref.read(authServiceProvider);
+      final wasAnonymous = authService.isAnonymous;
       final userCredential = await authService.signInWithApple();
 
-      if (userCredential != null && mounted) {
-        HapticFeedback.mediumImpact();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.check_circle, color: Colors.white),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text('Signed in as ${userCredential.user?.displayName ?? userCredential.user?.email}'),
-                ),
-              ],
+      if (userCredential != null) {
+         if (wasAnonymous && !userCredential.user!.isAnonymous) {
+             try {
+                final migrationService = ref.read(dataMigrationServiceProvider);
+                await migrationService.migrateLocalToFirebase(userCredential.user!.uid);
+
+                ref.invalidate(userSettingsRepositoryProvider);
+                ref.invalidate(transactionRepositoryProvider);
+             } catch (e) {
+               print("Migration error: $e");
+               if (mounted) {
+                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Data migration failed: $e")));
+               }
+             }
+        }
+
+        if (mounted) {
+          HapticFeedback.mediumImpact();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.check_circle, color: Colors.white),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text('Signed in as ${userCredential.user?.displayName ?? userCredential.user?.email}'),
+                  ),
+                ],
+              ),
+              backgroundColor: AppColors.success,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
-            backgroundColor: AppColors.success,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-        );
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
