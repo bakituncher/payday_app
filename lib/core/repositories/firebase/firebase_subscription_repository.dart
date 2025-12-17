@@ -1,7 +1,10 @@
 /// Firebase implementation of SubscriptionRepository
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:payday/core/models/subscription.dart';
+import 'package:payday/core/models/subscription_analysis.dart';
+import 'package:payday/core/models/bill_reminder.dart';
 import 'package:payday/core/repositories/subscription_repository.dart';
 
 class FirebaseSubscriptionRepository implements SubscriptionRepository {
@@ -77,13 +80,13 @@ class FirebaseSubscriptionRepository implements SubscriptionRepository {
   @override
   Future<double> getTotalMonthlyCost(String userId) async {
       final subs = await getActiveSubscriptions(userId);
-      return subs.fold(0.0, (sum, sub) => sum + sub.amount); // Simplification: assuming all are monthly
+      return subs.fold(0.0, (sum, sub) => sum + sub.amount);
   }
 
   @override
   Future<double> getTotalYearlyCost(String userId) async {
       final subs = await getActiveSubscriptions(userId);
-      return subs.fold(0.0, (sum, sub) => sum + (sub.amount * 12)); // Simplification
+      return subs.fold(0.0, (sum, sub) => sum + (sub.amount * 12));
   }
 
   @override
