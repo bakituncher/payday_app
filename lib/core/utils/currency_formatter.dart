@@ -1,4 +1,5 @@
 /// Utility functions for formatting currency
+import 'dart:ui' as ui;
 import 'package:intl/intl.dart';
 import 'package:payday/core/services/currency_service.dart';
 
@@ -35,27 +36,17 @@ class CurrencyFormatter {
     return formatter.format(amount).trim();
   }
 
-  /// Get currency symbol from code using currency_picker
+  /// Get currency symbol from code
+  /// Supports all world currencies automatically via Intl package
   static String _getCurrencySymbol(String currencyCode) {
-    final currencyService = CurrencyUtilityService();
-    return currencyService.getSymbol(currencyCode);
-  }
-
-  /// Get decimal digits for currency (some currencies don't use decimals)
-  static int _getDecimalDigits(String currencyCode) {
-    // Currencies that don't use decimal places
-    const noDecimalCurrencies = [
-      'JPY', // Japanese Yen
-      'KRW', // South Korean Won
-      'VND', // Vietnamese Dong
-      'CLP', // Chilean Peso
-      'ISK', // Icelandic Króna
-      'HUF', // Hungarian Forint
-      'TWD', // New Taiwan Dollar
-      'PYG', // Paraguayan Guaraní
-    ];
-
-    return noDecimalCurrencies.contains(currencyCode.toUpperCase()) ? 0 : 2;
+    try {
+      // Intl kütüphanesi otomatik olarak tüm dünya para birimlerini destekler
+      final format = NumberFormat.simpleCurrency(name: currencyCode);
+      return format.currencySymbol;
+    } catch (e) {
+      // Eğer para birimi bulunamazsa varsayılan olarak kod kendisini döner
+      return currencyCode;
+    }
   }
 
   /// Get currency symbol publicly
@@ -63,16 +54,12 @@ class CurrencyFormatter {
     return _getCurrencySymbol(currencyCode);
   }
 
-  /// Get currency name
-  static String getName(String currencyCode) {
-    final currencyService = CurrencyUtilityService();
-    return currencyService.getName(currencyCode);
-  }
-
-  /// Get currency flag
-  static String getFlag(String currencyCode) {
-    final currencyService = CurrencyUtilityService();
-    return currencyService.getFlag(currencyCode);
+  /// Get local currency code from device locale
+  static String getLocalCurrencyCode() {
+    // Cihazın mevcut yerel ayarını alır (örn: tr_TR, en_US)
+    final String locale = ui.PlatformDispatcher.instance.locale.toString();
+    final format = NumberFormat.simpleCurrency(locale: locale);
+    return format.currencyName ?? 'USD'; // Varsayılan olarak USD döner
   }
 
   /// Parse currency string to double

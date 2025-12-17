@@ -8,6 +8,7 @@ import 'package:payday/core/constants/app_constants.dart';
 import 'package:payday/core/services/currency_service.dart';
 import 'package:payday/core/models/user_settings.dart';
 import 'package:payday/core/providers/repository_providers.dart';
+import 'package:payday/core/utils/currency_formatter.dart';
 import 'package:payday/shared/widgets/payday_button.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
@@ -28,6 +29,13 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   DateTime _nextPayday = DateTime.now().add(const Duration(days: 30));
   final _incomeController = TextEditingController();
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Cihazın yerel ayarlarından para birimini otomatik seç
+    _selectedCurrency = CurrencyFormatter.getLocalCurrencyCode();
+  }
 
   @override
   void dispose() {
@@ -87,7 +95,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 Padding(
                   padding: const EdgeInsets.all(AppSpacing.lg),
                   child: Row(
-                    children: List.generate(4, (index) {
+                    children: List.generate(3, (index) {
                       final isActive = index <= _currentPage;
                       final isCurrent = index == _currentPage;
                       return Expanded(
@@ -121,7 +129,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Step ${_currentPage + 1} of 4',
+                        'Step ${_currentPage + 1} of 3',
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: AppColors.mediumGray,
                           fontWeight: FontWeight.w500,
@@ -158,7 +166,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     },
                     children: [
                       _buildWelcomePage(theme),
-                      _buildCurrencyPage(theme),
                       _buildPayCyclePage(theme),
                       _buildIncomePage(theme),
                     ],
@@ -169,12 +176,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 Padding(
                   padding: const EdgeInsets.all(AppSpacing.lg),
                   child: PaydayButton(
-                    text: _currentPage == 3 ? 'Get Started' : 'Continue',
+                    text: _currentPage == 2 ? 'Get Started' : 'Continue',
                     onPressed: _isLoading ? null : _nextPage,
                     isLoading: _isLoading,
                     width: double.infinity,
-                    icon: _currentPage == 3 ? Icons.check_rounded : null,
-                    trailingIcon: _currentPage < 3 ? Icons.arrow_forward_rounded : null,
+                    icon: _currentPage == 2 ? Icons.check_rounded : null,
+                    trailingIcon: _currentPage < 2 ? Icons.arrow_forward_rounded : null,
                   ),
                 ),
               ],
@@ -316,248 +323,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         .slideX(begin: 0.1, end: 0);
   }
 
-  Widget _buildCurrencyPage(ThemeData theme) {
-    final currencyService = CurrencyUtilityService();
-    final selectedCurrency = currencyService.findByCode(_selectedCurrency);
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppSpacing.xl),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const SizedBox(height: AppSpacing.xl),
-          Container(
-            padding: const EdgeInsets.all(AppSpacing.lg),
-            decoration: BoxDecoration(
-              color: AppColors.subtleGray,
-              shape: BoxShape.circle,
-            ),
-            child: Text(selectedCurrency?.flag ?? '💵', style: const TextStyle(fontSize: 48)),
-          )
-              .animate()
-              .scale(duration: 400.ms, curve: Curves.elasticOut),
-          const SizedBox(height: AppSpacing.xl),
-          Text(
-            'Select Your Currency',
-            style: theme.textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.w800,
-              letterSpacing: -0.5,
-            ),
-            textAlign: TextAlign.center,
-          )
-              .animate()
-              .fadeIn(duration: 300.ms, delay: 100.ms),
-          const SizedBox(height: AppSpacing.sm),
-          Text(
-            'Choose the currency you get paid in',
-            style: theme.textTheme.bodyLarge?.copyWith(
-              color: AppColors.mediumGray,
-            ),
-            textAlign: TextAlign.center,
-          )
-              .animate()
-              .fadeIn(duration: 300.ms, delay: 150.ms),
-          const SizedBox(height: AppSpacing.xxl),
-
-          // Selected currency card
-          GestureDetector(
-            onTap: _showCurrencyPicker,
-            child: Container(
-              padding: const EdgeInsets.all(AppSpacing.lg),
-              decoration: BoxDecoration(
-                gradient: AppColors.pinkGradient,
-                borderRadius: BorderRadius.circular(AppRadius.xl),
-                boxShadow: AppColors.elevatedShadow,
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 64,
-                    height: 64,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(AppRadius.md),
-                    ),
-                    child: Center(
-                      child: Text(
-                        selectedCurrency?.flag ?? '🌍',
-                        style: const TextStyle(fontSize: 36),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.md),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          selectedCurrency?.name ?? 'Select Currency',
-                          style: theme.textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '${selectedCurrency?.code ?? ''} ${selectedCurrency?.symbol ?? ''}',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: Colors.white.withValues(alpha: 0.9),
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Icon(
-                    Icons.keyboard_arrow_down_rounded,
-                    color: Colors.white,
-                    size: 32,
-                  ),
-                ],
-              ),
-            ),
-          )
-              .animate()
-              .fadeIn(duration: 300.ms, delay: 200.ms)
-              .slideY(begin: 0.1, end: 0),
-
-          const SizedBox(height: AppSpacing.lg),
-
-          // Popular currencies hint
-          Text(
-            'Popular currencies',
-            style: theme.textTheme.titleSmall?.copyWith(
-              color: AppColors.mediumGray,
-              fontWeight: FontWeight.w600,
-            ),
-          )
-              .animate()
-              .fadeIn(duration: 300.ms, delay: 300.ms),
-
-          const SizedBox(height: AppSpacing.md),
-
-          // Quick select popular currencies
-          Wrap(
-            spacing: AppSpacing.sm,
-            runSpacing: AppSpacing.sm,
-            children: AppConstants.popularCurrencies.take(6).map((code) {
-              final currency = currencyService.findByCode(code);
-              if (currency == null) return const SizedBox.shrink();
-
-              final isSelected = _selectedCurrency == code;
-              return GestureDetector(
-                onTap: () {
-                  HapticFeedback.selectionClick();
-                  setState(() {
-                    _selectedCurrency = code;
-                  });
-                },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.md,
-                    vertical: AppSpacing.sm,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? AppColors.lightPink
-                        : AppColors.cardWhite,
-                    borderRadius: BorderRadius.circular(AppRadius.lg),
-                    border: Border.all(
-                      color: isSelected
-                          ? AppColors.primaryPink
-                          : AppColors.lightGray,
-                      width: isSelected ? 2 : 1,
-                    ),
-                    boxShadow: isSelected ? AppColors.cardShadow : null,
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        currency.flag ?? '🌍',
-                        style: const TextStyle(fontSize: 20),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        currency.code,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                          color: isSelected
-                              ? AppColors.primaryPink
-                              : AppColors.darkCharcoal,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }).toList(),
-          )
-              .animate()
-              .fadeIn(duration: 300.ms, delay: 400.ms),
-        ],
-      ),
-    );
-  }
-
-  void _showCurrencyPicker() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    showCurrencyPicker(
-      context: context,
-      theme: CurrencyPickerThemeData(
-        backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
-        titleTextStyle: TextStyle(
-          color: isDark ? AppColors.darkTextPrimary : AppColors.darkCharcoal,
-          fontSize: 20,
-          fontWeight: FontWeight.w600,
-        ),
-        subtitleTextStyle: TextStyle(
-          color: isDark ? AppColors.darkTextSecondary : AppColors.mediumGray,
-          fontSize: 14,
-        ),
-        bottomSheetHeight: MediaQuery.of(context).size.height * 0.75,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(
-            top: Radius.circular(24),
-          ),
-        ),
-        inputDecoration: InputDecoration(
-          hintText: 'Search currency...',
-          hintStyle: TextStyle(
-            color: isDark ? AppColors.darkTextSecondary : AppColors.mediumGray,
-          ),
-          prefixIcon: const Icon(
-            Icons.search,
-            color: AppColors.primaryPink,
-          ),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.md),
-            borderSide: BorderSide(
-              color: isDark ? AppColors.darkBorder : AppColors.lightGray,
-            ),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.md),
-            borderSide: const BorderSide(color: AppColors.primaryPink, width: 2),
-          ),
-          filled: true,
-          fillColor: isDark ? AppColors.darkBackground : AppColors.lightGray,
-        ),
-      ),
-      favorite: AppConstants.popularCurrencies,
-      showFlag: true,
-      showCurrencyName: true,
-      showCurrencyCode: true,
-      onSelect: (Currency currency) {
-        HapticFeedback.mediumImpact();
-        setState(() {
-          _selectedCurrency = currency.code;
-        });
-      },
-    );
-  }
 
   Widget _buildPayCyclePage(ThemeData theme) {
     return SingleChildScrollView(
@@ -815,7 +580,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   child: Row(
                     children: [
                       Text(
-                        currencySymbol,
+                        CurrencyFormatter.getSymbol(_selectedCurrency),
                         style: theme.textTheme.headlineLarge?.copyWith(
                           fontWeight: FontWeight.w800,
                           color: AppColors.primaryPink,
@@ -933,7 +698,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   Future<void> _nextPage() async {
-    if (_currentPage == 3) {
+    if (_currentPage == 2) {
       // Validate income
       if (_incomeController.text.isEmpty || double.tryParse(_incomeController.text) == null) {
         ScaffoldMessenger.of(context).showSnackBar(
