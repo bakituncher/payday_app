@@ -131,19 +131,28 @@ class SubscriptionNotifier extends StateNotifier<AsyncValue<void>> {
       await repository.addSubscription(subscription);
 
       // Schedule notification for the subscription
-      final notificationService = _ref.read(notificationServiceProvider);
-      await notificationService.scheduleSubscriptionDueNotification(subscription);
+      try {
+        final notificationService = _ref.read(notificationServiceProvider);
+        await notificationService.scheduleSubscriptionDueNotification(subscription);
+      } catch (notificationError) {
+        // Log notification error but don't fail the whole operation
+        print('Warning: Failed to schedule notification: $notificationError');
+      }
 
       // Invalidate cached data
       _ref.invalidate(subscriptionsProvider);
       _ref.invalidate(activeSubscriptionsProvider);
+      _ref.invalidate(filteredSubscriptionsProvider);
       _ref.invalidate(totalMonthlyCostProvider);
       _ref.invalidate(subscriptionsDueSoonProvider);
       _ref.invalidate(currentMonthlySummaryProvider); // Update monthly summary
 
       state = const AsyncValue.data(null);
     } catch (e, st) {
+      print('Error adding subscription: $e');
+      print('Stack trace: $st');
       state = AsyncValue.error(e, st);
+      rethrow;
     }
   }
 
@@ -156,6 +165,7 @@ class SubscriptionNotifier extends StateNotifier<AsyncValue<void>> {
       // Invalidate cached data
       _ref.invalidate(subscriptionsProvider);
       _ref.invalidate(activeSubscriptionsProvider);
+      _ref.invalidate(filteredSubscriptionsProvider);
       _ref.invalidate(totalMonthlyCostProvider);
       _ref.invalidate(selectedSubscriptionProvider);
       _ref.invalidate(currentMonthlySummaryProvider); // Update monthly summary
@@ -179,6 +189,7 @@ class SubscriptionNotifier extends StateNotifier<AsyncValue<void>> {
       // Invalidate cached data
       _ref.invalidate(subscriptionsProvider);
       _ref.invalidate(activeSubscriptionsProvider);
+      _ref.invalidate(filteredSubscriptionsProvider);
       _ref.invalidate(totalMonthlyCostProvider);
       _ref.invalidate(subscriptionsDueSoonProvider);
       _ref.invalidate(currentMonthlySummaryProvider); // Update monthly summary
@@ -202,6 +213,7 @@ class SubscriptionNotifier extends StateNotifier<AsyncValue<void>> {
       // Invalidate cached data
       _ref.invalidate(subscriptionsProvider);
       _ref.invalidate(activeSubscriptionsProvider);
+      _ref.invalidate(filteredSubscriptionsProvider);
       _ref.invalidate(totalMonthlyCostProvider);
       _ref.invalidate(subscriptionAnalysisProvider);
       _ref.invalidate(currentMonthlySummaryProvider); // Update monthly summary
@@ -220,6 +232,7 @@ class SubscriptionNotifier extends StateNotifier<AsyncValue<void>> {
 
       _ref.invalidate(subscriptionsProvider);
       _ref.invalidate(activeSubscriptionsProvider);
+      _ref.invalidate(filteredSubscriptionsProvider);
 
       state = const AsyncValue.data(null);
     } catch (e, st) {
@@ -235,6 +248,7 @@ class SubscriptionNotifier extends StateNotifier<AsyncValue<void>> {
 
       _ref.invalidate(subscriptionsProvider);
       _ref.invalidate(activeSubscriptionsProvider);
+      _ref.invalidate(filteredSubscriptionsProvider);
 
       state = const AsyncValue.data(null);
     } catch (e, st) {
