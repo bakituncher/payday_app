@@ -75,6 +75,10 @@ class _SavingsGoalDetailScreenState extends ConsumerState<SavingsGoalDetailScree
           await transactionRepository.addTransaction(transaction);
 
           // SUCCESS: Both operations completed, update UI
+          // -----> Ana sayfadaki işlem listesini yenile: <-----
+          ref.invalidate(currentCycleTransactionsProvider);
+          // ------------------------------------
+
           setState(() {
             _currentGoal = _currentGoal.copyWith(
               currentAmount: _currentGoal.currentAmount + result,
@@ -176,6 +180,9 @@ class _SavingsGoalDetailScreenState extends ConsumerState<SavingsGoalDetailScree
           await transactionRepository.addTransaction(transaction);
 
           // SUCCESS: Both operations completed, update UI
+          // EKLENECEK SATIR: Ana sayfadaki işlem listesini yenile
+          ref.invalidate(currentCycleTransactionsProvider);
+
           setState(() {
             _currentGoal = _currentGoal.copyWith(
               currentAmount: _currentGoal.currentAmount - result,
@@ -230,7 +237,7 @@ class _SavingsGoalDetailScreenState extends ConsumerState<SavingsGoalDetailScree
       builder: (context) => AlertDialog(
         title: const Text('Delete Goal'),
         content: Text(
-          'Are you sure you want to delete this goal?\n\nAccumulated amount: ${_formatCurrency(_currentGoal.currentAmount)}',
+          'Are you sure you want to delete this goal?\n\nAccumulated amount: ${_formatCurrency(_currentGoal.currentAmount)}\n\n(This amount will be returned to your budget)',
         ),
         actions: [
           TextButton(
@@ -242,7 +249,7 @@ class _SavingsGoalDetailScreenState extends ConsumerState<SavingsGoalDetailScree
             style: TextButton.styleFrom(
               foregroundColor: AppColors.error,
             ),
-            child: const Text('Delete'),
+            child: const Text('Delete & Refund'),
           ),
         ],
       ),
@@ -252,14 +259,38 @@ class _SavingsGoalDetailScreenState extends ConsumerState<SavingsGoalDetailScree
       setState(() => _isLoading = true);
       try {
         final repository = ref.read(savingsGoalRepositoryProvider);
+        final transactionRepository = ref.read(transactionRepositoryProvider);
+
+        // ADIM 1: Eğer hedefte para varsa, önce bunu bütçeye geri ekle (Transaction oluştur)
+        if (_currentGoal.currentAmount > 0) {
+          final refundTransaction = Transaction(
+            id: const Uuid().v4(),
+            userId: _currentGoal.userId,
+            amount: _currentGoal.currentAmount,
+            categoryId: AppConstants.savingsCategoryId,
+            categoryName: 'Savings Closure',
+            categoryEmoji: _currentGoal.emoji,
+            date: DateTime.now(),
+            note: 'Refund from deleted goal: ${_currentGoal.name}',
+            isExpense: false, // Gelir olarak ekle (Bütçeye geri dönüş)
+            relatedGoalId: null, // Hedef silineceği için null veya ID tutulabilir ama null daha güvenli
+          );
+
+          await transactionRepository.addTransaction(refundTransaction);
+        }
+
+        // ADIM 2: Hedefi sil
         await repository.deleteSavingsGoal(_currentGoal.id, _currentGoal.userId);
 
+        // EKLENECEK SATIR: Ana sayfadaki işlem listesini yenile
+        ref.invalidate(currentCycleTransactionsProvider);
+
         if (mounted) {
-          Navigator.pop(context);
+          Navigator.pop(context); // Ekrandan çık
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Goal deleted'),
-              backgroundColor: AppColors.error,
+            SnackBar(
+              content: Text('Goal deleted and ${_formatCurrency(_currentGoal.currentAmount)} returned to budget'),
+              backgroundColor: AppColors.success, // Pozitif bir işlem olduğu için yeşil/success
             ),
           );
         }

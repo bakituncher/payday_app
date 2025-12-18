@@ -55,7 +55,7 @@ class FirebaseSavingsGoalRepository implements SavingsGoalRepository {
      final doc = _getCollection(userId).doc(goalId);
      await _firestore.runTransaction((transaction) async {
        final snapshot = await transaction.get(doc);
-       if (!snapshot.exists) return;
+       if (!snapshot.exists) throw Exception("Goal not found");
        final goal = SavingsGoal.fromJson(snapshot.data()!);
        final newCurrentAmount = goal.currentAmount + amount;
        transaction.update(doc, {'currentAmount': newCurrentAmount});
@@ -67,10 +67,13 @@ class FirebaseSavingsGoalRepository implements SavingsGoalRepository {
      final doc = _getCollection(userId).doc(goalId);
      await _firestore.runTransaction((transaction) async {
        final snapshot = await transaction.get(doc);
-       if (!snapshot.exists) return;
+       if (!snapshot.exists) throw Exception("Goal not found");
        final goal = SavingsGoal.fromJson(snapshot.data()!);
        final newCurrentAmount = goal.currentAmount - amount;
-       if (newCurrentAmount < 0) return; // Or throw error
+       // DÜZELTME: Sessizce durmak yerine hata fırlatın ki UI bunu yakalasın
+       if (newCurrentAmount < 0) {
+         throw Exception("Insufficient funds");
+       }
        transaction.update(doc, {'currentAmount': newCurrentAmount});
      });
   }
