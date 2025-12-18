@@ -1,11 +1,13 @@
-/// Monthly Summary Preview Card for Home Screen
-/// Shows a quick snapshot of current month's financial status
+/// Pay Period Summary Card for Home Screen
+/// Shows a quick snapshot of current pay period's spending
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:payday/core/theme/app_theme.dart';
-import 'package:payday/core/models/monthly_summary.dart';
-import 'package:payday/features/insights/providers/monthly_summary_providers.dart';
+import 'package:payday/core/models/transaction.dart';
+import 'package:payday/core/models/subscription.dart';
+import 'package:payday/features/home/providers/home_providers.dart';
+import 'package:payday/features/subscriptions/providers/subscription_providers.dart';
 import 'package:payday/features/insights/screens/monthly_summary_screen.dart';
 import 'package:intl/intl.dart';
 
@@ -14,8 +16,9 @@ class MonthlySummaryCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final summaryAsync = ref.watch(currentMonthlySummaryProvider);
-    final currencyFormat = NumberFormat.currency(symbol: '\$');
+    final settingsAsync = ref.watch(userSettingsProvider);
+    final transactionsAsync = ref.watch(currentCycleTransactionsProvider);
+    final subscriptionsAsync = ref.watch(activeSubscriptionsProvider);
 
     return GestureDetector(
       onTap: () {
@@ -31,14 +34,33 @@ class MonthlySummaryCard extends ConsumerWidget {
           borderRadius: BorderRadius.circular(AppRadius.lg),
           boxShadow: AppColors.getCardShadow(context),
         ),
-        child: summaryAsync.when(
+        child: settingsAsync.when(
           loading: () => _buildLoadingState(context),
           error: (_, __) => _buildErrorState(context),
-          data: (summary) {
-            if (summary == null) {
+          data: (settings) {
+            if (settings == null) {
               return _buildEmptyState(context);
             }
-            return _buildContent(context, summary, currencyFormat);
+
+            return transactionsAsync.when(
+              loading: () => _buildLoadingState(context),
+              error: (_, __) => _buildErrorState(context),
+              data: (transactions) {
+                return subscriptionsAsync.when(
+                  loading: () => _buildLoadingState(context),
+                  error: (_, __) => _buildErrorState(context),
+                  data: (subscriptions) {
+                    return _buildContent(
+                      context,
+                      settings.payCycle,
+                      settings.currency,
+                      transactions,
+                      subscriptions,
+                    );
+                  },
+                );
+              },
+            );
           },
         ),
       ),
@@ -47,10 +69,25 @@ class MonthlySummaryCard extends ConsumerWidget {
 
   Widget _buildContent(
     BuildContext context,
-    MonthlySummary summary,
-    NumberFormat currencyFormat,
+    String payCycle,
+    String currency,
+    List<Transaction> transactions,
+    List<Subscription> subscriptions,
   ) {
     final theme = Theme.of(context);
+    final currencyFormat = NumberFormat.currency(symbol: _getCurrencySymbol(currency));
+
+    // Calculate expenses
+    final expenses = transactions.where((t) => t.isExpense).toList();
+    final totalExpenses = expenses.fold<double>(0, (sum, t) => sum + t.amount);
+
+    // Calculate subscription costs in this period
+    final subscriptionTotal = subscriptions.fold<double>(
+      0,
+      (sum, sub) => sum + _getSubscriptionCostInPeriod(sub, payCycle),
+    );
+
+    final totalSpending = totalExpenses + subscriptionTotal;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -68,7 +105,7 @@ class MonthlySummaryCard extends ConsumerWidget {
                     borderRadius: BorderRadius.circular(AppRadius.sm),
                   ),
                   child: const Icon(
-                    Icons.summarize_rounded,
+                    Icons.calendar_today_rounded,
                     color: Colors.white,
                     size: 18,
                   ),
@@ -78,14 +115,14 @@ class MonthlySummaryCard extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '${summary.monthName} Summary',
+                      'Pay Period',
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w700,
                         color: AppColors.getTextPrimary(context),
                       ),
                     ),
                     Text(
-                      'Tap to see details',
+                      payCycle,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: AppColors.getTextSecondary(context),
                       ),
@@ -103,143 +140,143 @@ class MonthlySummaryCard extends ConsumerWidget {
 
         const SizedBox(height: AppSpacing.md),
 
-        // Health Status & Savings Rate
-        Row(
-          children: [
-            // Health Status
-            Expanded(
-              child: Container(
-                padding: const EdgeInsets.all(AppSpacing.sm),
-                decoration: BoxDecoration(
-                  color: _getHealthColor(summary.healthStatus).withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                ),
-                child: Row(
-                  children: [
-                    Text(
-                      summary.healthStatusEmoji,
-                      style: const TextStyle(fontSize: 20),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Health',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: AppColors.getTextSecondary(context),
-                            ),
-                          ),
-                          Text(
-                            summary.healthStatus.name.toUpperCase(),
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              fontWeight: FontWeight.w700,
-                              color: _getHealthColor(summary.healthStatus),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+        // Total Spending
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(AppSpacing.md),
+          decoration: BoxDecoration(
+            gradient: AppColors.pinkGradient,
+            borderRadius: BorderRadius.circular(AppRadius.md),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Total Spending',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: Colors.white.withValues(alpha: 0.8),
                 ),
               ),
-            ),
-
-            const SizedBox(width: AppSpacing.sm),
-
-            // Savings Rate
-            Expanded(
-              child: Container(
-                padding: const EdgeInsets.all(AppSpacing.sm),
-                decoration: BoxDecoration(
-                  color: AppColors.getSubtle(context),
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.savings_rounded,
-                      color: AppColors.success,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Saved',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: AppColors.getTextSecondary(context),
-                            ),
-                          ),
-                          Text(
-                            '${summary.savingsRate.toStringAsFixed(0)}%',
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.success,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+              const SizedBox(height: 4),
+              Text(
+                currencyFormat.format(totalSpending),
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
 
-        // Leftover Amount (if positive)
-        if (summary.leftoverAmount > 0) ...[
-          const SizedBox(height: AppSpacing.sm),
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.md,
-              vertical: AppSpacing.sm,
-            ),
-            decoration: BoxDecoration(
-              color: AppColors.success.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(AppRadius.md),
-              border: Border.all(
-                color: AppColors.success.withValues(alpha: 0.3),
-              ),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.account_balance_wallet_rounded,
-                  color: AppColors.success,
-                  size: 18,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Left over: ',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: AppColors.success,
-                  ),
-                ),
-                Text(
-                  currencyFormat.format(summary.leftoverAmount),
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.success,
-                  ),
-                ),
-                const Spacer(),
-                Text(
-                  'Allocate →',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: AppColors.success,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
+        const SizedBox(height: AppSpacing.sm),
+
+        // Spending Chart
+        _buildMiniChart(context, transactions, currency),
+      ],
+    );
+  }
+
+  Widget _buildMiniChart(BuildContext context, List<Transaction> transactions, String currency) {
+    final theme = Theme.of(context);
+    final currencyFormat = NumberFormat.currency(symbol: _getCurrencySymbol(currency));
+
+    // Group expenses by date (last 7 days)
+    final expenses = transactions.where((t) => t.isExpense).toList();
+    final now = DateTime.now();
+    final last7Days = List.generate(7, (i) => now.subtract(Duration(days: 6 - i)));
+
+    final expensesByDate = <DateTime, double>{};
+    for (var expense in expenses) {
+      final dateKey = DateTime(expense.date.year, expense.date.month, expense.date.day);
+      if (last7Days.any((d) =>
+        d.year == dateKey.year && d.month == dateKey.month && d.day == dateKey.day)) {
+        expensesByDate[dateKey] = (expensesByDate[dateKey] ?? 0) + expense.amount;
+      }
+    }
+
+    final maxAmount = expensesByDate.values.isEmpty ? 100.0 : expensesByDate.values.reduce((a, b) => a > b ? a : b);
+
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.getCardBackground(context),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(
+          color: AppColors.getBorder(context),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Last 7 Days',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: AppColors.getTextSecondary(context),
+              fontWeight: FontWeight.w600,
             ),
           ),
+          const SizedBox(height: AppSpacing.sm),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: last7Days.map((date) {
+              final dateKey = DateTime(date.year, date.month, date.day);
+              final amount = expensesByDate[dateKey] ?? 0;
+              final heightFactor = maxAmount > 0 ? (amount / maxAmount) : 0.0;
+              final isToday = DateTime.now().difference(date).inDays == 0;
+
+              return Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 2),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Amount (if not zero)
+                      SizedBox(
+                        height: 16,
+                        child: amount > 0 ? Text(
+                          currencyFormat.format(amount).replaceAll(RegExp(r'[^\d.,]'), '').split('.')[0],
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            fontSize: 8,
+                            color: AppColors.primaryPink,
+                            fontWeight: FontWeight.w700,
+                          ),
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.clip,
+                        ) : null,
+                      ),
+                      const SizedBox(height: 2),
+                      // Bar
+                      Container(
+                        width: double.infinity,
+                        height: (heightFactor * 40).clamp(2, 40),
+                        decoration: BoxDecoration(
+                          gradient: amount > 0 ? AppColors.pinkGradient : null,
+                          color: amount == 0 ? AppColors.getSubtle(context) : null,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      // Day label
+                      Text(
+                        DateFormat('E').format(date).substring(0, 1),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          fontSize: 10,
+                          color: isToday ? AppColors.primaryPink : AppColors.getTextSecondary(context),
+                          fontWeight: isToday ? FontWeight.w700 : FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
         ],
-      ],
+      ),
     );
   }
 
@@ -257,22 +294,46 @@ class MonthlySummaryCard extends ConsumerWidget {
               ),
             ),
             const SizedBox(width: AppSpacing.sm),
-            Container(
-              width: 120,
-              height: 16,
-              decoration: BoxDecoration(
-                color: AppColors.getSubtle(context),
-                borderRadius: BorderRadius.circular(4),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 120,
+                    height: 14,
+                    decoration: BoxDecoration(
+                      color: AppColors.getSubtle(context),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Container(
+                    width: 80,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      color: AppColors.getSubtle(context),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
         ),
         const SizedBox(height: AppSpacing.md),
+        Container(
+          height: 80,
+          decoration: BoxDecoration(
+            color: AppColors.getSubtle(context),
+            borderRadius: BorderRadius.circular(AppRadius.md),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.sm),
         Row(
           children: [
             Expanded(
               child: Container(
-                height: 60,
+                height: 70,
                 decoration: BoxDecoration(
                   color: AppColors.getSubtle(context),
                   borderRadius: BorderRadius.circular(AppRadius.md),
@@ -282,7 +343,7 @@ class MonthlySummaryCard extends ConsumerWidget {
             const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: Container(
-                height: 60,
+                height: 70,
                 decoration: BoxDecoration(
                   color: AppColors.getSubtle(context),
                   borderRadius: BorderRadius.circular(AppRadius.md),
@@ -300,10 +361,12 @@ class MonthlySummaryCard extends ConsumerWidget {
       children: [
         Icon(Icons.error_outline, color: AppColors.error),
         const SizedBox(width: AppSpacing.sm),
-        Text(
-          'Could not load summary',
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: AppColors.error,
+        Expanded(
+          child: Text(
+            'Could not load pay period data',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: AppColors.error,
+            ),
           ),
         ),
       ],
@@ -317,11 +380,11 @@ class MonthlySummaryCard extends ConsumerWidget {
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            gradient: AppColors.pinkGradient,
+            gradient: AppColors.premiumGradient,
             borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
           child: const Icon(
-            Icons.summarize_rounded,
+            Icons.calendar_today_rounded,
             color: Colors.white,
             size: 18,
           ),
@@ -332,14 +395,14 @@ class MonthlySummaryCard extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Monthly Summary',
+                'Pay Period Summary',
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w700,
                   color: AppColors.getTextPrimary(context),
                 ),
               ),
               Text(
-                'Start tracking to see your summary',
+                'Set up your profile to get started',
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: AppColors.getTextSecondary(context),
                 ),
@@ -355,17 +418,101 @@ class MonthlySummaryCard extends ConsumerWidget {
     );
   }
 
-  Color _getHealthColor(FinancialHealth health) {
-    switch (health) {
-      case FinancialHealth.excellent:
-        return AppColors.success;
-      case FinancialHealth.good:
-        return AppColors.info;
-      case FinancialHealth.fair:
-        return AppColors.warning;
-      case FinancialHealth.poor:
-      case FinancialHealth.critical:
-        return AppColors.error;
+  double _getSubscriptionCostInPeriod(Subscription sub, String payCycle) {
+    // Calculate how much this subscription costs in the given pay period
+    switch (payCycle.toLowerCase()) {
+      case 'weekly':
+        return _convertToWeeklyCost(sub);
+      case 'bi-weekly':
+      case 'biweekly':
+      case 'fortnightly':
+        return _convertToBiWeeklyCost(sub);
+      case 'monthly':
+        return sub.monthlyCost;
+      default:
+        return sub.monthlyCost;
+    }
+  }
+
+  double _convertToWeeklyCost(Subscription sub) {
+    switch (sub.frequency) {
+      case RecurrenceFrequency.daily:
+        return sub.amount * 7;
+      case RecurrenceFrequency.weekly:
+        return sub.amount;
+      case RecurrenceFrequency.biweekly:
+        return sub.amount / 2;
+      case RecurrenceFrequency.monthly:
+        return sub.amount / 4.33;
+      case RecurrenceFrequency.quarterly:
+        return sub.amount / 13;
+      case RecurrenceFrequency.yearly:
+        return sub.amount / 52;
+    }
+  }
+
+  double _convertToBiWeeklyCost(Subscription sub) {
+    switch (sub.frequency) {
+      case RecurrenceFrequency.daily:
+        return sub.amount * 14;
+      case RecurrenceFrequency.weekly:
+        return sub.amount * 2;
+      case RecurrenceFrequency.biweekly:
+        return sub.amount;
+      case RecurrenceFrequency.monthly:
+        return sub.amount / 2.17;
+      case RecurrenceFrequency.quarterly:
+        return sub.amount / 6.5;
+      case RecurrenceFrequency.yearly:
+        return sub.amount / 26;
+    }
+  }
+
+  String _getCurrencySymbol(String currency) {
+    // Common currency symbols
+    switch (currency.toUpperCase()) {
+      case 'USD':
+        return '\$';
+      case 'EUR':
+        return '€';
+      case 'GBP':
+        return '£';
+      case 'JPY':
+        return '¥';
+      case 'TRY':
+        return '₺';
+      case 'INR':
+        return '₹';
+      case 'RUB':
+        return '₽';
+      case 'CNY':
+        return '¥';
+      case 'KRW':
+        return '₩';
+      case 'AUD':
+      case 'CAD':
+      case 'NZD':
+      case 'SGD':
+      case 'HKD':
+        return '\$';
+      case 'CHF':
+        return 'CHF';
+      case 'SEK':
+        return 'kr';
+      case 'NOK':
+        return 'kr';
+      case 'DKK':
+        return 'kr';
+      case 'PLN':
+        return 'zł';
+      case 'BRL':
+        return 'R\$';
+      case 'ZAR':
+        return 'R';
+      case 'MXN':
+        return '\$';
+      default:
+        return currency;
     }
   }
 }
