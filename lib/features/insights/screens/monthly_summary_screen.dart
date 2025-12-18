@@ -114,7 +114,7 @@ class MonthlySummaryScreen extends ConsumerWidget {
                   'Daily Spending',
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
-                    color: AppColors.darkCharcoal,
+                    color: AppColors.getTextPrimary(context),
                   ),
                 ),
                 const SizedBox(height: AppSpacing.sm),
@@ -130,7 +130,7 @@ class MonthlySummaryScreen extends ConsumerWidget {
                       'Expenses Summary',
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w700,
-                        color: AppColors.darkCharcoal,
+                        color: AppColors.getTextPrimary(context),
                       ),
                     ),
                     Container(
@@ -169,7 +169,7 @@ class MonthlySummaryScreen extends ConsumerWidget {
                       'Subscriptions',
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w700,
-                        color: AppColors.darkCharcoal,
+                        color: AppColors.getTextPrimary(context),
                       ),
                     ),
                     Container(
@@ -282,9 +282,9 @@ class MonthlySummaryScreen extends ConsumerWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.cardWhite,
+        color: AppColors.getCardBackground(context),
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        boxShadow: AppColors.cardShadow,
+        boxShadow: AppColors.getCardShadow(context),
       ),
       child: Column(
         children: sortedDates.take(10).map((date) {
@@ -299,7 +299,7 @@ class MonthlySummaryScreen extends ConsumerWidget {
             decoration: BoxDecoration(
               border: Border(
                 bottom: BorderSide(
-                  color: AppColors.subtleGray,
+                  color: AppColors.getBorder(context),
                   width: 0.5,
                 ),
               ),
@@ -312,7 +312,7 @@ class MonthlySummaryScreen extends ConsumerWidget {
                   decoration: BoxDecoration(
                     color: isToday
                         ? AppColors.primaryPink.withValues(alpha: 0.1)
-                        : AppColors.subtleGray,
+                        : AppColors.getSubtle(context),
                     borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
                   child: Column(
@@ -322,14 +322,14 @@ class MonthlySummaryScreen extends ConsumerWidget {
                         DateFormat('d').format(date),
                         style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w700,
-                          color: isToday ? AppColors.primaryPink : AppColors.darkCharcoal,
+                          color: isToday ? AppColors.primaryPink : AppColors.getTextPrimary(context),
                         ),
                       ),
                       Text(
                         DateFormat('MMM').format(date),
                         style: theme.textTheme.bodySmall?.copyWith(
                           fontSize: 10,
-                          color: AppColors.mediumGray,
+                          color: AppColors.getTextSecondary(context),
                         ),
                       ),
                     ],
@@ -349,7 +349,7 @@ class MonthlySummaryScreen extends ConsumerWidget {
                       Text(
                         DateFormat('MMM d, yyyy').format(date),
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: AppColors.mediumGray,
+                          color: AppColors.getTextSecondary(context),
                         ),
                       ),
                     ],
@@ -382,9 +382,9 @@ class MonthlySummaryScreen extends ConsumerWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.cardWhite,
+        color: AppColors.getCardBackground(context),
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        boxShadow: AppColors.cardShadow,
+        boxShadow: AppColors.getCardShadow(context),
       ),
       child: Column(
         children: byCategory.entries.map((entry) {
@@ -418,7 +418,7 @@ class MonthlySummaryScreen extends ConsumerWidget {
             subtitle: Text(
               '${categoryExpenses.length} transaction${categoryExpenses.length > 1 ? 's' : ''}',
               style: theme.textTheme.bodySmall?.copyWith(
-                color: AppColors.mediumGray,
+                color: AppColors.getTextSecondary(context),
               ),
             ),
             trailing: Text(
@@ -445,9 +445,9 @@ class MonthlySummaryScreen extends ConsumerWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.cardWhite,
+        color: AppColors.getCardBackground(context),
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        boxShadow: AppColors.cardShadow,
+        boxShadow: AppColors.getCardShadow(context),
       ),
       child: Column(
         children: subscriptions.map((sub) {
@@ -478,7 +478,7 @@ class MonthlySummaryScreen extends ConsumerWidget {
             subtitle: Text(
               _getFrequencyText(sub.frequency),
               style: theme.textTheme.bodySmall?.copyWith(
-                color: AppColors.mediumGray,
+                color: AppColors.getTextSecondary(context),
               ),
             ),
             trailing: Column(
@@ -496,7 +496,7 @@ class MonthlySummaryScreen extends ConsumerWidget {
                   Text(
                     'Est. for period',
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: AppColors.mediumGray,
+                      color: AppColors.getTextSecondary(context),
                       fontSize: 10,
                     ),
                   ),
@@ -512,19 +512,19 @@ class MonthlySummaryScreen extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.xl),
       decoration: BoxDecoration(
-        color: AppColors.cardWhite,
+        color: AppColors.getCardBackground(context),
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        boxShadow: AppColors.cardShadow,
+        boxShadow: AppColors.getCardShadow(context),
       ),
       child: Center(
         child: Column(
           children: [
-            Icon(icon, size: 48, color: AppColors.lightGray),
+            Icon(icon, size: 48, color: AppColors.getTextSecondary(context).withValues(alpha: 0.5)),
             const SizedBox(height: AppSpacing.sm),
             Text(
               message,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColors.mediumGray,
+                color: AppColors.getTextSecondary(context),
               ),
             ),
           ],
@@ -694,7 +694,7 @@ class MonthlySummaryScreen extends ConsumerWidget {
               'Start tracking your expenses to see your monthly summary.',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColors.mediumGray,
+                color: AppColors.getTextSecondary(context),
               ),
             ),
           ],
