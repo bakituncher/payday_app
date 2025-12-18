@@ -3,12 +3,15 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:payday/core/models/monthly_summary.dart';
 import 'package:payday/core/models/budget_goal.dart';
+import 'package:payday/core/models/summary_period.dart';
 import 'package:payday/core/providers/repository_providers.dart';
 import 'package:payday/core/repositories/monthly_summary_repository.dart';
 import 'package:payday/core/services/financial_insights_service.dart';
 import 'package:payday/core/services/leftover_allocation_service.dart';
 import 'package:payday/features/home/providers/home_providers.dart';
 import 'package:payday/features/subscriptions/providers/subscription_providers.dart';
+// Note: currentCycleTransactionsProvider is exported by home_providers.dart
+// Note: activeSubscriptionsProvider is exported by subscription_providers.dart
 
 /// Leftover Allocation Service Provider
 final leftoverAllocationServiceProvider = Provider<LeftoverAllocationService>((ref) {
@@ -26,7 +29,53 @@ final savingsGoalsProvider = FutureProvider<List<dynamic>>((ref) async {
   return repository.getSavingsGoals(userId);
 });
 
-/// Current month summary provider - Always calculates from current data
+/// NEW: Selected Summary Period Provider
+final summaryPeriodProvider = StateProvider<SummaryPeriod>((ref) => SummaryPeriod.monthly);
+
+/// Current summary provider - Calculates based on selected period
+final currentSummaryProvider = FutureProvider<MonthlySummary?>((ref) async {
+  final userId = ref.watch(currentUserIdProvider);
+  // final repository = ref.watch(monthlySummaryRepositoryProvider); // Not caching arbitrary periods yet
+  final period = ref.watch(summaryPeriodProvider);
+
+  final userSettings = await ref.watch(userSettingsProvider.future);
+
+  // Note: currentCycleTransactionsProvider currently fetches Month data.
+  // For true weekly/bi-weekly accuracy across months, we might need a broader fetch,
+  // but for now, assuming users look at current month's context is safe or we use what we have.
+  // Ideally, we'd have a 'transactionService.getTransactions(startDate, endDate)' provider.
+  // For this implementation, we will use the existing transaction provider which gives us
+  // the current cycle transactions, which should be sufficient for "current week" if it's in the cycle.
+  // If the week straddles months, this might miss data.
+  // FIXME: Improve transaction fetching to be date-range aware.
+  final transactions = await ref.watch(currentCycleTransactionsProvider.future);
+  final subscriptions = await ref.watch(activeSubscriptionsProvider.future);
+
+  if (userSettings == null) {
+    return null;
+  }
+
+  // Calculate previous period expenses for trend
+  // This is a simplified fetch - ideally we'd query the DB for the exact previous range
+  // For now, we will pass null or 0 to avoid complex DB queries in this iteration
+  double? previousPeriodExpenses;
+  // TODO: Implement fetching previous period transactions for accurate trend
+
+  // Generate fresh summary with current data
+  final summary = FinancialInsightsService.generateSummary(
+    userId: userId,
+    period: period,
+    totalIncome: userSettings.incomeAmount,
+    transactions: transactions,
+    subscriptions: subscriptions,
+    previousPeriodExpenses: previousPeriodExpenses,
+  );
+
+  return summary;
+});
+
+
+/// Current month summary provider - Legacy support / Specific for monthly view persistence
 final currentMonthlySummaryProvider = FutureProvider<MonthlySummary?>((ref) async {
   final userId = ref.watch(currentUserIdProvider);
   final repository = ref.watch(monthlySummaryRepositoryProvider);
@@ -241,4 +290,3 @@ class MonthlySummaryNotifier extends StateNotifier<AsyncValue<void>> {
 final monthlySummaryNotifierProvider = StateNotifierProvider<MonthlySummaryNotifier, AsyncValue<void>>((ref) {
   return MonthlySummaryNotifier(ref);
 });
-
