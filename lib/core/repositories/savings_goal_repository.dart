@@ -5,6 +5,9 @@ abstract class SavingsGoalRepository {
   /// Get all savings goals for a user
   Future<List<SavingsGoal>> getSavingsGoals(String userId);
 
+  /// Stream all savings goals for a user (for real-time updates)
+  Stream<List<SavingsGoal>> watchSavingsGoals(String userId);
+
   /// Add a new savings goal
   Future<void> addSavingsGoal(SavingsGoal goal);
 

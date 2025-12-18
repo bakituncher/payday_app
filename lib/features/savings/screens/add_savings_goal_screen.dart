@@ -83,6 +83,9 @@ class _AddSavingsGoalScreenState extends ConsumerState<AddSavingsGoalScreen> {
     final authService = ref.read(authServiceProvider);
     final userId = authService.currentUser?.uid;
 
+    print('💾 Saving goal - User ID: $userId');
+    print('💾 User is anonymous: ${authService.currentUser?.isAnonymous}');
+
     if (userId == null) {
       _showError('User not logged in');
       return;
@@ -108,8 +111,13 @@ class _AddSavingsGoalScreenState extends ConsumerState<AddSavingsGoalScreen> {
             : 0.0,
       );
 
+      print('💾 Goal created: ${goal.toJson()}');
+
       final repository = ref.read(savingsGoalRepositoryProvider);
+      print('💾 Repository type: ${repository.runtimeType}');
+
       await repository.addSavingsGoal(goal);
+      print('💾 Goal saved successfully');
 
       if (mounted) {
         HapticFeedback.mediumImpact();
@@ -122,6 +130,7 @@ class _AddSavingsGoalScreenState extends ConsumerState<AddSavingsGoalScreen> {
         );
       }
     } catch (e) {
+      print('❌ Error saving goal: $e');
       _showError('Failed to create goal: $e');
     } finally {
       if (mounted) {

@@ -12,13 +12,31 @@ class FirebaseSavingsGoalRepository implements SavingsGoalRepository {
 
   @override
   Future<List<SavingsGoal>> getSavingsGoals(String userId) async {
+    print('🔥 Firebase: Getting savings goals for user: $userId');
     final snapshot = await _getCollection(userId).get();
+    print('🔥 Firebase: Found ${snapshot.docs.length} savings goals');
     return snapshot.docs.map((d) => SavingsGoal.fromJson(d.data())).toList();
   }
 
   @override
+  Stream<List<SavingsGoal>> watchSavingsGoals(String userId) {
+    print('🔥 Firebase: Starting to watch savings goals for user: $userId');
+    return _getCollection(userId).snapshots().map((snapshot) {
+      print('🔥 Firebase: Stream update - ${snapshot.docs.length} savings goals');
+      return snapshot.docs.map((d) => SavingsGoal.fromJson(d.data())).toList();
+    });
+  }
+
+  @override
   Future<void> addSavingsGoal(SavingsGoal goal) async {
-    await _getCollection(goal.userId).doc(goal.id).set(goal.toJson());
+    print('🔥 Firebase: Adding savings goal - ID: ${goal.id}, User: ${goal.userId}, Name: ${goal.name}');
+    try {
+      await _getCollection(goal.userId).doc(goal.id).set(goal.toJson());
+      print('🔥 Firebase: Savings goal added successfully');
+    } catch (e) {
+      print('❌ Firebase: Error adding savings goal: $e');
+      rethrow;
+    }
   }
 
   @override

@@ -5,27 +5,22 @@ import 'package:payday/core/providers/repository_providers.dart';
 import 'package:payday/core/providers/auth_providers.dart';
 
 /// Provider for all savings goals
-final savingsGoalsProvider = StreamProvider<List<SavingsGoal>>((ref) async* {
+final savingsGoalsProvider = StreamProvider<List<SavingsGoal>>((ref) {
   final authService = ref.watch(authServiceProvider);
   final userId = authService.currentUser?.uid;
 
+  print('📊 Savings Provider: User ID = $userId');
+
   if (userId == null) {
-    yield [];
-    return;
+    print('📊 Savings Provider: No user ID, returning empty stream');
+    return Stream.value([]);
   }
 
   final repository = ref.watch(savingsGoalRepositoryProvider);
+  print('📊 Savings Provider: Repository type = ${repository.runtimeType}');
 
-  // For Firebase, we'd use a stream. For now, periodic refresh
-  while (true) {
-    try {
-      final goals = await repository.getSavingsGoals(userId);
-      yield goals;
-    } catch (e) {
-      yield [];
-    }
-    await Future.delayed(const Duration(seconds: 5));
-  }
+  // Use the real-time stream from repository
+  return repository.watchSavingsGoals(userId);
 });
 
 /// Provider for total savings amount across all goals

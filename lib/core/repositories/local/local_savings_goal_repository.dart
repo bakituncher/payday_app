@@ -1,5 +1,6 @@
 /// Local implementation of SavingsGoalRepository using SharedPreferences
 /// Data persists across app restarts
+import 'dart:async';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:payday/core/models/savings_goal.dart';
@@ -9,6 +10,7 @@ class LocalSavingsGoalRepository implements SavingsGoalRepository {
   static const String _storageKey = 'local_savings_goals';
 
   List<SavingsGoal>? _cachedGoals;
+  final _streamController = StreamController<List<SavingsGoal>>.broadcast();
 
   Future<List<SavingsGoal>> _loadGoals() async {
     if (_cachedGoals != null) return _cachedGoals!;
@@ -39,6 +41,9 @@ class LocalSavingsGoalRepository implements SavingsGoalRepository {
     final prefs = await SharedPreferences.getInstance();
     final jsonList = _cachedGoals!.map((g) => g.toJson()).toList();
     await prefs.setString(_storageKey, json.encode(jsonList));
+
+    // Notify stream listeners
+    _streamController.add(_cachedGoals!);
   }
 
   @override
@@ -46,6 +51,20 @@ class LocalSavingsGoalRepository implements SavingsGoalRepository {
     final goals = await _loadGoals();
     return goals.where((g) => g.userId == userId).toList()
       ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+  }
+
+  @override
+  Stream<List<SavingsGoal>> watchSavingsGoals(String userId) async* {
+    // First, yield current data
+    final goals = await getSavingsGoals(userId);
+    yield goals;
+
+    // Then listen for updates
+    await for (final allGoals in _streamController.stream) {
+      final userGoals = allGoals.where((g) => g.userId == userId).toList()
+        ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      yield userGoals;
+    }
   }
 
   @override
@@ -100,6 +119,11 @@ class LocalSavingsGoalRepository implements SavingsGoalRepository {
   /// Clear cache to force reload from storage
   void clearCache() {
     _cachedGoals = null;
+  }
+
+  /// Dispose stream controller
+  void dispose() {
+    _streamController.close();
   }
 }
 
