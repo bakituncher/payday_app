@@ -26,6 +26,7 @@ mixin _$SavingsGoal {
   String get name => throw _privateConstructorUsedError;
   double get targetAmount => throw _privateConstructorUsedError;
   double get currentAmount => throw _privateConstructorUsedError;
+  double get monthlyContribution => throw _privateConstructorUsedError;
   String get emoji => throw _privateConstructorUsedError;
   DateTime get createdAt => throw _privateConstructorUsedError;
   DateTime? get targetDate => throw _privateConstructorUsedError;
@@ -53,6 +54,7 @@ abstract class $SavingsGoalCopyWith<$Res> {
     String name,
     double targetAmount,
     double currentAmount,
+    double monthlyContribution,
     String emoji,
     DateTime createdAt,
     DateTime? targetDate,
@@ -79,6 +81,7 @@ class _$SavingsGoalCopyWithImpl<$Res, $Val extends SavingsGoal>
     Object? name = null,
     Object? targetAmount = null,
     Object? currentAmount = null,
+    Object? monthlyContribution = null,
     Object? emoji = null,
     Object? createdAt = null,
     Object? targetDate = freezed,
@@ -104,6 +107,10 @@ class _$SavingsGoalCopyWithImpl<$Res, $Val extends SavingsGoal>
             currentAmount: null == currentAmount
                 ? _value.currentAmount
                 : currentAmount // ignore: cast_nullable_to_non_nullable
+                      as double,
+            monthlyContribution: null == monthlyContribution
+                ? _value.monthlyContribution
+                : monthlyContribution // ignore: cast_nullable_to_non_nullable
                       as double,
             emoji: null == emoji
                 ? _value.emoji
@@ -138,6 +145,7 @@ abstract class _$$SavingsGoalImplCopyWith<$Res>
     String name,
     double targetAmount,
     double currentAmount,
+    double monthlyContribution,
     String emoji,
     DateTime createdAt,
     DateTime? targetDate,
@@ -163,6 +171,7 @@ class __$$SavingsGoalImplCopyWithImpl<$Res>
     Object? name = null,
     Object? targetAmount = null,
     Object? currentAmount = null,
+    Object? monthlyContribution = null,
     Object? emoji = null,
     Object? createdAt = null,
     Object? targetDate = freezed,
@@ -188,6 +197,10 @@ class __$$SavingsGoalImplCopyWithImpl<$Res>
         currentAmount: null == currentAmount
             ? _value.currentAmount
             : currentAmount // ignore: cast_nullable_to_non_nullable
+                  as double,
+        monthlyContribution: null == monthlyContribution
+            ? _value.monthlyContribution
+            : monthlyContribution // ignore: cast_nullable_to_non_nullable
                   as double,
         emoji: null == emoji
             ? _value.emoji
@@ -215,6 +228,7 @@ class _$SavingsGoalImpl implements _SavingsGoal {
     required this.name,
     required this.targetAmount,
     this.currentAmount = 0.0,
+    this.monthlyContribution = 0.0,
     required this.emoji,
     required this.createdAt,
     this.targetDate,
@@ -235,6 +249,9 @@ class _$SavingsGoalImpl implements _SavingsGoal {
   @JsonKey()
   final double currentAmount;
   @override
+  @JsonKey()
+  final double monthlyContribution;
+  @override
   final String emoji;
   @override
   final DateTime createdAt;
@@ -243,7 +260,7 @@ class _$SavingsGoalImpl implements _SavingsGoal {
 
   @override
   String toString() {
-    return 'SavingsGoal(id: $id, userId: $userId, name: $name, targetAmount: $targetAmount, currentAmount: $currentAmount, emoji: $emoji, createdAt: $createdAt, targetDate: $targetDate)';
+    return 'SavingsGoal(id: $id, userId: $userId, name: $name, targetAmount: $targetAmount, currentAmount: $currentAmount, monthlyContribution: $monthlyContribution, emoji: $emoji, createdAt: $createdAt, targetDate: $targetDate)';
   }
 
   @override
@@ -258,6 +275,8 @@ class _$SavingsGoalImpl implements _SavingsGoal {
                 other.targetAmount == targetAmount) &&
             (identical(other.currentAmount, currentAmount) ||
                 other.currentAmount == currentAmount) &&
+            (identical(other.monthlyContribution, monthlyContribution) ||
+                other.monthlyContribution == monthlyContribution) &&
             (identical(other.emoji, emoji) || other.emoji == emoji) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
@@ -274,6 +293,7 @@ class _$SavingsGoalImpl implements _SavingsGoal {
     name,
     targetAmount,
     currentAmount,
+    monthlyContribution,
     emoji,
     createdAt,
     targetDate,
@@ -300,6 +320,7 @@ abstract class _SavingsGoal implements SavingsGoal {
     required final String name,
     required final double targetAmount,
     final double currentAmount,
+    final double monthlyContribution,
     required final String emoji,
     required final DateTime createdAt,
     final DateTime? targetDate,
@@ -318,6 +339,8 @@ abstract class _SavingsGoal implements SavingsGoal {
   double get targetAmount;
   @override
   double get currentAmount;
+  @override
+  double get monthlyContribution;
   @override
   String get emoji;
   @override

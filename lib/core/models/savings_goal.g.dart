@@ -13,6 +13,7 @@ _$SavingsGoalImpl _$$SavingsGoalImplFromJson(Map<String, dynamic> json) =>
       name: json['name'] as String,
       targetAmount: (json['targetAmount'] as num).toDouble(),
       currentAmount: (json['currentAmount'] as num?)?.toDouble() ?? 0.0,
+      monthlyContribution: (json['monthlyContribution'] as num?)?.toDouble() ?? 0.0,
       emoji: json['emoji'] as String,
       createdAt: DateTime.parse(json['createdAt'] as String),
       targetDate: json['targetDate'] == null
@@ -27,6 +28,7 @@ Map<String, dynamic> _$$SavingsGoalImplToJson(_$SavingsGoalImpl instance) =>
       'name': instance.name,
       'targetAmount': instance.targetAmount,
       'currentAmount': instance.currentAmount,
+      'monthlyContribution': instance.monthlyContribution,
       'emoji': instance.emoji,
       'createdAt': instance.createdAt.toIso8601String(),
       'targetDate': instance.targetDate?.toIso8601String(),

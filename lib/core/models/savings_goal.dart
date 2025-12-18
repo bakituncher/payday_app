@@ -12,6 +12,7 @@ class SavingsGoal with _$SavingsGoal {
     required String name,
     required double targetAmount,
     @Default(0.0) double currentAmount,
+    @Default(0.0) double monthlyContribution,
     required String emoji,
     required DateTime createdAt,
     DateTime? targetDate,
@@ -38,4 +39,3 @@ extension SavingsGoalExtension on SavingsGoal {
     return remaining > 0 ? remaining : 0.0;
   }
 }
-

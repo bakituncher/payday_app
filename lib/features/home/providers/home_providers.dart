@@ -4,6 +4,7 @@ import 'package:payday/core/models/user_settings.dart';
 import 'package:payday/core/models/transaction.dart';
 import 'package:payday/core/providers/repository_providers.dart';
 import 'package:payday/core/services/date_cycle_service.dart';
+import 'package:payday/features/savings/providers/savings_provider.dart';
 
 /// User Settings Provider - Auto-updates payday if it has passed
 final userSettingsProvider = FutureProvider<UserSettings?>((ref) async {
@@ -168,11 +169,19 @@ final totalExpensesProvider = FutureProvider<double>((ref) async {
 final dailyAllowableSpendProvider = FutureProvider<double>((ref) async {
   final settings = await ref.watch(userSettingsProvider.future);
   final totalExpenses = await ref.watch(totalExpensesProvider.future);
+  final savingsGoals = await ref.watch(savingsControllerProvider.future);
 
   if (settings == null) return 0.0;
 
   // Protect against invalid income
   if (settings.incomeAmount <= 0) return 0.0;
+
+  // Calculate total monthly savings allocation
+  // Note: This logic assumes 'monthly' contribution. If the user is on a weekly cycle,
+  // we might want to adjust this math (e.g. savings / 4).
+  // For simplicity and "safe to spend" conservatism, we deduct the full monthly amount
+  // from the current cycle budget, effectively prioritizing savings.
+  final totalSavingsAllocation = savingsGoals.fold(0.0, (sum, g) => sum + g.monthlyContribution);
 
   final now = DateTime.now();
   final today = DateTime(now.year, now.month, now.day);
@@ -219,7 +228,9 @@ final dailyAllowableSpendProvider = FutureProvider<double>((ref) async {
     daysRemaining = 1;
   }
 
-  final remainingBudget = settings.incomeAmount - totalExpenses;
+  // Deduct savings from the income first
+  final adjustedIncome = settings.incomeAmount - totalSavingsAllocation;
+  final remainingBudget = adjustedIncome - totalExpenses;
 
   // If over budget, return 0 instead of negative value
   if (remainingBudget <= 0) {
