@@ -119,12 +119,28 @@ DateTime _subtractOneMonth(DateTime date) {
   return DateTime(year, month, day);
 }
 
-/// Total Expenses for Current Cycle Provider
+/// Total Expenses for Current Cycle Provider (DÜZELTİLMİŞ VERSİYON)
 final totalExpensesProvider = FutureProvider<double>((ref) async {
   final transactions = await ref.watch(currentCycleTransactionsProvider.future);
-  return transactions
+
+  // 1. Toplam Harcamaları Hesapla (Cüzdandan çıkanlar)
+  final grossExpenses = transactions
       .where((t) => t.isExpense)
       .fold<double>(0.0, (sum, t) => sum + t.amount);
+
+  // 2. Tasarruftan Geri Çekilenleri Hesapla (Bütçeye geri dönenler)
+  // Mantık: Eğer bir işlem 'Gelir' ise (!isExpense) VE bir tasarruf hedefine bağlıysa (relatedGoalId != null),
+  // bu işlem aslında bir harcama iadesidir.
+  final savingsWithdrawals = transactions
+      .where((t) => !t.isExpense && t.relatedGoalId != null)
+      .fold<double>(0.0, (sum, t) => sum + t.amount);
+
+  // 3. Net Harcamayı Bul (Toplam Harcama - Geri Çekilenler)
+  // Örnek: 100 TL yatırdın (Harcama: 100). 20 TL geri çektin (İade: 20). Net Harcama: 80.
+  double netExpenses = grossExpenses - savingsWithdrawals;
+
+  // Negatif çıkarsa 0 döndür (Çok nadir durumlarda)
+  return netExpenses < 0 ? 0.0 : netExpenses;
 });
 
 /// Daily Allowable Spend Provider
