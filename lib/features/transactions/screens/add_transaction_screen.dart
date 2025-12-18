@@ -6,6 +6,7 @@ import 'package:payday/core/theme/app_theme.dart';
 import 'package:payday/core/constants/app_constants.dart';
 import 'package:payday/core/models/transaction.dart';
 import 'package:payday/core/providers/repository_providers.dart';
+import 'package:payday/core/utils/currency_formatter.dart';
 import 'package:payday/features/home/providers/home_providers.dart';
 import 'package:payday/features/insights/providers/monthly_summary_providers.dart';
 import 'package:payday/shared/widgets/payday_button.dart';
@@ -183,7 +184,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                           alignment: Alignment.centerLeft,
                           width: 60,
                           child: Text(
-                            userSettings?.currency == 'AUD' ? 'A\$' : '\$',
+                            CurrencyFormatter.getSymbol(userSettings?.currency ?? 'USD'),
                             style: theme.textTheme.headlineMedium?.copyWith(
                               fontWeight: FontWeight.w700,
                               color: AppColors.primaryPink,
