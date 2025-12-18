@@ -7,6 +7,7 @@ import 'package:payday/core/models/savings_goal.dart';
 import 'package:payday/core/providers/repository_providers.dart';
 import 'package:payday/features/home/providers/home_providers.dart';
 import 'package:payday/shared/widgets/payday_button.dart';
+import 'package:payday/core/services/currency_service.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 class SavingsGoalDetailScreen extends ConsumerStatefulWidget {
@@ -188,13 +189,6 @@ class _SavingsGoalDetailScreenState extends ConsumerState<SavingsGoalDetailScree
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final userSettingsAsync = ref.watch(userSettingsProvider);
-
-    final currency = userSettingsAsync.when(
-      data: (settings) => settings?.currency ?? 'USD',
-      loading: () => 'USD',
-      error: (_, __) => 'USD',
-    );
 
     return Scaffold(
       backgroundColor: AppColors.getBackground(context),
@@ -481,28 +475,8 @@ class _SavingsGoalDetailScreenState extends ConsumerState<SavingsGoalDetailScree
       error: (_, __) => 'USD',
     );
 
-    final symbol = _getCurrencySymbol(currency);
-    return '$symbol${amount.toStringAsFixed(0).replaceAllMapped(
-      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-          (Match m) => '${m[1]},',
-    )}';
-  }
-
-  String _getCurrencySymbol(String currency) {
-    switch (currency) {
-      case 'USD':
-        return '\$';
-      case 'AUD':
-        return 'A\$';
-      case 'TRY':
-        return '₺';
-      case 'EUR':
-        return '€';
-      case 'GBP':
-        return '£';
-      default:
-        return '\$';
-    }
+    final currencyService = CurrencyUtilityService();
+    return currencyService.formatAmountWithSeparators(amount, currency, decimals: 0);
   }
 
   String _formatDate(DateTime date) {
@@ -512,22 +486,31 @@ class _SavingsGoalDetailScreenState extends ConsumerState<SavingsGoalDetailScree
   }
 }
 
-class _AddMoneyDialog extends StatelessWidget {
+class _AddMoneyDialog extends ConsumerWidget {
   final TextEditingController controller;
 
   const _AddMoneyDialog({required this.controller});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final userSettingsAsync = ref.watch(userSettingsProvider);
+    final currency = userSettingsAsync.when(
+      data: (settings) => settings?.currency ?? 'USD',
+      loading: () => 'USD',
+      error: (_, __) => 'USD',
+    );
+    final currencyService = CurrencyUtilityService();
+    final currencySymbol = currencyService.getSymbol(currency);
+
     return AlertDialog(
       title: const Text('Add Money'),
       content: TextField(
         controller: controller,
         keyboardType: TextInputType.number,
         autofocus: true,
-        decoration: const InputDecoration(
+        decoration: InputDecoration(
           hintText: 'Amount',
-          prefixText: '\$',
+          prefixText: currencySymbol,
         ),
       ),
       actions: [
@@ -547,7 +530,7 @@ class _AddMoneyDialog extends StatelessWidget {
   }
 }
 
-class _WithdrawMoneyDialog extends StatelessWidget {
+class _WithdrawMoneyDialog extends ConsumerWidget {
   final TextEditingController controller;
   final double maxAmount;
 
@@ -557,14 +540,23 @@ class _WithdrawMoneyDialog extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final userSettingsAsync = ref.watch(userSettingsProvider);
+    final currency = userSettingsAsync.when(
+      data: (settings) => settings?.currency ?? 'USD',
+      loading: () => 'USD',
+      error: (_, __) => 'USD',
+    );
+    final currencyService = CurrencyUtilityService();
+    final formattedMax = currencyService.formatAmountWithSeparators(maxAmount, currency);
+
     return AlertDialog(
       title: const Text('Withdraw Money'),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            'Maximum: \$${maxAmount.toStringAsFixed(2)}',
+            'Maximum: $formattedMax',
             style: const TextStyle(color: AppColors.mediumGray),
           ),
           const SizedBox(height: AppSpacing.sm),
@@ -572,9 +564,9 @@ class _WithdrawMoneyDialog extends StatelessWidget {
             controller: controller,
             keyboardType: TextInputType.number,
             autofocus: true,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               hintText: 'Amount',
-              prefixText: '\$',
+              prefixText: currencyService.getSymbol(currency),
             ),
           ),
         ],

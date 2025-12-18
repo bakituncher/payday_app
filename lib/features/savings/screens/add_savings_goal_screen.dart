@@ -7,6 +7,7 @@ import 'package:payday/core/models/savings_goal.dart';
 import 'package:payday/core/providers/repository_providers.dart';
 import 'package:payday/core/providers/auth_providers.dart';
 import 'package:payday/features/home/providers/home_providers.dart';
+import 'package:payday/core/services/currency_service.dart';
 import 'package:uuid/uuid.dart';
 
 class AddSavingsGoalScreen extends ConsumerStatefulWidget {
@@ -498,20 +499,8 @@ class _AddSavingsGoalScreenState extends ConsumerState<AddSavingsGoalScreen> {
   }
 
   String _getCurrencySymbol(String currency) {
-    switch (currency) {
-      case 'USD':
-        return '\$';
-      case 'AUD':
-        return 'A\$';
-      case 'TRY':
-        return '₺';
-      case 'EUR':
-        return '€';
-      case 'GBP':
-        return '£';
-      default:
-        return '\$';
-    }
+    final currencyService = CurrencyUtilityService();
+    return currencyService.getSymbol(currency);
   }
 
   String _formatDate(DateTime date) {

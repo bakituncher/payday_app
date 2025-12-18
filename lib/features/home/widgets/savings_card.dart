@@ -6,6 +6,7 @@ import 'package:payday/core/theme/app_theme.dart';
 import 'package:payday/features/savings/providers/savings_providers.dart';
 import 'package:payday/features/savings/screens/savings_screen.dart';
 import 'package:payday/features/home/providers/home_providers.dart';
+import 'package:payday/core/services/currency_service.dart';
 
 class SavingsCard extends ConsumerWidget {
   const SavingsCard({super.key});
@@ -249,27 +250,7 @@ class SavingsCard extends ConsumerWidget {
   }
 
   String _formatCurrency(double amount, String currency) {
-    final symbol = _getCurrencySymbol(currency);
-    return '$symbol${amount.toStringAsFixed(0).replaceAllMapped(
-      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-          (Match m) => '${m[1]},',
-    )}';
-  }
-
-  String _getCurrencySymbol(String currency) {
-    switch (currency) {
-      case 'USD':
-        return '\$';
-      case 'AUD':
-        return 'A\$';
-      case 'TRY':
-        return '₺';
-      case 'EUR':
-        return '€';
-      case 'GBP':
-        return '£';
-      default:
-        return '\$';
-    }
+    final currencyService = CurrencyUtilityService();
+    return currencyService.formatAmountWithSeparators(amount, currency, decimals: 0);
   }
 }
