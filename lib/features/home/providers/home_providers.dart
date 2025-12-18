@@ -20,11 +20,22 @@ final userSettingsProvider = FutureProvider<UserSettings?>((ref) async {
 
     // If payday was updated, save the new date AND process auto-transfers
     if (calculatedNextPayday != settings.nextPayday) {
-      print('💰 Payday has passed! Processing auto-transfers...');
+      print('💰 Payday has passed! Processing payday actions...');
 
-      // Save the new payday first
-      await repository.updateNextPayday(userId, calculatedNextPayday);
-      settings = settings.copyWith(nextPayday: calculatedNextPayday);
+      // Add income to current balance
+      final newBalance = settings.currentBalance + settings.incomeAmount;
+
+      // Update both payday and balance
+      final updatedSettings = settings.copyWith(
+        nextPayday: calculatedNextPayday,
+        currentBalance: newBalance,
+        updatedAt: DateTime.now(),
+      );
+
+      await repository.saveUserSettings(updatedSettings);
+      settings = updatedSettings;
+
+      print('💰 Income added to balance: ${settings.incomeAmount} -> New balance: $newBalance');
 
       // Process auto-transfers to savings goals
       try {
@@ -130,12 +141,11 @@ final totalExpensesProvider = FutureProvider<double>((ref) async {
 /// Daily Allowable Spend Provider
 final dailyAllowableSpendProvider = FutureProvider<double>((ref) async {
   final settings = await ref.watch(userSettingsProvider.future);
-  final totalExpenses = await ref.watch(totalExpensesProvider.future);
 
   if (settings == null) return 0.0;
 
-  // Protect against invalid income
-  if (settings.incomeAmount <= 0) return 0.0;
+  // Protect against invalid balance
+  if (settings.currentBalance <= 0) return 0.0;
 
   final now = DateTime.now();
   final today = DateTime(now.year, now.month, now.day);
@@ -162,14 +172,9 @@ final dailyAllowableSpendProvider = FutureProvider<double>((ref) async {
     daysRemaining = 1;
   }
 
-  final remainingBudget = settings.incomeAmount - totalExpenses;
-
-  // If over budget, return 0 instead of negative value
-  if (remainingBudget <= 0) {
-    return 0.0;
-  }
-
-  return remainingBudget / daysRemaining;
+  // Simply divide current balance by remaining days
+  // No need to subtract expenses since currentBalance is already up-to-date
+  return settings.currentBalance / daysRemaining;
 });
 
 /// Budget Health Status Provider
@@ -182,11 +187,11 @@ final budgetHealthProvider = FutureProvider<BudgetHealth>((ref) async {
   }
 
   // Protect against division by zero
-  if (settings.incomeAmount <= 0) {
+  if (settings.currentBalance <= 0) {
     return BudgetHealth.unknown;
   }
 
-  final spentPercentage = (totalExpenses / settings.incomeAmount) * 100;
+  final spentPercentage = (totalExpenses / settings.currentBalance) * 100;
 
   if (spentPercentage < 50) {
     return BudgetHealth.excellent;

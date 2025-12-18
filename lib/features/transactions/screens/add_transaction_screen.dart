@@ -436,7 +436,19 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
       final repository = ref.read(transactionRepositoryProvider);
       await repository.addTransaction(transaction);
 
+      // Update current balance
+      final settingsRepo = ref.read(userSettingsRepositoryProvider);
+      final currentSettings = await ref.read(userSettingsProvider.future);
+      if (currentSettings != null) {
+        final updatedSettings = currentSettings.copyWith(
+          currentBalance: currentSettings.currentBalance - amount,
+          updatedAt: DateTime.now(),
+        );
+        await settingsRepo.saveUserSettings(updatedSettings);
+      }
+
       // Refresh data
+      ref.invalidate(userSettingsProvider);
       ref.invalidate(currentCycleTransactionsProvider);
       ref.invalidate(totalExpensesProvider);
       ref.invalidate(dailyAllowableSpendProvider);

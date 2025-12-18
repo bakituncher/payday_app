@@ -216,7 +216,7 @@ class HomeScreen extends ConsumerWidget {
                           // Budget Progress Card
                           BudgetProgressCard(
                             currency: settings.currency,
-                            incomeAmount: settings.incomeAmount,
+                            currentBalance: settings.currentBalance,
                           )
                               .animate()
                               .fadeIn(duration: 500.ms, delay: 300.ms)

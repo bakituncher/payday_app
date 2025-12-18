@@ -12,6 +12,7 @@ class UserSettings with _$UserSettings {
     required String payCycle,
     required DateTime nextPayday,
     required double incomeAmount,
+    @Default(0.0) double currentBalance,
     @Default('US') String market,
     @Default(true) bool notificationsEnabled,
     @Default(true) bool paydayReminders,

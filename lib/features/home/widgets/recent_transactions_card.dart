@@ -284,7 +284,19 @@ class RecentTransactionsCard extends ConsumerWidget {
         // Pass userId from transaction object
         await repository.deleteTransaction(transaction.id, transaction.userId);
 
+        // Update current balance - add back the deleted expense
+        final settingsRepo = ref.read(userSettingsRepositoryProvider);
+        final currentSettings = await ref.read(userSettingsProvider.future);
+        if (currentSettings != null && transaction.isExpense) {
+          final updatedSettings = currentSettings.copyWith(
+            currentBalance: currentSettings.currentBalance + transaction.amount,
+            updatedAt: DateTime.now(),
+          );
+          await settingsRepo.saveUserSettings(updatedSettings);
+        }
+
         // Refresh data
+        ref.invalidate(userSettingsProvider);
         ref.invalidate(currentCycleTransactionsProvider);
         ref.invalidate(totalExpensesProvider);
         ref.invalidate(dailyAllowableSpendProvider);

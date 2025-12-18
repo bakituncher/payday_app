@@ -506,7 +506,23 @@ class _TransactionDetailScreenState extends ConsumerState<TransactionDetailScree
       final repository = ref.read(transactionRepositoryProvider);
       await repository.updateTransaction(updatedTransaction);
 
+      // Update current balance based on the difference
+      final settingsRepo = ref.read(userSettingsRepositoryProvider);
+      final currentSettings = await ref.read(userSettingsProvider.future);
+      if (currentSettings != null && widget.transaction.isExpense) {
+        final oldAmount = widget.transaction.amount;
+        final newAmount = updatedTransaction.amount;
+        final difference = newAmount - oldAmount;
+
+        final updatedSettings = currentSettings.copyWith(
+          currentBalance: currentSettings.currentBalance - difference,
+          updatedAt: DateTime.now(),
+        );
+        await settingsRepo.saveUserSettings(updatedSettings);
+      }
+
       // Invalidate providers
+      ref.invalidate(userSettingsProvider);
       ref.invalidate(currentCycleTransactionsProvider);
       ref.invalidate(totalExpensesProvider);
       ref.invalidate(dailyAllowableSpendProvider);
@@ -610,6 +626,18 @@ class _TransactionDetailScreenState extends ConsumerState<TransactionDetailScree
       final repository = ref.read(transactionRepositoryProvider);
       await repository.deleteTransaction(widget.transaction.id, widget.transaction.userId);
 
+      // Update current balance - add back the deleted expense
+      final settingsRepo = ref.read(userSettingsRepositoryProvider);
+      final currentSettings = await ref.read(userSettingsProvider.future);
+      if (currentSettings != null && widget.transaction.isExpense) {
+        final updatedSettings = currentSettings.copyWith(
+          currentBalance: currentSettings.currentBalance + widget.transaction.amount,
+          updatedAt: DateTime.now(),
+        );
+        await settingsRepo.saveUserSettings(updatedSettings);
+      }
+
+      ref.invalidate(userSettingsProvider);
       ref.invalidate(currentCycleTransactionsProvider);
       ref.invalidate(totalExpensesProvider);
       ref.invalidate(dailyAllowableSpendProvider);
