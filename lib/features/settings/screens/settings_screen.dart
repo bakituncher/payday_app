@@ -381,7 +381,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Text(
-                  'Hesabı Sil',
+                  'Delete Account',
                   style: TextStyle(
                     color: isDark ? AppColors.darkTextPrimary : AppColors.darkCharcoal,
                     fontWeight: FontWeight.w600,
@@ -395,7 +395,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Hesabınızı silmek üzeresiniz. Bu işlem geri alınamaz!',
+                'You are about to delete your account. This action cannot be undone!',
                 style: TextStyle(
                   color: isDark ? AppColors.darkTextPrimary : AppColors.darkCharcoal,
                   fontSize: 16,
@@ -404,17 +404,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
               const SizedBox(height: AppSpacing.md),
               Text(
-                'Aşağıdaki veriler kalıcı olarak silinecek:',
+                'The following data will be permanently deleted:',
                 style: TextStyle(
                   color: isDark ? AppColors.darkTextSecondary : AppColors.mediumGray,
                   fontSize: 14,
                 ),
               ),
               const SizedBox(height: AppSpacing.sm),
-              _buildDeleteWarningItem('Tüm işlemler ve harcamalar'),
-              _buildDeleteWarningItem('Finansal ayarlar ve tercihleri'),
-              _buildDeleteWarningItem('Hesap bilgileri'),
-              _buildDeleteWarningItem('Premium abonelik durumu'),
+              _buildDeleteWarningItem('All transactions and expenses'),
+              _buildDeleteWarningItem('Financial settings and preferences'),
+              _buildDeleteWarningItem('Account information'),
+              _buildDeleteWarningItem('Premium subscription status'),
               const SizedBox(height: AppSpacing.md),
               Container(
                 padding: const EdgeInsets.all(AppSpacing.md),
@@ -432,7 +432,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     const SizedBox(width: AppSpacing.sm),
                     Expanded(
                       child: Text(
-                        'Bu işlem geri alınamaz!',
+                        'This action cannot be undone!',
                         style: TextStyle(
                           color: AppColors.error,
                           fontSize: 13,
@@ -449,7 +449,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
               child: Text(
-                'İptal',
+                'Cancel',
                 style: TextStyle(
                   color: isDark ? AppColors.darkTextSecondary : AppColors.mediumGray,
                   fontWeight: FontWeight.w600,
@@ -474,7 +474,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ),
               ),
               child: const Text(
-                'Hesabı Sil',
+                'Delete Account',
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
                 ),
@@ -544,7 +544,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               children: [
                 Icon(Icons.check_circle, color: Colors.white),
                 SizedBox(width: 8),
-                Text('Hesabınız başarıyla silindi'),
+                Text('Your account has been deleted successfully'),
               ],
             ),
             backgroundColor: AppColors.success,
@@ -559,7 +559,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Hesap silinirken hata oluştu: $e'),
+            content: Text('An error occurred while deleting the account: $e'),
             backgroundColor: AppColors.error,
           ),
         );
@@ -855,7 +855,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             const SizedBox(height: AppSpacing.sm),
             // Delete Account Button
             PaydayButton(
-              text: 'Hesabı Sil',
+              text: 'Delete Account',
               icon: Icons.delete_forever_rounded,
               isLoading: _isSigningIn,
               width: double.infinity,

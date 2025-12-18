@@ -8,6 +8,7 @@
 /// Backend: Firebase (Mock repositories for now)
 
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_analytics/firebase_analytics.dart'; // ✅ EKLENDİ: Analytics Import
 import 'firebase_options.dart'; // Bu dosyayı flutterfire configure ile oluşturmuştuk
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -97,6 +98,12 @@ class _PaydayAppState extends ConsumerState<PaydayApp> {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: themeMode,
+
+      // ✅ EKLENDİ: Analytics Observer
+      // Bu sayede hangi ekranda ne kadar kalındığı otomatik takip edilir
+      navigatorObservers: [
+        FirebaseAnalyticsObserver(analytics: FirebaseAnalytics.instance),
+      ],
 
       // Routes
       initialRoute: '/',
