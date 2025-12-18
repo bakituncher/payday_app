@@ -18,10 +18,26 @@ final userSettingsProvider = FutureProvider<UserSettings?>((ref) async {
       settings.payCycle,
     );
 
-    // If payday was updated, save the new date
+    // If payday was updated, save the new date AND process auto-transfers
     if (calculatedNextPayday != settings.nextPayday) {
+      print('💰 Payday has passed! Processing auto-transfers...');
+
+      // Save the new payday first
       await repository.updateNextPayday(userId, calculatedNextPayday);
       settings = settings.copyWith(nextPayday: calculatedNextPayday);
+
+      // Process auto-transfers to savings goals
+      try {
+        final autoTransferService = ref.read(autoTransferServiceProvider);
+        final result = await autoTransferService.processAutoTransfers(userId);
+
+        if (result.success && result.transferCount > 0) {
+          print('💰 Auto-transfers completed: ${result.transferCount} goals, Total: ${result.totalAmount}');
+        }
+      } catch (e) {
+        print('❌ Error processing auto-transfers: $e');
+        // Don't fail the whole provider if auto-transfers fail
+      }
     }
   }
 

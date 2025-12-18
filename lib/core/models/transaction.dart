@@ -39,6 +39,8 @@ class Transaction with _$Transaction {
     TransactionFrequency? frequency,
     String? subscriptionId, // Link to subscription if applicable
     DateTime? nextRecurrenceDate,
+    // Savings goal link
+    String? relatedGoalId, // Link to savings goal if this is a savings transaction
   }) = _Transaction;
 
   factory Transaction.fromJson(Map<String, dynamic> json) =>

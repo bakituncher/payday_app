@@ -35,7 +35,9 @@ mixin _$Transaction {
   TransactionFrequency? get frequency => throw _privateConstructorUsedError;
   String? get subscriptionId =>
       throw _privateConstructorUsedError; // Link to subscription if applicable
-  DateTime? get nextRecurrenceDate => throw _privateConstructorUsedError;
+  DateTime? get nextRecurrenceDate =>
+      throw _privateConstructorUsedError; // Savings goal link
+  String? get relatedGoalId => throw _privateConstructorUsedError;
 
   /// Serializes this Transaction to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -68,6 +70,7 @@ abstract class $TransactionCopyWith<$Res> {
     TransactionFrequency? frequency,
     String? subscriptionId,
     DateTime? nextRecurrenceDate,
+    String? relatedGoalId,
   });
 }
 
@@ -99,6 +102,7 @@ class _$TransactionCopyWithImpl<$Res, $Val extends Transaction>
     Object? frequency = freezed,
     Object? subscriptionId = freezed,
     Object? nextRecurrenceDate = freezed,
+    Object? relatedGoalId = freezed,
   }) {
     return _then(
       _value.copyWith(
@@ -154,6 +158,10 @@ class _$TransactionCopyWithImpl<$Res, $Val extends Transaction>
                 ? _value.nextRecurrenceDate
                 : nextRecurrenceDate // ignore: cast_nullable_to_non_nullable
                       as DateTime?,
+            relatedGoalId: freezed == relatedGoalId
+                ? _value.relatedGoalId
+                : relatedGoalId // ignore: cast_nullable_to_non_nullable
+                      as String?,
           )
           as $Val,
     );
@@ -183,6 +191,7 @@ abstract class _$$TransactionImplCopyWith<$Res>
     TransactionFrequency? frequency,
     String? subscriptionId,
     DateTime? nextRecurrenceDate,
+    String? relatedGoalId,
   });
 }
 
@@ -213,6 +222,7 @@ class __$$TransactionImplCopyWithImpl<$Res>
     Object? frequency = freezed,
     Object? subscriptionId = freezed,
     Object? nextRecurrenceDate = freezed,
+    Object? relatedGoalId = freezed,
   }) {
     return _then(
       _$TransactionImpl(
@@ -268,6 +278,10 @@ class __$$TransactionImplCopyWithImpl<$Res>
             ? _value.nextRecurrenceDate
             : nextRecurrenceDate // ignore: cast_nullable_to_non_nullable
                   as DateTime?,
+        relatedGoalId: freezed == relatedGoalId
+            ? _value.relatedGoalId
+            : relatedGoalId // ignore: cast_nullable_to_non_nullable
+                  as String?,
       ),
     );
   }
@@ -290,6 +304,7 @@ class _$TransactionImpl extends _Transaction {
     this.frequency,
     this.subscriptionId,
     this.nextRecurrenceDate,
+    this.relatedGoalId,
   }) : super._();
 
   factory _$TransactionImpl.fromJson(Map<String, dynamic> json) =>
@@ -326,10 +341,13 @@ class _$TransactionImpl extends _Transaction {
   // Link to subscription if applicable
   @override
   final DateTime? nextRecurrenceDate;
+  // Savings goal link
+  @override
+  final String? relatedGoalId;
 
   @override
   String toString() {
-    return 'Transaction(id: $id, userId: $userId, amount: $amount, categoryId: $categoryId, categoryName: $categoryName, categoryEmoji: $categoryEmoji, date: $date, note: $note, isExpense: $isExpense, isRecurring: $isRecurring, frequency: $frequency, subscriptionId: $subscriptionId, nextRecurrenceDate: $nextRecurrenceDate)';
+    return 'Transaction(id: $id, userId: $userId, amount: $amount, categoryId: $categoryId, categoryName: $categoryName, categoryEmoji: $categoryEmoji, date: $date, note: $note, isExpense: $isExpense, isRecurring: $isRecurring, frequency: $frequency, subscriptionId: $subscriptionId, nextRecurrenceDate: $nextRecurrenceDate, relatedGoalId: $relatedGoalId)';
   }
 
   @override
@@ -357,7 +375,9 @@ class _$TransactionImpl extends _Transaction {
             (identical(other.subscriptionId, subscriptionId) ||
                 other.subscriptionId == subscriptionId) &&
             (identical(other.nextRecurrenceDate, nextRecurrenceDate) ||
-                other.nextRecurrenceDate == nextRecurrenceDate));
+                other.nextRecurrenceDate == nextRecurrenceDate) &&
+            (identical(other.relatedGoalId, relatedGoalId) ||
+                other.relatedGoalId == relatedGoalId));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -377,6 +397,7 @@ class _$TransactionImpl extends _Transaction {
     frequency,
     subscriptionId,
     nextRecurrenceDate,
+    relatedGoalId,
   );
 
   /// Create a copy of Transaction
@@ -408,6 +429,7 @@ abstract class _Transaction extends Transaction {
     final TransactionFrequency? frequency,
     final String? subscriptionId,
     final DateTime? nextRecurrenceDate,
+    final String? relatedGoalId,
   }) = _$TransactionImpl;
   const _Transaction._() : super._();
 
@@ -439,7 +461,9 @@ abstract class _Transaction extends Transaction {
   @override
   String? get subscriptionId; // Link to subscription if applicable
   @override
-  DateTime? get nextRecurrenceDate;
+  DateTime? get nextRecurrenceDate; // Savings goal link
+  @override
+  String? get relatedGoalId;
 
   /// Create a copy of Transaction
   /// with the given fields replaced by the non-null parameter values.

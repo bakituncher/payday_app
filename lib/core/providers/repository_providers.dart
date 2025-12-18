@@ -18,6 +18,7 @@ import 'package:payday/core/repositories/firebase/firebase_subscription_reposito
 import 'package:payday/core/repositories/firebase/firebase_monthly_summary_repository.dart';
 import 'package:payday/core/providers/auth_providers.dart';
 import 'package:payday/core/services/notification_service.dart';
+import 'package:payday/core/services/auto_transfer_service.dart';
 
 /// Repository Providers - Using Local implementations with SharedPreferences
 /// Data persists across app restarts
@@ -77,5 +78,15 @@ final currentUserIdProvider = Provider<String>((ref) {
   // If user is logged in (including anonymous), use their UID.
   // If no user, fallback to 'local_user' (shouldn't happen if we force anonymous auth)
   return user?.uid ?? 'local_user';
+});
+
+/// Auto Transfer Service Provider
+final autoTransferServiceProvider = Provider<AutoTransferService>((ref) {
+  final savingsGoalRepository = ref.watch(savingsGoalRepositoryProvider);
+  final transactionRepository = ref.watch(transactionRepositoryProvider);
+  return AutoTransferService(
+    savingsGoalRepository: savingsGoalRepository,
+    transactionRepository: transactionRepository,
+  );
 });
 

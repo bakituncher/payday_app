@@ -46,6 +46,9 @@ class AppConstants {
     payCycleMonthly: 30, // Approximate, will calculate actual
   };
 
+  // Savings Category ID (constant for system use)
+  static const String savingsCategoryId = 'savings';
+
   // Transaction Categories
   static const List<Map<String, String>> transactionCategories = [
     {'name': 'Food & Dining', 'emoji': '🍔', 'id': 'food'},
@@ -57,6 +60,7 @@ class AppConstants {
     {'name': 'Groceries', 'emoji': '🛒', 'id': 'groceries'},
     {'name': 'Coffee & Drinks', 'emoji': '☕', 'id': 'coffee'},
     {'name': 'Personal Care', 'emoji': '💄', 'id': 'personal'},
+    {'name': 'Savings Transfer', 'emoji': '💰', 'id': 'savings'}, // System category for savings
     {'name': 'Other', 'emoji': '📌', 'id': 'other'},
   ];
 

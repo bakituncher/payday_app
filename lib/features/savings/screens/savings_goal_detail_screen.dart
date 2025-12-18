@@ -4,11 +4,15 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:payday/core/theme/app_theme.dart';
 import 'package:payday/core/models/savings_goal.dart';
+import 'package:payday/core/models/transaction.dart';
 import 'package:payday/core/providers/repository_providers.dart';
 import 'package:payday/features/home/providers/home_providers.dart';
+import 'package:payday/features/savings/providers/savings_providers.dart';
 import 'package:payday/shared/widgets/payday_button.dart';
 import 'package:payday/core/services/currency_service.dart';
+import 'package:payday/core/constants/app_constants.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:uuid/uuid.dart';
 
 class SavingsGoalDetailScreen extends ConsumerStatefulWidget {
   final SavingsGoal goal;
@@ -43,37 +47,76 @@ class _SavingsGoalDetailScreenState extends ConsumerState<SavingsGoalDetailScree
     if (result != null && result > 0) {
       setState(() => _isLoading = true);
       try {
-        final repository = ref.read(savingsGoalRepositoryProvider);
-        await repository.addMoneyToGoal(
+        final savingsRepository = ref.read(savingsGoalRepositoryProvider);
+        final transactionRepository = ref.read(transactionRepositoryProvider);
+
+        // STEP 1: Add money to the savings goal (this changes the savings balance)
+        await savingsRepository.addMoneyToGoal(
           _currentGoal.id,
           result,
           _currentGoal.userId,
         );
 
-        setState(() {
-          _currentGoal = _currentGoal.copyWith(
-            currentAmount: _currentGoal.currentAmount + result,
+        try {
+          // STEP 2: Create an expense transaction to deduct from budget
+          // If this fails, we need to rollback the savings update
+          final transaction = Transaction(
+            id: const Uuid().v4(),
+            userId: _currentGoal.userId,
+            amount: result,
+            categoryId: AppConstants.savingsCategoryId, // Use constant instead of hardcoded string
+            categoryName: 'Savings Transfer',
+            categoryEmoji: _currentGoal.emoji,
+            date: DateTime.now(),
+            note: 'Transfer to ${_currentGoal.name}',
+            isExpense: true, // This is an expense - money leaving the budget
+            relatedGoalId: _currentGoal.id, // Link transaction to savings goal
           );
-        });
+          await transactionRepository.addTransaction(transaction);
 
-        if (mounted) {
-          HapticFeedback.mediumImpact();
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('✅ ${_formatCurrency(result)} added'),
-              backgroundColor: AppColors.success,
-            ),
-          );
+          // SUCCESS: Both operations completed, update UI
+          setState(() {
+            _currentGoal = _currentGoal.copyWith(
+              currentAmount: _currentGoal.currentAmount + result,
+            );
+          });
+
+          if (mounted) {
+            HapticFeedback.mediumImpact();
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('✅ ${_formatCurrency(result)} added to savings'),
+                backgroundColor: AppColors.success,
+              ),
+            );
+          }
+        } catch (transactionError) {
+          // ROLLBACK: Transaction creation failed, undo the savings update
+          print('⚠️ Transaction creation failed, rolling back savings update...');
+          try {
+            await savingsRepository.withdrawMoneyFromGoal(
+              _currentGoal.id,
+              result,
+              _currentGoal.userId,
+            );
+            print('✅ Rollback successful');
+          } catch (rollbackError) {
+            print('❌ CRITICAL: Rollback failed! Data inconsistency possible: $rollbackError');
+            // In production, you should log this to a monitoring service
+          }
+          // Re-throw the original error
+          throw transactionError;
         }
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Error: $e'),
+              content: Text('❌ Error: Failed to add money. Please try again.'),
               backgroundColor: AppColors.error,
             ),
           );
         }
+        print('Error in _addMoney: $e');
       } finally {
         setState(() => _isLoading = false);
       }
@@ -81,49 +124,100 @@ class _SavingsGoalDetailScreenState extends ConsumerState<SavingsGoalDetailScree
   }
 
   Future<void> _withdrawMoney() async {
+    // Get the latest goal data for max amount
+    final goalsAsync = ref.read(savingsGoalsProvider);
+    final currentGoalData = goalsAsync.whenOrNull(
+      data: (goals) {
+        try {
+          return goals.firstWhere((g) => g.id == widget.goal.id);
+        } catch (e) {
+          return _currentGoal;
+        }
+      },
+    ) ?? _currentGoal;
+
     final controller = TextEditingController();
     final result = await showDialog<double>(
       context: context,
       builder: (context) => _WithdrawMoneyDialog(
         controller: controller,
-        maxAmount: _currentGoal.currentAmount,
+        maxAmount: currentGoalData.currentAmount,
       ),
     );
 
     if (result != null && result > 0) {
       setState(() => _isLoading = true);
       try {
-        final repository = ref.read(savingsGoalRepositoryProvider);
-        await repository.withdrawMoneyFromGoal(
+        final savingsRepository = ref.read(savingsGoalRepositoryProvider);
+        final transactionRepository = ref.read(transactionRepositoryProvider);
+
+        // STEP 1: Withdraw money from the savings goal
+        await savingsRepository.withdrawMoneyFromGoal(
           _currentGoal.id,
           result,
           _currentGoal.userId,
         );
 
-        setState(() {
-          _currentGoal = _currentGoal.copyWith(
-            currentAmount: _currentGoal.currentAmount - result,
+        try {
+          // STEP 2: Create an income transaction to add back to budget
+          // If this fails, we need to rollback the savings update
+          final transaction = Transaction(
+            id: const Uuid().v4(),
+            userId: _currentGoal.userId,
+            amount: result,
+            categoryId: AppConstants.savingsCategoryId, // Use constant instead of hardcoded string
+            categoryName: 'Savings Transfer',
+            categoryEmoji: _currentGoal.emoji,
+            date: DateTime.now(),
+            note: 'Withdrawal from ${_currentGoal.name}',
+            isExpense: false, // This is income - money coming back to budget
+            relatedGoalId: _currentGoal.id, // Link transaction to savings goal
           );
-        });
+          await transactionRepository.addTransaction(transaction);
 
-        if (mounted) {
-          HapticFeedback.mediumImpact();
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('✅ ${_formatCurrency(result)} withdrawn'),
-              backgroundColor: AppColors.warning,
-            ),
-          );
+          // SUCCESS: Both operations completed, update UI
+          setState(() {
+            _currentGoal = _currentGoal.copyWith(
+              currentAmount: _currentGoal.currentAmount - result,
+            );
+          });
+
+          if (mounted) {
+            HapticFeedback.mediumImpact();
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('✅ ${_formatCurrency(result)} withdrawn'),
+                backgroundColor: AppColors.warning,
+              ),
+            );
+          }
+        } catch (transactionError) {
+          // ROLLBACK: Transaction creation failed, undo the savings withdrawal
+          print('⚠️ Transaction creation failed, rolling back savings withdrawal...');
+          try {
+            await savingsRepository.addMoneyToGoal(
+              _currentGoal.id,
+              result,
+              _currentGoal.userId,
+            );
+            print('✅ Rollback successful');
+          } catch (rollbackError) {
+            print('❌ CRITICAL: Rollback failed! Data inconsistency possible: $rollbackError');
+            // In production, you should log this to a monitoring service
+          }
+          // Re-throw the original error
+          throw transactionError;
         }
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Error: $e'),
+              content: Text('❌ Error: Failed to withdraw money. Please try again.'),
               backgroundColor: AppColors.error,
             ),
           );
         }
+        print('Error in _withdrawMoney: $e');
       } finally {
         setState(() => _isLoading = false);
       }
@@ -190,6 +284,24 @@ class _SavingsGoalDetailScreenState extends ConsumerState<SavingsGoalDetailScree
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
+    // Watch the savings goals provider to get live updates
+    final goalsAsync = ref.watch(savingsGoalsProvider);
+
+    // Find the current goal from the live data, fallback to _currentGoal if not found
+    final liveGoal = goalsAsync.whenOrNull(
+      data: (goals) {
+        try {
+          return goals.firstWhere((g) => g.id == widget.goal.id);
+        } catch (e) {
+          // Goal might be deleted or not found
+          return _currentGoal;
+        }
+      },
+    ) ?? _currentGoal;
+
+    // Use liveGoal instead of _currentGoal for rendering
+    // This ensures UI is always in sync with the repository
+
     return Scaffold(
       backgroundColor: AppColors.getBackground(context),
       appBar: AppBar(
@@ -214,13 +326,13 @@ class _SavingsGoalDetailScreenState extends ConsumerState<SavingsGoalDetailScree
           Container(
             padding: const EdgeInsets.all(AppSpacing.xl),
             decoration: BoxDecoration(
-              gradient: _currentGoal.isCompleted
+              gradient: liveGoal.isCompleted
                   ? AppColors.successGradient
                   : AppColors.pinkGradient,
               borderRadius: BorderRadius.circular(AppRadius.xl),
               boxShadow: [
                 BoxShadow(
-                  color: (_currentGoal.isCompleted
+                  color: (liveGoal.isCompleted
                       ? AppColors.success
                       : AppColors.primaryPink)
                       .withValues(alpha: 0.3),
@@ -241,21 +353,21 @@ class _SavingsGoalDetailScreenState extends ConsumerState<SavingsGoalDetailScree
                   ),
                   child: Center(
                     child: Text(
-                      _currentGoal.emoji,
+                      liveGoal.emoji,
                       style: const TextStyle(fontSize: 48),
                     ),
                   ),
                 ),
                 const SizedBox(height: AppSpacing.md),
                 Text(
-                  _currentGoal.name,
+                  liveGoal.name,
                   style: theme.textTheme.headlineMedium?.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.w800,
                   ),
                   textAlign: TextAlign.center,
                 ),
-                if (_currentGoal.isCompleted) ...[
+                if (liveGoal.isCompleted) ...[
                   const SizedBox(height: AppSpacing.sm),
                   Container(
                     padding: const EdgeInsets.symmetric(
@@ -296,7 +408,7 @@ class _SavingsGoalDetailScreenState extends ConsumerState<SavingsGoalDetailScree
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 Text(
-                  _formatCurrency(_currentGoal.currentAmount),
+                  _formatCurrency(liveGoal.currentAmount),
                   style: theme.textTheme.displaySmall?.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.w900,
@@ -304,7 +416,7 @@ class _SavingsGoalDetailScreenState extends ConsumerState<SavingsGoalDetailScree
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 Text(
-                  'Target: ${_formatCurrency(_currentGoal.targetAmount)}',
+                  'Target: ${_formatCurrency(liveGoal.targetAmount)}',
                   style: theme.textTheme.bodyLarge?.copyWith(
                     color: Colors.white.withValues(alpha: 0.8),
                   ),
@@ -317,15 +429,15 @@ class _SavingsGoalDetailScreenState extends ConsumerState<SavingsGoalDetailScree
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          '${_currentGoal.progressPercentage.toStringAsFixed(0)}%',
+                          '${liveGoal.progressPercentage.toStringAsFixed(0)}%',
                           style: theme.textTheme.titleLarge?.copyWith(
                             color: Colors.white,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
-                        if (!_currentGoal.isCompleted)
+                        if (!liveGoal.isCompleted)
                           Text(
-                            '${_formatCurrency(_currentGoal.remainingAmount)} left',
+                            '${_formatCurrency(liveGoal.remainingAmount)} left',
                             style: theme.textTheme.bodyMedium?.copyWith(
                               color: Colors.white.withValues(alpha: 0.9),
                             ),
@@ -336,7 +448,7 @@ class _SavingsGoalDetailScreenState extends ConsumerState<SavingsGoalDetailScree
                     ClipRRect(
                       borderRadius: BorderRadius.circular(AppRadius.full),
                       child: LinearProgressIndicator(
-                        value: _currentGoal.progressPercentage / 100,
+                        value: liveGoal.progressPercentage / 100,
                         backgroundColor: Colors.white.withValues(alpha: 0.3),
                         valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
                         minHeight: 12,
@@ -354,7 +466,7 @@ class _SavingsGoalDetailScreenState extends ConsumerState<SavingsGoalDetailScree
           const SizedBox(height: AppSpacing.lg),
 
           // Auto-transfer Info
-          if (_currentGoal.autoTransferEnabled && !_currentGoal.isCompleted)
+          if (liveGoal.autoTransferEnabled && !liveGoal.isCompleted)
             Container(
               padding: const EdgeInsets.all(AppSpacing.md),
               decoration: BoxDecoration(
@@ -385,7 +497,7 @@ class _SavingsGoalDetailScreenState extends ConsumerState<SavingsGoalDetailScree
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '${_formatCurrency(_currentGoal.autoTransferAmount)} will be automatically transferred on every payday',
+                          '${_formatCurrency(liveGoal.autoTransferAmount)} will be automatically transferred on every payday',
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: AppColors.info,
                           ),
@@ -400,11 +512,11 @@ class _SavingsGoalDetailScreenState extends ConsumerState<SavingsGoalDetailScree
                 .fadeIn(duration: 400.ms, delay: 200.ms)
                 .slideY(begin: 0.1, end: 0),
 
-          if (_currentGoal.autoTransferEnabled && !_currentGoal.isCompleted)
+          if (liveGoal.autoTransferEnabled && !liveGoal.isCompleted)
             const SizedBox(height: AppSpacing.md),
 
           // Target Date
-          if (_currentGoal.targetDate != null)
+          if (liveGoal.targetDate != null)
             Container(
               padding: const EdgeInsets.all(AppSpacing.md),
               decoration: BoxDecoration(
@@ -420,7 +532,7 @@ class _SavingsGoalDetailScreenState extends ConsumerState<SavingsGoalDetailScree
                   ),
                   const SizedBox(width: AppSpacing.sm),
                   Text(
-                    'Target Date: ${_formatDate(_currentGoal.targetDate!)}',
+                    'Target Date: ${_formatDate(liveGoal.targetDate!)}',
                     style: theme.textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                       color: AppColors.getTextPrimary(context),
@@ -436,7 +548,7 @@ class _SavingsGoalDetailScreenState extends ConsumerState<SavingsGoalDetailScree
           const SizedBox(height: AppSpacing.xl),
 
           // Action Buttons
-          if (!_currentGoal.isCompleted) ...[
+          if (!liveGoal.isCompleted) ...[
             Row(
               children: [
                 Expanded(
