@@ -1,15 +1,16 @@
-import 'dart:ui' as ui;
 import 'package:intl/intl.dart';
+import 'package:payday/core/services/locale_currency_service.dart';
 
 class CurrencyFormatter {
   /// Cihazın konumundan/dilinden otomatik para birimi kodunu alır (örn: TRY, USD)
+  /// Tüm dünya ülkeleri için locale-based currency detection
   static String getLocalCurrencyCode() {
     try {
-      final String locale = ui.PlatformDispatcher.instance.locale.toString();
-      final format = NumberFormat.simpleCurrency(locale: locale);
-      return format.currencyName ?? 'USD';
-    } catch (_) {
-      return 'USD';
+      // Use comprehensive locale-to-currency mapping service
+      final localeCurrencyService = LocaleCurrencyService();
+      return localeCurrencyService.detectCurrency();
+    } catch (e) {
+      return 'USD'; // Fallback
     }
   }
 
