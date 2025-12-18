@@ -229,7 +229,12 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                   Wrap(
                     spacing: AppSpacing.sm,
                     runSpacing: AppSpacing.sm,
-                    children: AppConstants.transactionCategories.asMap().entries.map((entry) {
+                    children: AppConstants.transactionCategories
+                        .where((c) => c['id'] != AppConstants.savingsCategoryId) // Hide system-only savings category
+                        .toList()
+                        .asMap()
+                        .entries
+                        .map((entry) {
                       final index = entry.key;
                       final category = entry.value;
                       final isSelected = _selectedCategoryId == category['id'];
