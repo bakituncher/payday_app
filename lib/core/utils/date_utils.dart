@@ -1,4 +1,6 @@
 /// Utility functions for date calculations
+library;
+
 import 'package:intl/intl.dart';
 
 class DateUtils {
@@ -52,33 +54,6 @@ class DateUtils {
         date.day == now.day;
   }
 
-  /// Get next payday based on current payday and cycle
-  static DateTime getNextPayday(DateTime currentPayday, String payCycle) {
-    switch (payCycle) {
-      case 'Weekly':
-        return currentPayday.add(const Duration(days: 7));
-      case 'Bi-Weekly':
-      case 'Fortnightly':
-        return currentPayday.add(const Duration(days: 14));
-      case 'Monthly':
-        // Add one month, keeping the same day
-        final nextMonth = currentPayday.month == 12 ? 1 : currentPayday.month + 1;
-        final nextYear = currentPayday.month == 12
-            ? currentPayday.year + 1
-            : currentPayday.year;
-
-        // Handle month-end edge cases (e.g., Jan 31 -> Feb 28)
-        int day = currentPayday.day;
-        final daysInNextMonth = DateTime(nextYear, nextMonth + 1, 0).day;
-        if (day > daysInNextMonth) {
-          day = daysInNextMonth;
-        }
-
-        return DateTime(nextYear, nextMonth, day);
-      default:
-        return currentPayday.add(const Duration(days: 30));
-    }
-  }
 
   /// Get relative time string (e.g., "in 5 days", "tomorrow", "today")
   static String getRelativeTimeString(DateTime date) {
