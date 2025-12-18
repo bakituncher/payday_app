@@ -4,6 +4,7 @@ import 'package:payday/core/models/savings_goal.dart';
 import 'package:payday/core/models/transaction.dart';
 import 'package:payday/core/repositories/savings_goal_repository.dart';
 import 'package:payday/core/repositories/transaction_repository.dart';
+import 'package:payday/core/constants/app_constants.dart';
 import 'package:uuid/uuid.dart';
 
 class AutoTransferService {
@@ -63,12 +64,15 @@ class AutoTransferService {
             id: const Uuid().v4(),
             userId: userId,
             amount: transferAmount,
-            categoryId: 'savings',
-            categoryName: 'Savings',
+            // DÜZELTME 1: Sabit değişkeni kullanın
+            categoryId: AppConstants.savingsCategoryId,
+            categoryName: 'Savings Transfer', // Tutarlılık için isimlendirme
             categoryEmoji: goal.emoji,
             date: DateTime.now(),
             note: 'Auto-transfer to ${goal.name}',
             isExpense: true, // This is an expense - money leaving the budget
+            // DÜZELTME 2: İşlemi hedefe bağlayın
+            relatedGoalId: goal.id,
           );
 
           await _transactionRepository.addTransaction(transaction);
