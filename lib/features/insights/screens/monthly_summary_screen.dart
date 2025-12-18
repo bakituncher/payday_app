@@ -57,7 +57,7 @@ class MonthlySummaryScreen extends ConsumerWidget {
                   ),
                   error: (error, _) => _buildErrorState(context, error),
                   data: (subscriptions) {
-                    return _buildContent(context, settings.payCycle, transactions, subscriptions);
+                    return _buildContent(context, settings.payCycle, settings.currency, transactions, subscriptions);
                   },
                 );
               },
@@ -71,11 +71,12 @@ class MonthlySummaryScreen extends ConsumerWidget {
   Widget _buildContent(
     BuildContext context,
     String payCycle,
+    String currency,
     List<Transaction> transactions,
     List<Subscription> subscriptions,
   ) {
     final theme = Theme.of(context);
-    final currencyFormat = NumberFormat.currency(symbol: '\$');
+    final currencyFormat = NumberFormat.currency(symbol: _getCurrencySymbol(currency));
 
     // Filter only expenses
     final expenses = transactions.where((t) => t.isExpense).toList();
@@ -117,7 +118,7 @@ class MonthlySummaryScreen extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: AppSpacing.sm),
-                _buildSpendingChart(context, expensesByDate, payCycle),
+                _buildSpendingChart(context, expensesByDate, payCycle, currency),
 
                 const SizedBox(height: AppSpacing.xl),
 
@@ -156,7 +157,7 @@ class MonthlySummaryScreen extends ConsumerWidget {
                 if (expenses.isEmpty)
                   _buildEmptyState(context, 'No expenses yet', Icons.shopping_bag_outlined)
                 else
-                  _buildExpensesList(context, expenses),
+                  _buildExpensesList(context, expenses, currency),
 
                 const SizedBox(height: AppSpacing.xl),
 
@@ -198,7 +199,7 @@ class MonthlySummaryScreen extends ConsumerWidget {
                 if (subscriptions.isEmpty)
                   _buildEmptyState(context, 'No active subscriptions', Icons.subscriptions_outlined)
                 else
-                  _buildSubscriptionsList(context, subscriptions, payCycle),
+                  _buildSubscriptionsList(context, subscriptions, payCycle, currency),
 
                 const SizedBox(height: AppSpacing.xl),
               ],
@@ -268,6 +269,7 @@ class MonthlySummaryScreen extends ConsumerWidget {
     BuildContext context,
     Map<DateTime, double> expensesByDate,
     String payCycle,
+    String currency,
   ) {
     if (expensesByDate.isEmpty) {
       return _buildEmptyState(context, 'No spending data yet', Icons.insert_chart_outlined);
@@ -275,7 +277,7 @@ class MonthlySummaryScreen extends ConsumerWidget {
 
     // Prepare chart data - sorted by date (most recent first)
     final sortedDates = expensesByDate.keys.toList()..sort((a, b) => b.compareTo(a));
-    final currencyFormat = NumberFormat.currency(symbol: '\$');
+    final currencyFormat = NumberFormat.currency(symbol: _getCurrencySymbol(currency));
     final theme = Theme.of(context);
 
     return Container(
@@ -368,9 +370,9 @@ class MonthlySummaryScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildExpensesList(BuildContext context, List<Transaction> expenses) {
+  Widget _buildExpensesList(BuildContext context, List<Transaction> expenses, String currency) {
     final theme = Theme.of(context);
-    final currencyFormat = NumberFormat.currency(symbol: '\$');
+    final currencyFormat = NumberFormat.currency(symbol: _getCurrencySymbol(currency));
 
     // Group by category
     final byCategory = <String, List<Transaction>>{};
@@ -436,9 +438,10 @@ class MonthlySummaryScreen extends ConsumerWidget {
     BuildContext context,
     List<Subscription> subscriptions,
     String payCycle,
+    String currency,
   ) {
     final theme = Theme.of(context);
-    final currencyFormat = NumberFormat.currency(symbol: '\$');
+    final currencyFormat = NumberFormat.currency(symbol: _getCurrencySymbol(currency));
 
     return Container(
       decoration: BoxDecoration(
@@ -594,6 +597,54 @@ class MonthlySummaryScreen extends ConsumerWidget {
         return 'Quarterly';
       case RecurrenceFrequency.yearly:
         return 'Yearly';
+    }
+  }
+
+  String _getCurrencySymbol(String currency) {
+    // Common currency symbols
+    switch (currency.toUpperCase()) {
+      case 'USD':
+        return '\$';
+      case 'EUR':
+        return '€';
+      case 'GBP':
+        return '£';
+      case 'JPY':
+        return '¥';
+      case 'TRY':
+        return '₺';
+      case 'INR':
+        return '₹';
+      case 'RUB':
+        return '₽';
+      case 'CNY':
+        return '¥';
+      case 'KRW':
+        return '₩';
+      case 'AUD':
+      case 'CAD':
+      case 'NZD':
+      case 'SGD':
+      case 'HKD':
+        return '\$';
+      case 'CHF':
+        return 'CHF';
+      case 'SEK':
+        return 'kr';
+      case 'NOK':
+        return 'kr';
+      case 'DKK':
+        return 'kr';
+      case 'PLN':
+        return 'zł';
+      case 'BRL':
+        return 'R\$';
+      case 'ZAR':
+        return 'R';
+      case 'MXN':
+        return '\$';
+      default:
+        return currency;
     }
   }
 
