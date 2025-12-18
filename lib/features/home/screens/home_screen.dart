@@ -8,6 +8,7 @@ import 'package:payday/features/insights/providers/monthly_summary_providers.dar
 import 'package:payday/features/home/widgets/countdown_card.dart';
 import 'package:payday/features/home/widgets/daily_spend_card.dart';
 import 'package:payday/features/home/widgets/budget_progress_card.dart';
+import 'package:payday/features/home/widgets/savings_card.dart';
 import 'package:payday/features/home/widgets/recent_transactions_card.dart';
 import 'package:payday/features/home/widgets/active_subscriptions_card.dart';
 import 'package:payday/features/home/widgets/monthly_summary_card.dart';
@@ -220,6 +221,14 @@ class HomeScreen extends ConsumerWidget {
                               .animate()
                               .fadeIn(duration: 500.ms, delay: 300.ms)
                               .slideX(begin: 0.1, end: 0),
+
+                          const SizedBox(height: AppSpacing.sm),
+
+                          // Savings Card
+                          const SavingsCard()
+                              .animate()
+                              .fadeIn(duration: 500.ms, delay: 325.ms)
+                              .slideX(begin: -0.1, end: 0),
 
                           const SizedBox(height: AppSpacing.sm),
 
