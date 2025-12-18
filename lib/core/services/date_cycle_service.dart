@@ -6,21 +6,24 @@ class DateCycleService {
   /// Check if payday has passed and calculate next payday
   static DateTime calculateNextPayday(DateTime currentPayday, String payCycle) {
     final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final paydayDate = DateTime(currentPayday.year, currentPayday.month, currentPayday.day);
 
     // If payday hasn't passed yet, return as is
-    if (currentPayday.isAfter(now)) {
+    if (paydayDate.isAfter(today)) {
       return currentPayday;
     }
 
-    // Payday has passed, calculate next one
-    DateTime nextPayday = currentPayday;
+    // Payday has passed or is today, calculate next one
+    DateTime nextPayday = paydayDate;
 
     // Safety limit to prevent infinite loops (max 520 iterations = 10 years of weekly pay)
     int iterations = 0;
     const maxIterations = 520;
 
-    while ((nextPayday.isBefore(now) || _isSameDay(nextPayday, now)) && iterations < maxIterations) {
+    while (iterations < maxIterations) {
       iterations++;
+
       switch (payCycle) {
         case 'Weekly':
           nextPayday = nextPayday.add(const Duration(days: 7));
@@ -33,13 +36,30 @@ class DateCycleService {
           nextPayday = _addMonth(nextPayday, 1);
           break;
         default:
+          // Default to monthly if unknown cycle
           nextPayday = _addMonth(nextPayday, 1);
+      }
+
+      // Check if we've found a future payday
+      if (nextPayday.isAfter(today)) {
+        break;
       }
     }
 
-    // If we hit the limit, just set payday to next month from now
+    // If we hit the limit, just set payday to next occurrence from now
     if (iterations >= maxIterations) {
-      nextPayday = _addMonth(now, 1);
+      switch (payCycle) {
+        case 'Weekly':
+          nextPayday = today.add(const Duration(days: 7));
+          break;
+        case 'Bi-Weekly':
+        case 'Fortnightly':
+          nextPayday = today.add(const Duration(days: 14));
+          break;
+        case 'Monthly':
+        default:
+          nextPayday = _addMonth(today, 1);
+      }
     }
 
     return nextPayday;
@@ -129,7 +149,10 @@ class DateCycleService {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final target = DateTime(targetDate.year, targetDate.month, targetDate.day);
-    return target.difference(today).inDays;
+
+    // Return days until target (not including today if target is in future)
+    final difference = target.difference(today).inDays;
+    return difference >= 0 ? difference : 0;
   }
 
   /// Check if a date is today
