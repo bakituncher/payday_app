@@ -52,79 +52,48 @@ final currentCycleTransactionsProvider = FutureProvider<List<Transaction>>((ref)
 
   if (settings == null) return [];
 
-  // Calculate the start of current pay cycle
+  // Use DateCycleService to calculate cycle boundaries consistently
   final now = DateTime.now();
   final today = DateTime(now.year, now.month, now.day);
-  final payday = DateTime(settings.nextPayday.year, settings.nextPayday.month, settings.nextPayday.day);
+  final nextPayday = DateTime(
+    settings.nextPayday.year,
+    settings.nextPayday.month,
+    settings.nextPayday.day,
+  );
 
-  // Get the previous payday (start of current cycle)
+  // Calculate the start of current pay cycle
   DateTime cycleStart;
 
-  if (payday.isAfter(today) || payday.isAtSameMomentAs(today)) {
-    // We're in a cycle before payday, find when it started
-    switch (settings.payCycle) {
-      case 'Weekly':
-        cycleStart = payday.subtract(const Duration(days: 7));
-        break;
-      case 'Bi-Weekly':
-      case 'Fortnightly':
-        cycleStart = payday.subtract(const Duration(days: 14));
-        break;
-      case 'Monthly':
-        // Use proper month calculation - go back exactly one month
-        cycleStart = _subtractOneMonth(payday);
-        break;
-      default:
-        // Default to monthly for unknown cycles
-        cycleStart = _subtractOneMonth(payday);
-    }
+  // If payday is today or in the future, calculate when the cycle started
+  if (nextPayday.isAfter(today) || nextPayday.isAtSameMomentAs(today)) {
+    cycleStart = _getPreviousPayday(nextPayday, settings.payCycle);
   } else {
-    // Payday has passed, we need to calculate when the NEXT payday would be
-    // and then go back one cycle from that
-    DateTime nextPayday;
-    switch (settings.payCycle) {
-      case 'Weekly':
-        // Find next weekly payday
-        nextPayday = payday.add(const Duration(days: 7));
-        while (nextPayday.isBefore(today) || nextPayday.isAtSameMomentAs(today)) {
-          nextPayday = nextPayday.add(const Duration(days: 7));
-        }
-        cycleStart = nextPayday.subtract(const Duration(days: 7));
-        break;
-      case 'Bi-Weekly':
-      case 'Fortnightly':
-        // Find next bi-weekly payday
-        nextPayday = payday.add(const Duration(days: 14));
-        while (nextPayday.isBefore(today) || nextPayday.isAtSameMomentAs(today)) {
-          nextPayday = nextPayday.add(const Duration(days: 14));
-        }
-        cycleStart = nextPayday.subtract(const Duration(days: 14));
-        break;
-      case 'Monthly':
-        // Find next monthly payday
-        nextPayday = _addOneMonth(payday);
-        while (nextPayday.isBefore(today) || nextPayday.isAtSameMomentAs(today)) {
-          nextPayday = _addOneMonth(nextPayday);
-        }
-        cycleStart = _subtractOneMonth(nextPayday);
-        break;
-      default:
-        // Default to monthly
-        nextPayday = _addOneMonth(payday);
-        while (nextPayday.isBefore(today) || nextPayday.isAtSameMomentAs(today)) {
-          nextPayday = _addOneMonth(nextPayday);
-        }
-        cycleStart = _subtractOneMonth(nextPayday);
-    }
-  }
-
-  // Ensure cycleStart is not in the future (safety check)
-  if (cycleStart.isAfter(today)) {
-    cycleStart = today;
+    // Payday has passed, this shouldn't happen as userSettingsProvider should update it
+    // But as a fallback, calculate the next payday and get its cycle start
+    final actualNextPayday = DateCycleService.calculateNextPayday(
+      settings.nextPayday,
+      settings.payCycle,
+    );
+    cycleStart = _getPreviousPayday(actualNextPayday, settings.payCycle);
   }
 
   return repository.getTransactionsForCurrentCycle(userId, cycleStart);
 });
+
+/// Get the previous payday (start of current cycle) from next payday
+DateTime _getPreviousPayday(DateTime nextPayday, String payCycle) {
+  switch (payCycle) {
+    case 'Weekly':
+      return nextPayday.subtract(const Duration(days: 7));
+    case 'Bi-Weekly':
+    case 'Fortnightly':
+      return nextPayday.subtract(const Duration(days: 14));
+    case 'Monthly':
+      return _subtractOneMonth(nextPayday);
+    default:
+      return _subtractOneMonth(nextPayday);
+  }
+}
 
 /// Subtract one month from a date, handling edge cases
 DateTime _subtractOneMonth(DateTime date) {
@@ -146,28 +115,6 @@ DateTime _subtractOneMonth(DateTime date) {
     day = lastDayOfPrevMonth;
   }
 
-  return DateTime(year, month, day);
-}
-
-/// Add one month to a date, handling edge cases
-DateTime _addOneMonth(DateTime date) {
-  int year = date.year;
-  int month = date.month + 1;
-  int day = date.day;
-
-  // Handle year rollover
-  if (month > 12) {
-    month = 1;
-    year++;
-  }
-
-  // Get the last day of the target month
-  final lastDayOfMonth = DateTime(year, month + 1, 0).day;
-
-  // If the day doesn't exist in target month, use the last day
-  if (day > lastDayOfMonth) {
-    day = lastDayOfMonth;
-  }
 
   return DateTime(year, month, day);
 }
@@ -192,42 +139,22 @@ final dailyAllowableSpendProvider = FutureProvider<double>((ref) async {
 
   final now = DateTime.now();
   final today = DateTime(now.year, now.month, now.day);
-  final payday = DateTime(settings.nextPayday.year, settings.nextPayday.month, settings.nextPayday.day);
+  final nextPayday = DateTime(
+    settings.nextPayday.year,
+    settings.nextPayday.month,
+    settings.nextPayday.day,
+  );
 
   // Calculate days remaining (including today)
-  int daysRemaining = payday.difference(today).inDays + 1;
+  int daysRemaining = nextPayday.difference(today).inDays + 1;
 
-  // If payday has passed or is today
+  // If payday has passed, recalculate (shouldn't happen as userSettingsProvider auto-updates)
   if (daysRemaining <= 0) {
-    // Calculate when the next cycle should start based on pay cycle
-    DateTime nextPayday;
-    switch (settings.payCycle) {
-      case 'Weekly':
-        nextPayday = payday.add(const Duration(days: 7));
-        while (nextPayday.isBefore(today) || nextPayday.isAtSameMomentAs(today)) {
-          nextPayday = nextPayday.add(const Duration(days: 7));
-        }
-        break;
-      case 'Bi-Weekly':
-      case 'Fortnightly':
-        nextPayday = payday.add(const Duration(days: 14));
-        while (nextPayday.isBefore(today) || nextPayday.isAtSameMomentAs(today)) {
-          nextPayday = nextPayday.add(const Duration(days: 14));
-        }
-        break;
-      case 'Monthly':
-        nextPayday = _addOneMonth(payday);
-        while (nextPayday.isBefore(today) || nextPayday.isAtSameMomentAs(today)) {
-          nextPayday = _addOneMonth(nextPayday);
-        }
-        break;
-      default:
-        nextPayday = _addOneMonth(payday);
-        while (nextPayday.isBefore(today) || nextPayday.isAtSameMomentAs(today)) {
-          nextPayday = _addOneMonth(nextPayday);
-        }
-    }
-    daysRemaining = nextPayday.difference(today).inDays + 1;
+    final actualNextPayday = DateCycleService.calculateNextPayday(
+      settings.nextPayday,
+      settings.payCycle,
+    );
+    daysRemaining = actualNextPayday.difference(today).inDays + 1;
   }
 
   // Ensure at least 1 day to prevent division by zero

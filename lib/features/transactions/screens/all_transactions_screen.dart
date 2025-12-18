@@ -41,7 +41,7 @@ class _AllTransactionsScreenState extends ConsumerState<AllTransactionsScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
           onPressed: () => Navigator.pop(context),
-          color: AppColors.darkCharcoal,
+          color: AppColors.getTextPrimary(context),
         ),
         title: Row(
           mainAxisSize: MainAxisSize.min,
@@ -63,7 +63,7 @@ class _AllTransactionsScreenState extends ConsumerState<AllTransactionsScreen> {
               'Transactions',
               style: theme.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.w700,
-                color: AppColors.darkCharcoal,
+                color: AppColors.getTextPrimary(context),
               ),
             ),
           ],
@@ -77,9 +77,9 @@ class _AllTransactionsScreenState extends ConsumerState<AllTransactionsScreen> {
             child: TextField(
               decoration: InputDecoration(
                 hintText: 'Search transactions...',
-                prefixIcon: const Icon(Icons.search_rounded, color: AppColors.mediumGray),
+                prefixIcon: Icon(Icons.search_rounded, color: AppColors.getTextSecondary(context)),
                 filled: true,
-                fillColor: AppColors.subtleGray,
+                fillColor: AppColors.getSubtle(context),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(AppRadius.lg),
                   borderSide: BorderSide.none,
@@ -186,7 +186,7 @@ class _AllTransactionsScreenState extends ConsumerState<AllTransactionsScreen> {
                 dateHeader,
                 style: theme.textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w600,
-                  color: AppColors.mediumGray,
+                  color: AppColors.getTextSecondary(context),
                 ),
               ),
               Text(
@@ -233,9 +233,9 @@ class _AllTransactionsScreenState extends ConsumerState<AllTransactionsScreen> {
           margin: const EdgeInsets.symmetric(vertical: 4),
           padding: const EdgeInsets.all(AppSpacing.sm),
           decoration: BoxDecoration(
-            color: AppColors.cardWhite,
+            color: AppColors.getCardBackground(context),
             borderRadius: BorderRadius.circular(AppRadius.md),
-            boxShadow: AppColors.cardShadow,
+            boxShadow: AppColors.getCardShadow(context),
           ),
           child: Row(
             children: [
@@ -243,7 +243,7 @@ class _AllTransactionsScreenState extends ConsumerState<AllTransactionsScreen> {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: AppColors.lightPink.withOpacity(0.6),
+                  color: AppColors.lightPink.withValues(alpha: 0.6),
                   borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
                 child: Center(
@@ -262,14 +262,14 @@ class _AllTransactionsScreenState extends ConsumerState<AllTransactionsScreen> {
                       transaction.categoryName,
                       style: theme.textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.w600,
-                        color: AppColors.darkCharcoal,
+                        color: AppColors.getTextPrimary(context),
                       ),
                     ),
                     if (transaction.note.isNotEmpty)
                       Text(
                         transaction.note,
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: AppColors.mediumGray,
+                          color: AppColors.getTextSecondary(context),
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -277,7 +277,7 @@ class _AllTransactionsScreenState extends ConsumerState<AllTransactionsScreen> {
                     Text(
                       DateFormat('h:mm a').format(transaction.date),
                       style: theme.textTheme.labelSmall?.copyWith(
-                        color: AppColors.mediumGray,
+                        color: AppColors.getTextSecondary(context),
                       ),
                     ),
                   ],
@@ -305,20 +305,20 @@ class _AllTransactionsScreenState extends ConsumerState<AllTransactionsScreen> {
           Container(
             padding: const EdgeInsets.all(AppSpacing.lg),
             decoration: BoxDecoration(
-              color: AppColors.subtleGray,
+              color: AppColors.getSubtle(context),
               shape: BoxShape.circle,
             ),
             child: Icon(
               Icons.receipt_long_rounded,
               size: 48,
-              color: AppColors.mediumGray,
+              color: AppColors.getTextSecondary(context),
             ),
           ),
           const SizedBox(height: AppSpacing.md),
           Text(
             'No transactions found',
             style: theme.textTheme.titleMedium?.copyWith(
-              color: AppColors.mediumGray,
+              color: AppColors.getTextSecondary(context),
             ),
           ),
           if (_searchQuery.isNotEmpty)
@@ -327,7 +327,7 @@ class _AllTransactionsScreenState extends ConsumerState<AllTransactionsScreen> {
               child: Text(
                 'Try a different search term',
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: AppColors.mediumGray,
+                  color: AppColors.getTextSecondary(context),
                 ),
               ),
             ),
@@ -367,7 +367,7 @@ class _AllTransactionsScreenState extends ConsumerState<AllTransactionsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text('Cancel', style: TextStyle(color: AppColors.mediumGray)),
+            child: Text('Cancel', style: TextStyle(color: AppColors.getTextSecondary(context))),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
@@ -440,4 +440,3 @@ class _AllTransactionsScreenState extends ConsumerState<AllTransactionsScreen> {
     }
   }
 }
-
