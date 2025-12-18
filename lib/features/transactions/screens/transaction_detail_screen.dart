@@ -403,7 +403,9 @@ class _TransactionDetailScreenState extends ConsumerState<TransactionDetailScree
             fontWeight: FontWeight.w600,
             color: AppColors.getTextPrimary(context),
           ),
-          items: AppConstants.transactionCategories.map((category) {
+          items: AppConstants.transactionCategories
+              .where((category) => category['id'] != AppConstants.savingsCategoryId) // Hide system-only savings category
+              .map((category) {
             return DropdownMenuItem<String>(
               value: category['id'] as String,
               child: Row(
