@@ -10,7 +10,7 @@ import 'package:payday/features/home/widgets/daily_spend_card.dart';
 import 'package:payday/features/home/widgets/budget_progress_card.dart';
 import 'package:payday/features/home/widgets/recent_transactions_card.dart';
 import 'package:payday/features/home/widgets/active_subscriptions_card.dart';
-import 'package:payday/features/home/widgets/monthly_summary_card.dart';
+import 'package:payday/features/home/widgets/sector_style_summary_card.dart';
 import 'package:payday/features/transactions/screens/add_transaction_screen.dart';
 import 'package:payday/features/settings/screens/settings_screen.dart';
 import 'package:payday/shared/widgets/payday_button.dart';
@@ -231,8 +231,8 @@ class HomeScreen extends ConsumerWidget {
 
                           const SizedBox(height: AppSpacing.sm),
 
-                          // Monthly Summary Card
-                          const MonthlySummaryCard()
+                          // Sector Style Summary Card
+                          const SectorStyleSummaryCard()
                               .animate()
                               .fadeIn(duration: 500.ms, delay: 375.ms)
                               .slideY(begin: 0.1, end: 0),

@@ -3,44 +3,94 @@
 import 'package:payday/core/models/monthly_summary.dart';
 import 'package:payday/core/models/subscription.dart';
 import 'package:payday/core/models/transaction.dart';
+import 'package:payday/core/models/summary_period.dart';
 
 class FinancialInsightsService {
-  /// Generate monthly summary from transactions
-  static MonthlySummary generateMonthlySummary({
+  /// Generate summary from transactions based on period
+  static MonthlySummary generateSummary({
     required String userId,
-    required int year,
-    required int month,
+    required SummaryPeriod period,
     required double totalIncome,
     required List<Transaction> transactions,
     required List<Subscription> subscriptions,
-    double? previousMonthExpenses,
+    double? previousPeriodExpenses,
+    DateTime? referenceDate,
   }) {
+    // Determine date range for the current period
+    final now = referenceDate ?? DateTime.now();
+    final DateTime startDate;
+    final DateTime endDate;
+    final double adjustedIncome;
+
+    switch (period) {
+      case SummaryPeriod.weekly:
+        // Start of current week (Monday) at 00:00:00
+        final start = now.subtract(Duration(days: now.weekday - 1));
+        startDate = DateTime(start.year, start.month, start.day);
+        // End is the reference date (e.g. today or end of historical week)
+        endDate = now;
+        adjustedIncome = totalIncome / 4; // Approx weekly income
+        break;
+      case SummaryPeriod.biWeekly:
+        // Last 14 days at 00:00:00
+        final start = now.subtract(const Duration(days: 13));
+        startDate = DateTime(start.year, start.month, start.day);
+        endDate = now;
+        adjustedIncome = totalIncome / 2; // Approx bi-weekly income
+        break;
+      case SummaryPeriod.monthly:
+        // Start of month at 00:00:00
+        startDate = DateTime(now.year, now.month, 1);
+        // End of month (for historical) or now (for current)
+        // For monthly, we generally want the whole month range if it's historical
+        // But for "current status" we might want "up to now"
+        // Let's assume standard month boundaries:
+        final nextMonth = DateTime(now.year, now.month + 1, 1);
+        endDate = nextMonth.subtract(const Duration(seconds: 1));
+        adjustedIncome = totalIncome;
+        break;
+    }
+
+    // Filter transactions
+    final periodTransactions = transactions.where((t) {
+      return t.date.isAfter(startDate.subtract(const Duration(seconds: 1))) &&
+          t.date.isBefore(endDate.add(const Duration(days: 1)));
+    }).toList();
+
     // Calculate total expenses
-    final totalExpenses = transactions
+    final totalExpenses = periodTransactions
         .where((t) => t.isExpense)
         .fold<double>(0, (sum, t) => sum + t.amount);
 
-    // Calculate subscription costs
-    final totalSubscriptions = subscriptions
+    // Calculate subscription costs (pro-rated if needed)
+    // For simplicity, we include active subscriptions in monthly,
+    // and pro-rate for others
+    double totalSubscriptions = subscriptions
         .where((s) => s.status == SubscriptionStatus.active)
         .fold<double>(0, (sum, s) => sum + s.monthlyCost);
 
+    if (period == SummaryPeriod.weekly) {
+      totalSubscriptions /= 4;
+    } else if (period == SummaryPeriod.biWeekly) {
+      totalSubscriptions /= 2;
+    }
+
     // Calculate leftover
-    final leftoverAmount = totalIncome - totalExpenses - totalSubscriptions;
+    final leftoverAmount = adjustedIncome - totalExpenses - totalSubscriptions;
 
     // Determine financial health
-    final spendingRatio = (totalExpenses + totalSubscriptions) / totalIncome;
+    final spendingRatio = (totalExpenses + totalSubscriptions) / adjustedIncome;
     final healthStatus = _determineHealthStatus(spendingRatio);
 
     // Determine spending trend
     final trend = _determineSpendingTrend(
       currentExpenses: totalExpenses,
-      previousExpenses: previousMonthExpenses,
+      previousExpenses: previousPeriodExpenses,
     );
 
     // Group expenses by category
     final expensesByCategory = <String, double>{};
-    for (final transaction in transactions.where((t) => t.isExpense)) {
+    for (final transaction in periodTransactions.where((t) => t.isExpense)) {
       expensesByCategory[transaction.categoryName] =
           (expensesByCategory[transaction.categoryName] ?? 0) + transaction.amount;
     }
@@ -50,7 +100,7 @@ class FinancialInsightsService {
 
     // Generate insights
     final insights = _generateInsights(
-      totalIncome: totalIncome,
+      totalIncome: adjustedIncome,
       totalExpenses: totalExpenses,
       totalSubscriptions: totalSubscriptions,
       leftoverAmount: leftoverAmount,
@@ -66,11 +116,11 @@ class FinancialInsightsService {
     );
 
     return MonthlySummary(
-      id: '${userId}_${year}_$month',
+      id: '${userId}_${period.name}_${now.millisecondsSinceEpoch}',
       userId: userId,
-      year: year,
-      month: month,
-      totalIncome: totalIncome,
+      year: now.year,
+      month: now.month,
+      totalIncome: adjustedIncome,
       totalExpenses: totalExpenses + totalSubscriptions,
       totalSubscriptions: totalSubscriptions,
       leftoverAmount: leftoverAmount,
@@ -79,7 +129,33 @@ class FinancialInsightsService {
       expensesByCategory: expensesByCategory,
       insights: insights,
       leftoverSuggestions: leftoverSuggestions,
-      createdAt: DateTime.now(),
+      createdAt: now,
+    );
+  }
+
+  /// Generate monthly summary from transactions (Legacy support wrapper)
+  static MonthlySummary generateMonthlySummary({
+    required String userId,
+    required int year,
+    required int month,
+    required double totalIncome,
+    required List<Transaction> transactions,
+    required List<Subscription> subscriptions,
+    double? previousMonthExpenses,
+  }) {
+    // Construct a reference date for the requested month
+    // We use the end of that month so the logic captures the whole month
+    // Or at least a date within that month so 'startDate' calculation works
+    final referenceDate = DateTime(year, month, 15);
+
+    return generateSummary(
+      userId: userId,
+      period: SummaryPeriod.monthly,
+      totalIncome: totalIncome,
+      transactions: transactions,
+      subscriptions: subscriptions,
+      previousPeriodExpenses: previousMonthExpenses,
+      referenceDate: referenceDate,
     );
   }
 
@@ -95,7 +171,7 @@ class FinancialInsightsService {
     required double currentExpenses,
     double? previousExpenses,
   }) {
-    if (previousExpenses == null) return SpendingTrend.stable;
+    if (previousExpenses == null || previousExpenses == 0) return SpendingTrend.stable;
 
     final difference = currentExpenses - previousExpenses;
     final percentageChange = (difference / previousExpenses) * 100;
@@ -118,7 +194,7 @@ class FinancialInsightsService {
     var insightId = 0;
 
     // Savings rate insight
-    final savingsRate = ((totalIncome - totalExpenses) / totalIncome * 100);
+    final savingsRate = totalIncome > 0 ? ((totalIncome - totalExpenses) / totalIncome * 100) : 0;
     if (savingsRate >= 20) {
       insights.add(SpendingInsight(
         id: 'insight_${insightId++}',
@@ -128,7 +204,7 @@ class FinancialInsightsService {
         type: InsightType.achievement,
         amount: savingsRate,
       ));
-    } else if (savingsRate < 10) {
+    } else if (savingsRate < 10 && savingsRate > 0) {
       insights.add(SpendingInsight(
         id: 'insight_${insightId++}',
         title: 'Low Savings Alert',
@@ -141,7 +217,7 @@ class FinancialInsightsService {
     }
 
     // Subscription spending insight
-    final subscriptionRatio = totalSubscriptions / totalIncome * 100;
+    final subscriptionRatio = totalIncome > 0 ? (totalSubscriptions / totalIncome * 100) : 0;
     if (subscriptionRatio > 15) {
       insights.add(SpendingInsight(
         id: 'insight_${insightId++}',
@@ -161,7 +237,7 @@ class FinancialInsightsService {
         ..sort((a, b) => b.value.compareTo(a.value));
 
       final topCategory = sortedCategories.first;
-      final topCategoryRatio = topCategory.value / totalExpenses * 100;
+      final topCategoryRatio = totalExpenses > 0 ? (topCategory.value / totalExpenses * 100) : 0;
 
       if (topCategoryRatio > 40) {
         insights.add(SpendingInsight(
@@ -181,7 +257,7 @@ class FinancialInsightsService {
       insights.add(SpendingInsight(
         id: 'insight_${insightId++}',
         title: 'Spending Increased',
-        description: 'Your spending has increased compared to last month. Keep an eye on your budget.',
+        description: 'Your spending has increased compared to previous period. Keep an eye on your budget.',
         emoji: '📈',
         type: InsightType.warning,
       ));
@@ -189,7 +265,7 @@ class FinancialInsightsService {
       insights.add(SpendingInsight(
         id: 'insight_${insightId++}',
         title: 'Spending Decreased',
-        description: 'Great job! You spent less than last month.',
+        description: 'Great job! You spent less than the previous period.',
         emoji: '📉',
         type: InsightType.positive,
       ));
@@ -333,4 +409,3 @@ class FinancialInsightsService {
     return '💡 Track every expense to stay on budget. Small purchases add up!';
   }
 }
-
