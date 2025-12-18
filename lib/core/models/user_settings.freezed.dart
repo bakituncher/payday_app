@@ -26,6 +26,7 @@ mixin _$UserSettings {
   String get payCycle => throw _privateConstructorUsedError;
   DateTime get nextPayday => throw _privateConstructorUsedError;
   double get incomeAmount => throw _privateConstructorUsedError;
+  double get currentBalance => throw _privateConstructorUsedError;
   String get market => throw _privateConstructorUsedError;
   bool get notificationsEnabled => throw _privateConstructorUsedError;
   bool get paydayReminders =>
@@ -64,6 +65,7 @@ abstract class $UserSettingsCopyWith<$Res> {
     String payCycle,
     DateTime nextPayday,
     double incomeAmount,
+    double currentBalance,
     String market,
     bool notificationsEnabled,
     bool paydayReminders,
@@ -98,6 +100,7 @@ class _$UserSettingsCopyWithImpl<$Res, $Val extends UserSettings>
     Object? payCycle = null,
     Object? nextPayday = null,
     Object? incomeAmount = null,
+    Object? currentBalance = null,
     Object? market = null,
     Object? notificationsEnabled = null,
     Object? paydayReminders = null,
@@ -131,6 +134,10 @@ class _$UserSettingsCopyWithImpl<$Res, $Val extends UserSettings>
             incomeAmount: null == incomeAmount
                 ? _value.incomeAmount
                 : incomeAmount // ignore: cast_nullable_to_non_nullable
+                      as double,
+            currentBalance: null == currentBalance
+                ? _value.currentBalance
+                : currentBalance // ignore: cast_nullable_to_non_nullable
                       as double,
             market: null == market
                 ? _value.market
@@ -197,6 +204,7 @@ abstract class _$$UserSettingsImplCopyWith<$Res>
     String payCycle,
     DateTime nextPayday,
     double incomeAmount,
+    double currentBalance,
     String market,
     bool notificationsEnabled,
     bool paydayReminders,
@@ -230,6 +238,7 @@ class __$$UserSettingsImplCopyWithImpl<$Res>
     Object? payCycle = null,
     Object? nextPayday = null,
     Object? incomeAmount = null,
+    Object? currentBalance = null,
     Object? market = null,
     Object? notificationsEnabled = null,
     Object? paydayReminders = null,
@@ -263,6 +272,10 @@ class __$$UserSettingsImplCopyWithImpl<$Res>
         incomeAmount: null == incomeAmount
             ? _value.incomeAmount
             : incomeAmount // ignore: cast_nullable_to_non_nullable
+                  as double,
+        currentBalance: null == currentBalance
+            ? _value.currentBalance
+            : currentBalance // ignore: cast_nullable_to_non_nullable
                   as double,
         market: null == market
             ? _value.market
@@ -322,6 +335,7 @@ class _$UserSettingsImpl implements _UserSettings {
     required this.payCycle,
     required this.nextPayday,
     required this.incomeAmount,
+    this.currentBalance = 0.0,
     this.market = 'US',
     this.notificationsEnabled = true,
     this.paydayReminders = true,
@@ -348,6 +362,9 @@ class _$UserSettingsImpl implements _UserSettings {
   final DateTime nextPayday;
   @override
   final double incomeAmount;
+  @override
+  @JsonKey()
+  final double currentBalance;
   @override
   @JsonKey()
   final String market;
@@ -385,7 +402,7 @@ class _$UserSettingsImpl implements _UserSettings {
 
   @override
   String toString() {
-    return 'UserSettings(userId: $userId, currency: $currency, payCycle: $payCycle, nextPayday: $nextPayday, incomeAmount: $incomeAmount, market: $market, notificationsEnabled: $notificationsEnabled, paydayReminders: $paydayReminders, billReminders: $billReminders, billReminderDaysBefore: $billReminderDaysBefore, subscriptionAlerts: $subscriptionAlerts, weeklySubscriptionSummary: $weeklySubscriptionSummary, unusedSubscriptionAlerts: $unusedSubscriptionAlerts, unusedThresholdDays: $unusedThresholdDays, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'UserSettings(userId: $userId, currency: $currency, payCycle: $payCycle, nextPayday: $nextPayday, incomeAmount: $incomeAmount, currentBalance: $currentBalance, market: $market, notificationsEnabled: $notificationsEnabled, paydayReminders: $paydayReminders, billReminders: $billReminders, billReminderDaysBefore: $billReminderDaysBefore, subscriptionAlerts: $subscriptionAlerts, weeklySubscriptionSummary: $weeklySubscriptionSummary, unusedSubscriptionAlerts: $unusedSubscriptionAlerts, unusedThresholdDays: $unusedThresholdDays, createdAt: $createdAt, updatedAt: $updatedAt)';
   }
 
   @override
@@ -402,6 +419,8 @@ class _$UserSettingsImpl implements _UserSettings {
                 other.nextPayday == nextPayday) &&
             (identical(other.incomeAmount, incomeAmount) ||
                 other.incomeAmount == incomeAmount) &&
+            (identical(other.currentBalance, currentBalance) ||
+                other.currentBalance == currentBalance) &&
             (identical(other.market, market) || other.market == market) &&
             (identical(other.notificationsEnabled, notificationsEnabled) ||
                 other.notificationsEnabled == notificationsEnabled) &&
@@ -440,6 +459,7 @@ class _$UserSettingsImpl implements _UserSettings {
     payCycle,
     nextPayday,
     incomeAmount,
+    currentBalance,
     market,
     notificationsEnabled,
     paydayReminders,
@@ -474,6 +494,7 @@ abstract class _UserSettings implements UserSettings {
     required final String payCycle,
     required final DateTime nextPayday,
     required final double incomeAmount,
+    final double currentBalance,
     final String market,
     final bool notificationsEnabled,
     final bool paydayReminders,
@@ -500,6 +521,8 @@ abstract class _UserSettings implements UserSettings {
   DateTime get nextPayday;
   @override
   double get incomeAmount;
+  @override
+  double get currentBalance;
   @override
   String get market;
   @override

@@ -8,12 +8,12 @@ import 'package:flutter_animate/flutter_animate.dart';
 
 class BudgetProgressCard extends ConsumerWidget {
   final String currency;
-  final double incomeAmount;
+  final double currentBalance;
 
   const BudgetProgressCard({
     super.key,
     required this.currency,
-    required this.incomeAmount,
+    required this.currentBalance,
   });
 
   @override
@@ -34,8 +34,8 @@ class BudgetProgressCard extends ConsumerWidget {
           loading: () => _buildShimmer(context),
           error: (error, stack) => _buildError(theme),
           data: (totalExpenses) {
-            final remaining = incomeAmount - totalExpenses;
-            final progressPercentage = (totalExpenses / incomeAmount).clamp(0.0, 1.0);
+            final remaining = currentBalance - totalExpenses;
+            final progressPercentage = (totalExpenses / currentBalance).clamp(0.0, 1.0);
             final budgetHealth = budgetHealthAsync.value ?? BudgetHealth.unknown;
 
             return Column(

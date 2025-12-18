@@ -20,11 +20,22 @@ final userSettingsProvider = FutureProvider<UserSettings?>((ref) async {
 
     // If payday was updated, save the new date AND process auto-transfers
     if (calculatedNextPayday != settings.nextPayday) {
-      print('💰 Payday has passed! Processing auto-transfers...');
+      print('💰 Payday has passed! Processing payday actions...');
 
-      // Save the new payday first
-      await repository.updateNextPayday(userId, calculatedNextPayday);
-      settings = settings.copyWith(nextPayday: calculatedNextPayday);
+      // Add income to current balance
+      final newBalance = settings.currentBalance + settings.incomeAmount;
+
+      // Update both payday and balance
+      final updatedSettings = settings.copyWith(
+        nextPayday: calculatedNextPayday,
+        currentBalance: newBalance,
+        updatedAt: DateTime.now(),
+      );
+
+      await repository.saveUserSettings(updatedSettings);
+      settings = updatedSettings;
+
+      print('💰 Income added to balance: ${settings.incomeAmount} -> New balance: $newBalance');
 
       // Process auto-transfers to savings goals
       try {
@@ -182,11 +193,11 @@ final budgetHealthProvider = FutureProvider<BudgetHealth>((ref) async {
   }
 
   // Protect against division by zero
-  if (settings.incomeAmount <= 0) {
+  if (settings.currentBalance <= 0) {
     return BudgetHealth.unknown;
   }
 
-  final spentPercentage = (totalExpenses / settings.incomeAmount) * 100;
+  final spentPercentage = (totalExpenses / settings.currentBalance) * 100;
 
   if (spentPercentage < 50) {
     return BudgetHealth.excellent;

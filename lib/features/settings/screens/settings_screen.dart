@@ -28,6 +28,7 @@ class SettingsScreen extends ConsumerStatefulWidget {
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   final _incomeController = TextEditingController();
+  final _currentBalanceController = TextEditingController();
   String _selectedCurrency = 'USD';
   String _selectedPayCycle = 'Monthly';
   DateTime _nextPayday = DateTime.now().add(const Duration(days: 30));
@@ -57,6 +58,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     if (settings != null && mounted) {
       setState(() {
         _incomeController.text = settings.incomeAmount.toStringAsFixed(2);
+        _currentBalanceController.text = settings.currentBalance.toStringAsFixed(2);
         _selectedCurrency = settings.currency;
         _selectedPayCycle = settings.payCycle;
         _nextPayday = settings.nextPayday;
@@ -67,6 +69,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   @override
   void dispose() {
     _incomeController.dispose();
+    _currentBalanceController.dispose();
     super.dispose();
   }
 
@@ -594,6 +597,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           payCycle: _selectedPayCycle,
           nextPayday: _nextPayday,
           incomeAmount: double.parse(_incomeController.text),
+          currentBalance: _currentBalanceController.text.isNotEmpty
+              ? double.parse(_currentBalanceController.text)
+              : 0.0,
           updatedAt: DateTime.now(),
         );
 
@@ -1111,6 +1117,47 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppRadius.md),
                 borderSide: const BorderSide(color: AppColors.primaryPink, width: 2),
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md,
+                vertical: AppSpacing.sm,
+              ),
+            ),
+            onChanged: (_) {},
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Text(
+            'Current Balance',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: AppColors.getTextSecondary(context),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          TextField(
+            controller: _currentBalanceController,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: AppColors.getTextPrimary(context),
+            ),
+            decoration: InputDecoration(
+              prefixText: currencySymbol,
+              prefixStyle: theme.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: AppColors.secondaryPurple,
+              ),
+              hintText: '0.00',
+              hintStyle: theme.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: AppColors.getTextSecondary(context).withValues(alpha: 0.3),
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                borderSide: BorderSide(color: AppColors.getBorder(context)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                borderSide: const BorderSide(color: AppColors.secondaryPurple, width: 2),
               ),
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: AppSpacing.md,
