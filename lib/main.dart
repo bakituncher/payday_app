@@ -1,14 +1,7 @@
-/// Payday - Your Smart Financial Countdown Companion
-///
-/// A viral, mass-market financial tracker for the US and Australian markets
-/// that counts down to payday, tracks expenses, and manages savings goals.
-///
-/// Design: Chic Fintech Pink with Material 3 & Cupertino blend
-/// State Management: Riverpod
-/// Backend: Firebase (Mock repositories for now)
-
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_analytics/firebase_analytics.dart'; // ✅ EKLENDİ: Analytics Import
+import 'package:firebase_crashlytics/firebase_crashlytics.dart'; // ✅ EKLENDİ: Crashlytics Import
+import 'package:flutter/foundation.dart'; // ✅ EKLENDİ: PlatformDispatcher ve kDebugMode için
 import 'firebase_options.dart'; // Bu dosyayı flutterfire configure ile oluşturmuştuk
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -30,6 +23,18 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // ✅ CRASHLYTICS ENTEGRASYONU BAŞLANGICI
+
+  // Flutter framework hatalarını otomatik olarak Crashlytics'e bildir
+  FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+
+  // Asenkron (async) hataları yakala ve Crashlytics'e bildir
+  PlatformDispatcher.instance.onError = (error, stack) {
+    FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+    return true;
+  };
+  // ✅ CRASHLYTICS ENTEGRASYONU BİTİŞİ
 
   // Set system UI overlay style
   SystemChrome.setSystemUIOverlayStyle(
@@ -81,6 +86,8 @@ class _PaydayAppState extends ConsumerState<PaydayApp> {
         print('Signed in anonymously.');
       } catch (e) {
         print('Error signing in anonymously: $e');
+        // İsteğe bağlı: Auth hatalarını da Crashlytics'e bildirebilirsiniz
+        FirebaseCrashlytics.instance.recordError(e, null, reason: 'Anonymous Auth Failed');
       }
     }
   }
