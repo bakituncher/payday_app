@@ -141,12 +141,11 @@ final totalExpensesProvider = FutureProvider<double>((ref) async {
 /// Daily Allowable Spend Provider
 final dailyAllowableSpendProvider = FutureProvider<double>((ref) async {
   final settings = await ref.watch(userSettingsProvider.future);
-  final totalExpenses = await ref.watch(totalExpensesProvider.future);
 
   if (settings == null) return 0.0;
 
-  // Protect against invalid income
-  if (settings.incomeAmount <= 0) return 0.0;
+  // Protect against invalid balance
+  if (settings.currentBalance <= 0) return 0.0;
 
   final now = DateTime.now();
   final today = DateTime(now.year, now.month, now.day);
@@ -173,14 +172,9 @@ final dailyAllowableSpendProvider = FutureProvider<double>((ref) async {
     daysRemaining = 1;
   }
 
-  final remainingBudget = settings.incomeAmount - totalExpenses;
-
-  // If over budget, return 0 instead of negative value
-  if (remainingBudget <= 0) {
-    return 0.0;
-  }
-
-  return remainingBudget / daysRemaining;
+  // Simply divide current balance by remaining days
+  // No need to subtract expenses since currentBalance is already up-to-date
+  return settings.currentBalance / daysRemaining;
 });
 
 /// Budget Health Status Provider
