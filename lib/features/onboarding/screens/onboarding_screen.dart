@@ -1,4 +1,4 @@
-/// Onboarding Screen - Setup wizard for first-time users - Premium Industry-Grade Design
+import 'dart:ui'; // Blur efekti için gerekli
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -42,429 +42,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     super.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Scaffold(
-      backgroundColor: AppColors.getBackground(context),
-      body: SafeArea(
-        child: Stack(
-          children: [
-            // Background decorations
-            Positioned(
-              top: -80,
-              right: -60,
-              child: Container(
-                width: 200,
-                height: 200,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      AppColors.primaryPink.withValues(alpha: 0.1),
-                      AppColors.primaryPink.withValues(alpha: 0.0),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              bottom: 100,
-              left: -60,
-              child: Container(
-                width: 180,
-                height: 180,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      AppColors.secondaryPurple.withValues(alpha: 0.08),
-                      AppColors.secondaryPurple.withValues(alpha: 0.0),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            Column(
-              children: [
-                // Progress Indicator
-                Padding(
-                  padding: const EdgeInsets.all(AppSpacing.lg),
-                  child: Row(
-                    children: List.generate(3, (index) {
-                      final isActive = index <= _currentPage;
-                      final isCurrent = index == _currentPage;
-                      return Expanded(
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 300),
-                          height: 4,
-                          margin: const EdgeInsets.symmetric(horizontal: 3),
-                          decoration: BoxDecoration(
-                            gradient: isActive ? AppColors.pinkGradient : null,
-                            color: isActive ? null : AppColors.lightGray,
-                            borderRadius: BorderRadius.circular(AppRadius.round),
-                            boxShadow: isCurrent
-                                ? [
-                              BoxShadow(
-                                color: AppColors.primaryPink.withValues(alpha: 0.4),
-                                blurRadius: 4,
-                              ),
-                            ]
-                                : null,
-                          ),
-                        ),
-                      );
-                    }),
-                  ),
-                ),
-
-                // Step indicator & Back button
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Step ${_currentPage + 1} of 3',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: AppColors.mediumGray,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      if (_currentPage > 0)
-                        TextButton(
-                          onPressed: _previousPage,
-                          child: Row(
-                            children: [
-                              Icon(Icons.arrow_back_ios_rounded, size: 14, color: AppColors.mediumGray),
-                              const SizedBox(width: 4),
-                              Text(
-                                'Back',
-                                style: TextStyle(color: AppColors.mediumGray),
-                              ),
-                            ],
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-
-                // Content Pages
-                Expanded(
-                  child: PageView(
-                    controller: _pageController,
-                    physics: const NeverScrollableScrollPhysics(),
-                    onPageChanged: (page) {
-                      HapticFeedback.selectionClick();
-                      setState(() {
-                        _currentPage = page;
-                      });
-                    },
-                    children: [
-                      _buildSetupPage(theme),
-                      _buildIncomePage(theme),
-                    ],
-                  ),
-                ),
-
-                // Navigation Button
-                Padding(
-                  padding: const EdgeInsets.all(AppSpacing.lg),
-                  child: PaydayButton(
-                    text: _currentPage == 1 ? 'Get Started' : 'Continue',
-                    onPressed: _isLoading ? null : _nextPage,
-                    isLoading: _isLoading,
-                    width: double.infinity,
-                    icon: _currentPage == 1 ? Icons.check_rounded : null,
-                    trailingIcon: _currentPage < 1 ? Icons.arrow_forward_rounded : null,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSetupPage(ThemeData theme) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppSpacing.xl),
-      child: Column(
-        children: [
-          const SizedBox(height: AppSpacing.lg),
-          Container(
-            padding: const EdgeInsets.all(AppSpacing.xl),
-            decoration: BoxDecoration(
-              gradient: AppColors.premiumGradient,
-              shape: BoxShape.circle,
-              boxShadow: AppColors.elevatedShadow,
-            ),
-            child: const Icon(
-              Icons.account_balance_wallet_rounded,
-              size: 64,
-              color: Colors.white,
-            ),
-          ).animate().scale(duration: 600.ms, curve: Curves.elasticOut),
-          const SizedBox(height: AppSpacing.xl),
-          Text(
-            'Welcome to Payday',
-            style: theme.textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.w800,
-              letterSpacing: -0.5,
-            ),
-            textAlign: TextAlign.center,
-          ).animate().fadeIn(duration: 400.ms, delay: 200.ms),
-          const SizedBox(height: AppSpacing.sm),
-          Text(
-            'Track your money until next payday\nCurrency auto-detected: ${CurrencyFormatter.getSymbol(_selectedCurrency)} $_selectedCurrency',
-            style: theme.textTheme.bodyLarge?.copyWith(
-              color: AppColors.mediumGray,
-              height: 1.5,
-            ),
-            textAlign: TextAlign.center,
-          ).animate().fadeIn(duration: 400.ms, delay: 300.ms),
-          const SizedBox(height: AppSpacing.xxl),
-
-          // Pay Cycle Section
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(AppSpacing.lg),
-            decoration: BoxDecoration(
-              color: AppColors.cardWhite,
-              borderRadius: BorderRadius.circular(AppRadius.xl),
-              boxShadow: AppColors.cardShadow,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: AppColors.secondaryPurple.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(AppRadius.sm),
-                      ),
-                      child: Icon(Icons.calendar_month_rounded, color: AppColors.secondaryPurple, size: 20),
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Text('How Often Are You Paid?', style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.md),
-                _buildPayCycleOption(theme, AppConstants.payCycleWeekly, 'Weekly', 'Every 7 days', 0),
-                const SizedBox(height: AppSpacing.sm),
-                _buildPayCycleOption(theme, AppConstants.payCycleBiWeekly, 'Bi-Weekly', 'Every 14 days', 1),
-                const SizedBox(height: AppSpacing.sm),
-                _buildPayCycleOption(theme, AppConstants.payCycleMonthly, 'Monthly', 'Once a month', 2),
-              ],
-            ),
-          ).animate().fadeIn(duration: 300.ms, delay: 400.ms),
-
-          const SizedBox(height: AppSpacing.lg),
-
-          // Next Payday Section
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(AppSpacing.lg),
-            decoration: BoxDecoration(
-              color: AppColors.cardWhite,
-              borderRadius: BorderRadius.circular(AppRadius.xl),
-              boxShadow: AppColors.cardShadow,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: AppColors.primaryPink.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(AppRadius.sm),
-                      ),
-                      child: Icon(Icons.event_rounded, color: AppColors.primaryPink, size: 20),
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Text('Next Payday', style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.md),
-                GestureDetector(
-                  onTap: () => _selectDate(context),
-                  child: Container(
-                    padding: const EdgeInsets.all(AppSpacing.md),
-                    decoration: BoxDecoration(
-                      gradient: AppColors.pinkGradient,
-                      borderRadius: BorderRadius.circular(AppRadius.lg),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.calendar_today_rounded, color: Colors.white, size: 20),
-                        const SizedBox(width: AppSpacing.sm),
-                        Text(
-                          _formatDate(_nextPayday),
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(width: AppSpacing.sm),
-                        const Icon(Icons.edit_rounded, color: Colors.white, size: 16),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ).animate().fadeIn(duration: 300.ms, delay: 500.ms),
-        ],
-      ),
-    );
-  }
-
-  String _formatDate(DateTime date) {
-    final months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-    return '${months[date.month - 1]} ${date.day}, ${date.year}';
-  }
-
-  Widget _buildPayCycleOption(ThemeData theme, String payCycle, String title, String description, int index) {
-    final isSelected = _selectedPayCycle == payCycle;
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.selectionClick();
-        setState(() {
-          _selectedPayCycle = payCycle;
-        });
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.all(AppSpacing.md),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.lightPink : AppColors.subtleGray,
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          border: Border.all(
-            color: isSelected ? AppColors.primaryPink : Colors.transparent,
-            width: 2,
-          ),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
-                  ),
-                  Text(
-                    description,
-                    style: theme.textTheme.bodySmall?.copyWith(color: AppColors.mediumGray),
-                  ),
-                ],
-              ),
-            ),
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.all(2),
-              decoration: BoxDecoration(
-                color: isSelected ? AppColors.primaryPink : Colors.transparent,
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: isSelected ? AppColors.primaryPink : AppColors.lightGray,
-                  width: 2,
-                ),
-              ),
-              child: Icon(
-                Icons.check_rounded,
-                color: isSelected ? Colors.white : Colors.transparent,
-                size: 14,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-
-
-  Widget _buildIncomePage(ThemeData theme) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppSpacing.xl),
-      child: Column(
-        children: [
-          const SizedBox(height: AppSpacing.xl),
-          Container(
-            padding: const EdgeInsets.all(AppSpacing.lg),
-            decoration: BoxDecoration(color: AppColors.subtleGray, shape: BoxShape.circle),
-            child: const Text('💰', style: TextStyle(fontSize: 48)),
-          ).animate().scale(duration: 400.ms, curve: Curves.elasticOut),
-          const SizedBox(height: AppSpacing.xl),
-          Text('What\'s Your Income?', style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800, letterSpacing: -0.5), textAlign: TextAlign.center).animate().fadeIn(duration: 300.ms, delay: 100.ms),
-          const SizedBox(height: AppSpacing.sm),
-          Text('Enter your per-paycheck income (after tax)', style: theme.textTheme.bodyLarge?.copyWith(color: AppColors.mediumGray), textAlign: TextAlign.center).animate().fadeIn(duration: 300.ms, delay: 150.ms),
-          const SizedBox(height: AppSpacing.xxl),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(AppSpacing.xl),
-            decoration: BoxDecoration(color: AppColors.cardWhite, borderRadius: BorderRadius.circular(AppRadius.xl), boxShadow: AppColors.cardShadow),
-            child: Column(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-                  decoration: BoxDecoration(color: AppColors.subtleGray, borderRadius: BorderRadius.circular(AppRadius.lg)),
-                  child: Row(
-                    children: [
-                      Text(CurrencyFormatter.getSymbol(_selectedCurrency), style: theme.textTheme.headlineLarge?.copyWith(fontWeight: FontWeight.w800, color: AppColors.primaryPink)),
-                      Expanded(
-                        child: TextFormField(
-                          controller: _incomeController,
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                          inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}'))],
-                          style: theme.textTheme.headlineLarge?.copyWith(fontWeight: FontWeight.w800, color: AppColors.darkCharcoal),
-                          textAlign: TextAlign.center,
-                          decoration: InputDecoration(
-                            hintText: '0.00',
-                            hintStyle: theme.textTheme.headlineLarge?.copyWith(fontWeight: FontWeight.w500, color: AppColors.mediumGray.withValues(alpha: 0.3)),
-                            border: InputBorder.none,
-                            contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.lg),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ).animate().fadeIn(duration: 300.ms, delay: 200.ms).slideY(begin: 0.1, end: 0),
-          const SizedBox(height: AppSpacing.lg),
-          Container(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            decoration: BoxDecoration(color: AppColors.infoLight, borderRadius: BorderRadius.circular(AppRadius.lg), border: Border.all(color: AppColors.info.withValues(alpha: 0.3))),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(color: AppColors.info.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(AppRadius.sm)),
-                  child: Icon(Icons.lightbulb_outline_rounded, color: AppColors.info, size: 20),
-                ),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(
-                  child: Text('We\'ll use this to calculate how much you can safely spend each day until payday', style: theme.textTheme.bodySmall?.copyWith(color: AppColors.darkCharcoal.withValues(alpha: 0.8), height: 1.4)),
-                ),
-              ],
-            ),
-          ).animate().fadeIn(duration: 300.ms, delay: 400.ms),
-        ],
-      ),
-    );
-  }
-
+  // --- Logic Helpers (Aynen korundu) ---
   Future<void> _selectDate(BuildContext context) async {
     final picked = await showDatePicker(
       context: context,
@@ -474,34 +52,38 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(primary: AppColors.primaryPink, onPrimary: Colors.white, surface: AppColors.cardWhite, onSurface: AppColors.darkCharcoal),
+            colorScheme: ColorScheme.light(
+              primary: AppColors.primaryPink,
+              onPrimary: Colors.white,
+              surface: Colors.white,
+              onSurface: AppColors.darkCharcoal,
+            ),
+            dialogBackgroundColor: Colors.white,
           ),
           child: child!,
         );
       },
     );
     if (picked != null) {
-      setState(() {
-        _nextPayday = picked;
-      });
+      setState(() => _nextPayday = picked);
     }
   }
 
   void _previousPage() {
-    _pageController.previousPage(duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
+    _pageController.previousPage(duration: 300.ms, curve: Curves.easeInOutCubic);
   }
 
   Future<void> _nextPage() async {
     if (_currentPage == 1) {
-      // Last page - validate and save
       if (_incomeController.text.isEmpty || double.tryParse(_incomeController.text) == null) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter a valid income amount'), backgroundColor: AppColors.error));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please enter a valid amount'), backgroundColor: AppColors.error),
+        );
         return;
       }
       await _saveSettings();
     } else {
-      // First page - go to next
-      _pageController.nextPage(duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
+      _pageController.nextPage(duration: 400.ms, curve: Curves.easeInOutCubic);
     }
   }
 
@@ -509,16 +91,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     setState(() { _isLoading = true; });
     try {
       final authService = ref.read(authServiceProvider);
-      // Ensure user is logged in (anonymous if needed) before saving
       if (authService.currentUser == null) {
         await authService.signInAnonymously();
       }
 
-      final userId = authService.currentUser?.uid ?? 'unknown';
-      final repository = ref.read(userSettingsRepositoryProvider);
-
       final settings = UserSettings(
-        userId: userId,
+        userId: authService.currentUser?.uid ?? 'unknown',
         currency: _selectedCurrency,
         payCycle: _selectedPayCycle,
         nextPayday: _nextPayday,
@@ -527,19 +105,420 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         updatedAt: DateTime.now(),
       );
 
-      // Save settings to repository
-      await repository.saveUserSettings(settings);
+      await ref.read(userSettingsRepositoryProvider).saveUserSettings(settings);
 
       if (mounted) {
-        // Point-blank fix: Clear navigation stack and go to home
         Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error saving settings: $e'), backgroundColor: AppColors.error));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.error));
       }
     } finally {
       if (mounted) { setState(() { _isLoading = false; }); }
     }
+  }
+
+  // --- UI Build ---
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8F9FC), // Çok açık gri/beyaz premium zemin
+      resizeToAvoidBottomInset: true,
+      body: Stack(
+        children: [
+          // 1. Modern Background Blobs with Blur
+          Positioned(
+            top: -100,
+            right: -50,
+            child: Container(
+              width: 300,
+              height: 300,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.primaryPink.withOpacity(0.2),
+                    AppColors.secondaryPurple.withOpacity(0.1),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: -50,
+            left: -50,
+            child: Container(
+              width: 250,
+              height: 250,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.blueAccent.withOpacity(0.1),
+                    AppColors.secondaryPurple.withOpacity(0.1),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          // Glassmorphism Blur Effect over blobs
+          BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+            child: Container(color: Colors.white.withOpacity(0.3)),
+          ),
+
+          // 2. Main Content
+          SafeArea(
+            child: Column(
+              children: [
+                // Top Navigation Bar
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  child: Row(
+                    children: [
+                      if (_currentPage > 0)
+                        IconButton(
+                          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+                          color: AppColors.darkCharcoal,
+                          style: IconButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            elevation: 0,
+                            padding: const EdgeInsets.all(12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          onPressed: _previousPage,
+                        ).animate().scale(),
+                      const Spacer(),
+                      // Şık Progress Indicator
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.6),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: Colors.white),
+                        ),
+                        child: Row(
+                          children: [
+                            Text(
+                              "Step ${_currentPage + 1}",
+                              style: theme.textTheme.labelMedium?.copyWith(fontWeight: FontWeight.bold, color: AppColors.darkCharcoal),
+                            ),
+                            Text(
+                              " / 2",
+                              style: theme.textTheme.labelMedium?.copyWith(color: AppColors.mediumGray),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Page View
+                Expanded(
+                  child: PageView(
+                    controller: _pageController,
+                    physics: const NeverScrollableScrollPhysics(),
+                    onPageChanged: (page) {
+                      setState(() => _currentPage = page);
+                    },
+                    children: [
+                      _buildSetupPage(theme),
+                      _buildIncomePage(theme),
+                    ],
+                  ),
+                ),
+
+                // Bottom Action Button (Floating & Glassy)
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        const Color(0xFFF8F9FC).withOpacity(0),
+                        const Color(0xFFF8F9FC),
+                      ],
+                    ),
+                  ),
+                  child: PaydayButton(
+                    text: _currentPage == 1 ? 'Start Budgeting' : 'Continue',
+                    onPressed: _isLoading ? null : _nextPage,
+                    isLoading: _isLoading,
+                    width: double.infinity,
+                    size: PaydayButtonSize.large,
+                    icon: _currentPage == 1 ? Icons.rocket_launch_rounded : null,
+                  ).animate().slideY(begin: 0.5, end: 0, duration: 400.ms),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSetupPage(ThemeData theme) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 10),
+          Text(
+            "Setup your\nPay Cycle",
+            style: theme.textTheme.displaySmall?.copyWith(
+              fontWeight: FontWeight.w800,
+              color: AppColors.darkCharcoal,
+              height: 1.1,
+              letterSpacing: -1,
+            ),
+          ).animate().fadeIn().slideX(),
+
+          const SizedBox(height: 8),
+          Text(
+            "This helps us calculate your daily safe-to-spend limit.",
+            style: theme.textTheme.bodyMedium?.copyWith(color: AppColors.mediumGray),
+          ).animate().fadeIn(delay: 100.ms),
+
+          const SizedBox(height: 32),
+
+          // Section 1: Frequency
+          Text("HOW OFTEN?", style: theme.textTheme.labelSmall?.copyWith(fontWeight: FontWeight.bold, letterSpacing: 1.2, color: AppColors.mediumGray)),
+          const SizedBox(height: 12),
+
+          Row(
+            children: [
+              Expanded(child: _buildCompactCycleOption(theme, AppConstants.payCycleWeekly, 'Weekly', '7d')),
+              const SizedBox(width: 12),
+              Expanded(child: _buildCompactCycleOption(theme, AppConstants.payCycleBiWeekly, 'Bi-Weekly', '14d')),
+              const SizedBox(width: 12),
+              Expanded(child: _buildCompactCycleOption(theme, AppConstants.payCycleMonthly, 'Monthly', '30d')),
+            ],
+          ).animate().fadeIn(delay: 200.ms),
+
+          const SizedBox(height: 32),
+
+          // Section 2: Date Picker (Hero Card)
+          Text("NEXT PAYDAY", style: theme.textTheme.labelSmall?.copyWith(fontWeight: FontWeight.bold, letterSpacing: 1.2, color: AppColors.mediumGray)),
+          const SizedBox(height: 12),
+
+          GestureDetector(
+            onTap: () => _selectDate(context),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(color: AppColors.primaryPink.withOpacity(0.08), blurRadius: 20, offset: const Offset(0, 10)),
+                  BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 5, offset: const Offset(0, 2)),
+                ],
+                border: Border.all(color: Colors.white),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _formatDate(_nextPayday),
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.darkCharcoal,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        "Tap to change date",
+                        style: theme.textTheme.bodySmall?.copyWith(color: AppColors.primaryPink),
+                      ),
+                    ],
+                  ),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryPink.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(Icons.calendar_today_rounded, color: AppColors.primaryPink, size: 24),
+                  ),
+                ],
+              ),
+            ),
+          ).animate().fadeIn(delay: 300.ms).scale(curve: Curves.elasticOut, duration: 600.ms),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCompactCycleOption(ThemeData theme, String value, String title, String badge) {
+    final isSelected = _selectedPayCycle == value;
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        setState(() => _selectedPayCycle = value);
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        height: 100,
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.darkCharcoal : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? Colors.transparent : Colors.grey.withOpacity(0.2),
+            width: 1.5,
+          ),
+          boxShadow: isSelected
+              ? [BoxShadow(color: AppColors.darkCharcoal.withOpacity(0.3), blurRadius: 12, offset: const Offset(0, 8))]
+              : [],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              badge,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: isSelected ? Colors.white.withOpacity(0.6) : AppColors.primaryPink,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              title,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+                color: isSelected ? Colors.white : AppColors.darkCharcoal,
+              ),
+            ),
+            if (isSelected)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: const Icon(Icons.check_circle, size: 16, color: AppColors.primaryPink)
+                    .animate().scale(),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildIncomePage(ThemeData theme) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        children: [
+          const SizedBox(height: 20),
+          // Icon Animation
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: AppColors.primaryPink.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: const Text('🤑', style: TextStyle(fontSize: 40)),
+          ).animate().scale(duration: 500.ms, curve: Curves.elasticOut),
+
+          const SizedBox(height: 24),
+
+          Text(
+            "What's your income?",
+            style: theme.textTheme.headlineMedium?.copyWith(
+              fontWeight: FontWeight.w800,
+              color: AppColors.darkCharcoal,
+            ),
+          ).animate().fadeIn(),
+
+          const SizedBox(height: 8),
+          Text(
+            "Enter per-paycheck amount (after tax)",
+            style: theme.textTheme.bodyMedium?.copyWith(color: AppColors.mediumGray),
+          ),
+
+          const SizedBox(height: 48),
+
+          // Huge Input Field
+          Column(
+            children: [
+              Text(
+                  CurrencyFormatter.getSymbol(_selectedCurrency),
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.mediumGray.withOpacity(0.5))
+              ),
+              IntrinsicWidth(
+                child: TextField(
+                  controller: _incomeController,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}'))],
+                  style: theme.textTheme.displayMedium?.copyWith(
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.darkCharcoal,
+                    fontSize: 48, // Massive font size
+                  ),
+                  textAlign: TextAlign.center,
+                  cursorColor: AppColors.primaryPink,
+                  cursorWidth: 3,
+                  cursorRadius: const Radius.circular(2),
+                  decoration: InputDecoration(
+                    hintText: '0',
+                    hintStyle: TextStyle(color: AppColors.lightGray.withOpacity(0.5)),
+                    border: InputBorder.none,
+                    isDense: true,
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+              ),
+              Container(
+                height: 2,
+                width: 100,
+                margin: const EdgeInsets.only(top: 8),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryPink.withOpacity(0.5),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ],
+          ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.2, end: 0),
+
+          const SizedBox(height: 48),
+
+          // Info Box
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.lightGray.withOpacity(0.5)),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.lock_outline_rounded, size: 18, color: AppColors.mediumGray),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    "Your financial data is stored locally and never shared.",
+                    style: theme.textTheme.bodySmall?.copyWith(color: AppColors.mediumGray, height: 1.4),
+                  ),
+                ),
+              ],
+            ),
+          ).animate().fadeIn(delay: 400.ms),
+        ],
+      ),
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }
 }
