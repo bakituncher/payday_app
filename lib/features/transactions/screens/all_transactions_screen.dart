@@ -9,6 +9,7 @@ import 'package:payday/core/providers/repository_providers.dart';
 import 'package:payday/core/models/transaction.dart';
 import 'package:payday/features/home/providers/home_providers.dart';
 import 'package:payday/features/insights/providers/monthly_summary_providers.dart';
+import 'package:payday/features/transactions/screens/transaction_detail_screen.dart';
 import 'package:intl/intl.dart';
 
 class AllTransactionsScreen extends ConsumerStatefulWidget {
@@ -217,7 +218,7 @@ class _AllTransactionsScreenState extends ConsumerState<AllTransactionsScreen> {
         padding: const EdgeInsets.only(right: AppSpacing.md),
         margin: const EdgeInsets.symmetric(vertical: 4),
         decoration: BoxDecoration(
-          color: AppColors.error.withOpacity(0.1),
+          color: AppColors.error.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(AppRadius.md),
         ),
         child: const Icon(
@@ -225,68 +226,72 @@ class _AllTransactionsScreenState extends ConsumerState<AllTransactionsScreen> {
           color: AppColors.error,
         ),
       ),
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 4),
-        padding: const EdgeInsets.all(AppSpacing.sm),
-        decoration: BoxDecoration(
-          color: AppColors.cardWhite,
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          boxShadow: AppColors.cardShadow,
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: AppColors.lightPink.withOpacity(0.6),
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-              ),
-              child: Center(
-                child: Text(
-                  transaction.categoryEmoji,
-                  style: const TextStyle(fontSize: 20),
+      child: InkWell(
+        onTap: () => _openTransactionDetail(transaction),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        child: Container(
+          margin: const EdgeInsets.symmetric(vertical: 4),
+          padding: const EdgeInsets.all(AppSpacing.sm),
+          decoration: BoxDecoration(
+            color: AppColors.cardWhite,
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            boxShadow: AppColors.cardShadow,
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: AppColors.lightPink.withOpacity(0.6),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                ),
+                child: Center(
+                  child: Text(
+                    transaction.categoryEmoji,
+                    style: const TextStyle(fontSize: 20),
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: AppSpacing.sm),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    transaction.categoryName,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.darkCharcoal,
-                    ),
-                  ),
-                  if (transaction.note.isNotEmpty)
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Text(
-                      transaction.note,
-                      style: theme.textTheme.bodySmall?.copyWith(
+                      transaction.categoryName,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.darkCharcoal,
+                      ),
+                    ),
+                    if (transaction.note.isNotEmpty)
+                      Text(
+                        transaction.note,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: AppColors.mediumGray,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    Text(
+                      DateFormat('h:mm a').format(transaction.date),
+                      style: theme.textTheme.labelSmall?.copyWith(
                         color: AppColors.mediumGray,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
-                  Text(
-                    DateFormat('h:mm a').format(transaction.date),
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: AppColors.mediumGray,
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            Text(
-              '-${CurrencyFormatter.format(transaction.amount, widget.currency)}',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-                color: AppColors.error,
+              Text(
+                '-${CurrencyFormatter.format(transaction.amount, widget.currency)}',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.error,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -343,7 +348,7 @@ class _AllTransactionsScreenState extends ConsumerState<AllTransactionsScreen> {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: AppColors.error.withOpacity(0.1),
+                color: AppColors.error.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
               child: const Icon(
@@ -376,6 +381,24 @@ class _AllTransactionsScreenState extends ConsumerState<AllTransactionsScreen> {
       ),
     );
     return result ?? false;
+  }
+
+  Future<void> _openTransactionDetail(Transaction transaction) async {
+    HapticFeedback.lightImpact();
+    final result = await Navigator.push<Transaction>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => TransactionDetailScreen(
+          transaction: transaction,
+          currency: widget.currency,
+        ),
+      ),
+    );
+
+    // Refresh if transaction was updated
+    if (result != null && mounted) {
+      ref.invalidate(currentCycleTransactionsProvider);
+    }
   }
 
   Future<void> _deleteTransaction(Transaction transaction) async {

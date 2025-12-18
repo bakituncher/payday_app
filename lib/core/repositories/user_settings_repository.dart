@@ -16,5 +16,8 @@ abstract class UserSettingsRepository {
 
   /// Check if user has completed onboarding
   Future<bool> hasCompletedOnboarding();
+
+  /// Delete all user data
+  Future<void> deleteAllUserData(String userId);
 }
 

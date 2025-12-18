@@ -55,4 +55,9 @@ class FirebaseUserSettingsRepository implements UserSettingsRepository {
   Future<void> updateNextPayday(String userId, DateTime date) async {
     await _getDoc(userId).update({'nextPayday': date.toIso8601String(), 'updatedAt': DateTime.now().toIso8601String()});
   }
+
+  @override
+  Future<void> deleteAllUserData(String userId) async {
+    await _getDoc(userId).delete();
+  }
 }

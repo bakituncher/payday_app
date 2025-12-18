@@ -119,6 +119,13 @@ class LocalTransactionRepository implements TransactionRepository {
     return transactions.where((t) => t.userId == userId).length;
   }
 
+  @override
+  Future<void> deleteAllUserTransactions(String userId) async {
+    await _loadTransactions();
+    _cachedTransactions!.removeWhere((t) => t.userId == userId);
+    await _saveTransactions();
+  }
+
   /// Clear cache to force reload from storage
   void clearCache() {
     _cachedTransactions = null;

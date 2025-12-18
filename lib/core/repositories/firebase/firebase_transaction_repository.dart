@@ -94,4 +94,16 @@ class FirebaseTransactionRepository implements TransactionRepository {
     final snapshot = await _getCollection(userId).count().get();
     return snapshot.count ?? 0;
   }
+
+  @override
+  Future<void> deleteAllUserTransactions(String userId) async {
+    final snapshot = await _getCollection(userId).get();
+
+    final batch = _firestore.batch();
+    for (final doc in snapshot.docs) {
+      batch.delete(doc.reference);
+    }
+
+    await batch.commit();
+  }
 }
