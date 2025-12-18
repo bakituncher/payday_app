@@ -50,6 +50,9 @@ class AppConstants {
   static const String savingsCategoryId = 'savings';
 
   // Transaction Categories
+  // ⚠️ CRITICAL: The 'savings' category must be filtered out in UI screens
+  // to prevent "ghost transactions" where money disappears from budget
+  // without being added to any savings goal. See AddTransactionScreen.dart
   static const List<Map<String, String>> transactionCategories = [
     {'name': 'Food & Dining', 'emoji': '🍔', 'id': 'food'},
     {'name': 'Transportation', 'emoji': '🚗', 'id': 'transport'},
@@ -60,7 +63,7 @@ class AppConstants {
     {'name': 'Groceries', 'emoji': '🛒', 'id': 'groceries'},
     {'name': 'Coffee & Drinks', 'emoji': '☕', 'id': 'coffee'},
     {'name': 'Personal Care', 'emoji': '💄', 'id': 'personal'},
-    {'name': 'Savings Transfer', 'emoji': '💰', 'id': 'savings'}, // System category for savings
+    {'name': 'Savings Transfer', 'emoji': '💰', 'id': 'savings'}, // 🔒 SYSTEM ONLY - Never show in user-facing category selectors
     {'name': 'Other', 'emoji': '📌', 'id': 'other'},
   ];
 

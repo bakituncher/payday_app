@@ -150,6 +150,10 @@ Users are guided through a 4-step setup:
 📱 Bills & Utilities | 💪 Health & Fitness | 🛒 Groceries | ☕ Coffee & Drinks
 💄 Personal Care | 📌 Other
 
+**System Categories (Hidden from UI):**
+- 💰 Savings Transfer - Reserved for automatic savings goal contributions only
+- Protected to prevent "ghost transactions" where money would disappear from budget without being added to savings
+
 ## 📱 Screens
 
 ### Home Screen
