@@ -54,7 +54,17 @@ class _CountdownTimerState extends State<CountdownTimer> with TickerProviderStat
 
   void _updateRemaining() {
     final now = DateTime.now();
-    _remaining = widget.targetDate.difference(now);
+    // Calculate remaining time to END of target date (23:59:59)
+    // This ensures the countdown shows the full day when it's payday
+    final targetEndOfDay = DateTime(
+      widget.targetDate.year,
+      widget.targetDate.month,
+      widget.targetDate.day,
+      23,
+      59,
+      59,
+    );
+    _remaining = targetEndOfDay.difference(now);
 
     // Ensure we don't show negative time
     if (_remaining.isNegative) {

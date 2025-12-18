@@ -7,7 +7,7 @@ import 'package:payday/core/models/subscription.dart';
 
 class DateCycleService {
   /// Calculate next payday optimized without loops
-  /// Returns current payday if it's today (for "It's Payday!" UI experience)
+  /// Returns current payday if it's today or in the future
   /// FIXED: "Skip Today Bug" - Now correctly returns today if it's a payday
   static DateTime calculateNextPayday(DateTime currentPayday, String payCycle) {
     final now = DateTime.now();
@@ -16,16 +16,12 @@ class DateCycleService {
     // Normalize current payday to remove time components for comparison
     DateTime basePayday = DateTime(currentPayday.year, currentPayday.month, currentPayday.day);
 
-    // If payday is in the future, return it with weekend adjustment
-    if (basePayday.isAfter(today)) {
+    // If payday is today or in the future, return it with weekend adjustment
+    if (basePayday.isAfter(today) || _isSameDay(basePayday, today)) {
       return _adjustForWeekend(basePayday);
     }
 
-    // If payday is today, return it immediately (for "It's Payday!" celebration UI)
-    if (_isSameDay(basePayday, today)) {
-      return _adjustForWeekend(basePayday);
-    }
-
+    // Payday has passed, calculate next one
     DateTime nextDate;
 
     switch (payCycle) {
