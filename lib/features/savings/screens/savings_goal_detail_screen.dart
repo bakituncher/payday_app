@@ -75,6 +75,10 @@ class _SavingsGoalDetailScreenState extends ConsumerState<SavingsGoalDetailScree
           await transactionRepository.addTransaction(transaction);
 
           // SUCCESS: Both operations completed, update UI
+          // -----> Ana sayfadaki işlem listesini yenile: <-----
+          ref.invalidate(currentCycleTransactionsProvider);
+          // ------------------------------------
+
           setState(() {
             _currentGoal = _currentGoal.copyWith(
               currentAmount: _currentGoal.currentAmount + result,
@@ -176,6 +180,9 @@ class _SavingsGoalDetailScreenState extends ConsumerState<SavingsGoalDetailScree
           await transactionRepository.addTransaction(transaction);
 
           // SUCCESS: Both operations completed, update UI
+          // EKLENECEK SATIR: Ana sayfadaki işlem listesini yenile
+          ref.invalidate(currentCycleTransactionsProvider);
+
           setState(() {
             _currentGoal = _currentGoal.copyWith(
               currentAmount: _currentGoal.currentAmount - result,
@@ -274,6 +281,9 @@ class _SavingsGoalDetailScreenState extends ConsumerState<SavingsGoalDetailScree
 
         // ADIM 2: Hedefi sil
         await repository.deleteSavingsGoal(_currentGoal.id, _currentGoal.userId);
+
+        // EKLENECEK SATIR: Ana sayfadaki işlem listesini yenile
+        ref.invalidate(currentCycleTransactionsProvider);
 
         if (mounted) {
           Navigator.pop(context); // Ekrandan çık
