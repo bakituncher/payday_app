@@ -28,7 +28,10 @@ mixin _$SavingsGoal {
   double get currentAmount => throw _privateConstructorUsedError;
   String get emoji => throw _privateConstructorUsedError;
   DateTime get createdAt => throw _privateConstructorUsedError;
-  DateTime? get targetDate => throw _privateConstructorUsedError;
+  DateTime? get targetDate =>
+      throw _privateConstructorUsedError; // Auto-transfer settings
+  bool get autoTransferEnabled => throw _privateConstructorUsedError;
+  double get autoTransferAmount => throw _privateConstructorUsedError;
 
   /// Serializes this SavingsGoal to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -56,6 +59,8 @@ abstract class $SavingsGoalCopyWith<$Res> {
     String emoji,
     DateTime createdAt,
     DateTime? targetDate,
+    bool autoTransferEnabled,
+    double autoTransferAmount,
   });
 }
 
@@ -82,6 +87,8 @@ class _$SavingsGoalCopyWithImpl<$Res, $Val extends SavingsGoal>
     Object? emoji = null,
     Object? createdAt = null,
     Object? targetDate = freezed,
+    Object? autoTransferEnabled = null,
+    Object? autoTransferAmount = null,
   }) {
     return _then(
       _value.copyWith(
@@ -117,6 +124,14 @@ class _$SavingsGoalCopyWithImpl<$Res, $Val extends SavingsGoal>
                 ? _value.targetDate
                 : targetDate // ignore: cast_nullable_to_non_nullable
                       as DateTime?,
+            autoTransferEnabled: null == autoTransferEnabled
+                ? _value.autoTransferEnabled
+                : autoTransferEnabled // ignore: cast_nullable_to_non_nullable
+                      as bool,
+            autoTransferAmount: null == autoTransferAmount
+                ? _value.autoTransferAmount
+                : autoTransferAmount // ignore: cast_nullable_to_non_nullable
+                      as double,
           )
           as $Val,
     );
@@ -141,6 +156,8 @@ abstract class _$$SavingsGoalImplCopyWith<$Res>
     String emoji,
     DateTime createdAt,
     DateTime? targetDate,
+    bool autoTransferEnabled,
+    double autoTransferAmount,
   });
 }
 
@@ -166,6 +183,8 @@ class __$$SavingsGoalImplCopyWithImpl<$Res>
     Object? emoji = null,
     Object? createdAt = null,
     Object? targetDate = freezed,
+    Object? autoTransferEnabled = null,
+    Object? autoTransferAmount = null,
   }) {
     return _then(
       _$SavingsGoalImpl(
@@ -201,6 +220,14 @@ class __$$SavingsGoalImplCopyWithImpl<$Res>
             ? _value.targetDate
             : targetDate // ignore: cast_nullable_to_non_nullable
                   as DateTime?,
+        autoTransferEnabled: null == autoTransferEnabled
+            ? _value.autoTransferEnabled
+            : autoTransferEnabled // ignore: cast_nullable_to_non_nullable
+                  as bool,
+        autoTransferAmount: null == autoTransferAmount
+            ? _value.autoTransferAmount
+            : autoTransferAmount // ignore: cast_nullable_to_non_nullable
+                  as double,
       ),
     );
   }
@@ -218,6 +245,8 @@ class _$SavingsGoalImpl implements _SavingsGoal {
     required this.emoji,
     required this.createdAt,
     this.targetDate,
+    this.autoTransferEnabled = false,
+    this.autoTransferAmount = 0.0,
   });
 
   factory _$SavingsGoalImpl.fromJson(Map<String, dynamic> json) =>
@@ -240,10 +269,17 @@ class _$SavingsGoalImpl implements _SavingsGoal {
   final DateTime createdAt;
   @override
   final DateTime? targetDate;
+  // Auto-transfer settings
+  @override
+  @JsonKey()
+  final bool autoTransferEnabled;
+  @override
+  @JsonKey()
+  final double autoTransferAmount;
 
   @override
   String toString() {
-    return 'SavingsGoal(id: $id, userId: $userId, name: $name, targetAmount: $targetAmount, currentAmount: $currentAmount, emoji: $emoji, createdAt: $createdAt, targetDate: $targetDate)';
+    return 'SavingsGoal(id: $id, userId: $userId, name: $name, targetAmount: $targetAmount, currentAmount: $currentAmount, emoji: $emoji, createdAt: $createdAt, targetDate: $targetDate, autoTransferEnabled: $autoTransferEnabled, autoTransferAmount: $autoTransferAmount)';
   }
 
   @override
@@ -262,7 +298,11 @@ class _$SavingsGoalImpl implements _SavingsGoal {
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             (identical(other.targetDate, targetDate) ||
-                other.targetDate == targetDate));
+                other.targetDate == targetDate) &&
+            (identical(other.autoTransferEnabled, autoTransferEnabled) ||
+                other.autoTransferEnabled == autoTransferEnabled) &&
+            (identical(other.autoTransferAmount, autoTransferAmount) ||
+                other.autoTransferAmount == autoTransferAmount));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -277,6 +317,8 @@ class _$SavingsGoalImpl implements _SavingsGoal {
     emoji,
     createdAt,
     targetDate,
+    autoTransferEnabled,
+    autoTransferAmount,
   );
 
   /// Create a copy of SavingsGoal
@@ -303,6 +345,8 @@ abstract class _SavingsGoal implements SavingsGoal {
     required final String emoji,
     required final DateTime createdAt,
     final DateTime? targetDate,
+    final bool autoTransferEnabled,
+    final double autoTransferAmount,
   }) = _$SavingsGoalImpl;
 
   factory _SavingsGoal.fromJson(Map<String, dynamic> json) =
@@ -323,7 +367,11 @@ abstract class _SavingsGoal implements SavingsGoal {
   @override
   DateTime get createdAt;
   @override
-  DateTime? get targetDate;
+  DateTime? get targetDate; // Auto-transfer settings
+  @override
+  bool get autoTransferEnabled;
+  @override
+  double get autoTransferAmount;
 
   /// Create a copy of SavingsGoal
   /// with the given fields replaced by the non-null parameter values.

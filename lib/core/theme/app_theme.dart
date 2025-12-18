@@ -63,6 +63,12 @@ class AppColors {
     end: Alignment.bottomRight,
   );
 
+  static const LinearGradient successGradient = LinearGradient(
+    colors: [Color(0xFF10B981), Color(0xFF059669)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
   static const LinearGradient glassGradient = LinearGradient(
     colors: [
       Color(0x30FFFFFF),
@@ -660,6 +666,7 @@ class AppRadius {
   static const double xl = 24.0;
   static const double xxl = 32.0;
   static const double round = 999.0;
+  static const double full = 999.0; // Alias for round
 }
 
 /// Premium Decoration Helpers

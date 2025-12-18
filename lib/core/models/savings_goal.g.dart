@@ -18,6 +18,9 @@ _$SavingsGoalImpl _$$SavingsGoalImplFromJson(Map<String, dynamic> json) =>
       targetDate: json['targetDate'] == null
           ? null
           : DateTime.parse(json['targetDate'] as String),
+      autoTransferEnabled: json['autoTransferEnabled'] as bool? ?? false,
+      autoTransferAmount:
+          (json['autoTransferAmount'] as num?)?.toDouble() ?? 0.0,
     );
 
 Map<String, dynamic> _$$SavingsGoalImplToJson(_$SavingsGoalImpl instance) =>
@@ -30,4 +33,6 @@ Map<String, dynamic> _$$SavingsGoalImplToJson(_$SavingsGoalImpl instance) =>
       'emoji': instance.emoji,
       'createdAt': instance.createdAt.toIso8601String(),
       'targetDate': instance.targetDate?.toIso8601String(),
+      'autoTransferEnabled': instance.autoTransferEnabled,
+      'autoTransferAmount': instance.autoTransferAmount,
     };

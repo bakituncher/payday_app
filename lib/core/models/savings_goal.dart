@@ -15,6 +15,9 @@ class SavingsGoal with _$SavingsGoal {
     required String emoji,
     required DateTime createdAt,
     DateTime? targetDate,
+    // Auto-transfer settings
+    @Default(false) bool autoTransferEnabled,
+    @Default(0.0) double autoTransferAmount, // Amount to transfer per payday
   }) = _SavingsGoal;
 
   factory SavingsGoal.fromJson(Map<String, dynamic> json) =>
