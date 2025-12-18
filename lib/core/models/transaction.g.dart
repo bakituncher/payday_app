@@ -26,6 +26,7 @@ _$TransactionImpl _$$TransactionImplFromJson(Map<String, dynamic> json) =>
       nextRecurrenceDate: json['nextRecurrenceDate'] == null
           ? null
           : DateTime.parse(json['nextRecurrenceDate'] as String),
+      relatedGoalId: json['relatedGoalId'] as String?,
     );
 
 Map<String, dynamic> _$$TransactionImplToJson(_$TransactionImpl instance) =>
@@ -43,6 +44,7 @@ Map<String, dynamic> _$$TransactionImplToJson(_$TransactionImpl instance) =>
       'frequency': _$TransactionFrequencyEnumMap[instance.frequency],
       'subscriptionId': instance.subscriptionId,
       'nextRecurrenceDate': instance.nextRecurrenceDate?.toIso8601String(),
+      'relatedGoalId': instance.relatedGoalId,
     };
 
 const _$TransactionFrequencyEnumMap = {
