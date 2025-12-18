@@ -8,6 +8,7 @@ import 'package:payday/core/models/subscription.dart';
 class DateCycleService {
   /// Calculate next payday optimized without loops
   /// Returns current payday if it's today (for "It's Payday!" UI experience)
+  /// FIXED: "Skip Today Bug" - Now correctly returns today if it's a payday
   static DateTime calculateNextPayday(DateTime currentPayday, String payCycle) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
@@ -15,8 +16,13 @@ class DateCycleService {
     // Normalize current payday to remove time components for comparison
     DateTime basePayday = DateTime(currentPayday.year, currentPayday.month, currentPayday.day);
 
-    // If payday is today or in the future, return it (allows "It's Payday!" celebration UI)
-    if (basePayday.isAfter(today) || _isSameDay(basePayday, today)) {
+    // If payday is in the future, return it with weekend adjustment
+    if (basePayday.isAfter(today)) {
+      return _adjustForWeekend(basePayday);
+    }
+
+    // If payday is today, return it immediately (for "It's Payday!" celebration UI)
+    if (_isSameDay(basePayday, today)) {
       return _adjustForWeekend(basePayday);
     }
 
@@ -30,6 +36,9 @@ class DateCycleService {
       case 'Fortnightly':
         nextDate = _calculateNextPeriodicDate(basePayday, today, 14);
         break;
+      case 'Semi-Monthly': // NEW: Twice per month (e.g., 15th and Last day)
+        nextDate = _calculateNextSemiMonthlyDate(basePayday, today);
+        break;
       case 'Monthly':
         nextDate = _calculateNextMonthlyDate(basePayday, today);
         break;
@@ -42,6 +51,9 @@ class DateCycleService {
   }
 
   /// Calculates next recurring date using math instead of loops (O(1) complexity)
+  /// FIXED: Changed logic to include TODAY as a valid next date if cycles align
+  /// Previously: (cyclesPassed + 1) would ALWAYS skip today, even if today was payday
+  /// Now: Checks if potentialDate (current cycle) is valid before jumping to next cycle
   static DateTime _calculateNextPeriodicDate(DateTime startDate, DateTime today, int cycleDays) {
     final diffDays = today.difference(startDate).inDays;
 
@@ -50,32 +62,45 @@ class DateCycleService {
     // Calculate how many full cycles have passed
     final cyclesPassed = (diffDays / cycleDays).floor();
 
-    // Jump directly to the next cycle
-    // (cyclesPassed + 1) ensures we get the *next* future date
-    return startDate.add(Duration(days: (cyclesPassed + 1) * cycleDays));
+    // Calculate potential date for current cycle
+    DateTime potentialDate = startDate.add(Duration(days: cyclesPassed * cycleDays));
+
+    // If potential date is in the past, move to next cycle
+    // If potential date is TODAY, return it (allows "It's Payday!" UI)
+    if (potentialDate.isBefore(today)) {
+      return startDate.add(Duration(days: (cyclesPassed + 1) * cycleDays));
+    }
+
+    return potentialDate;
   }
 
   /// Calculates next monthly date safely handling end-of-month logic
+  /// FIXED: Logic adjusted to catch TODAY as valid payday using isBefore check
   static DateTime _calculateNextMonthlyDate(DateTime startDate, DateTime today) {
-    DateTime candidate = startDate;
+    // Calculate month difference (approximate cycle count)
+    int monthDiff = (today.year - startDate.year) * 12 + (today.month - startDate.month);
 
-    // Eğer başlangıç tarihi bugün veya geçmişteyse, bugünden sonraki ilk ayı bulana kadar ilerle.
-    // Aylık döngüde matematiksel hesaplama (modüler) gün sayısı değiştiği için risklidir,
-    // ancak burada sadece "yıl * 12 + ay" farkını alarak zıplayabiliriz.
+    // Calculate candidate date (e.g., Start: Jan 31, Today: Feb 28 -> Returns Feb 28)
+    DateTime candidate = _addMonthsSafely(startDate, monthDiff);
 
-    if (candidate.isBefore(today) || _isSameDay(candidate, today)) {
-      int monthDiff = (today.year - startDate.year) * 12 + (today.month - startDate.month);
-
-      // En az 1 ay ekleyerek başla
-      candidate = _addMonthsSafely(startDate, monthDiff);
-
-      // Eğer hala geçmişteyse 1 ay daha ekle
-      if (!candidate.isAfter(today)) {
-        candidate = _addMonthsSafely(candidate, 1);
-      }
+    // If calculated date is in the past, add 1 month
+    // If it's today, return it (valid payday)
+    if (candidate.isBefore(today)) {
+      candidate = _addMonthsSafely(startDate, monthDiff + 1);
     }
 
     return candidate;
+  }
+
+  /// Industry Standard: Semi-Monthly (Usually 15th and Last Day of Month)
+  /// Common in US corporate payroll: twice per month on fixed dates
+  /// This implementation uses a 15-day cycle as approximation
+  /// Note: Production systems typically store two separate anchor dates in UserSettings
+  static DateTime _calculateNextSemiMonthlyDate(DateTime startDate, DateTime today) {
+    // Simple implementation: Use 15-day periodic cycle
+    // More sophisticated approach: Track two anchor dates (e.g., 15th and 30th)
+    // For now, treat as 15-day recurring cycle
+    return _calculateNextPeriodicDate(startDate, today, 15);
   }
 
   /// Industry Standard: If payday falls on weekend, move to Friday
@@ -90,6 +115,7 @@ class DateCycleService {
 
   /// Check if subscription billing date has passed and calculate next billing date
   /// Returns current billing date if it's today (for consistency with payday logic)
+  /// FIXED: Now uses corrected _calculateNextPeriodicDate that doesn't skip today
   static DateTime calculateNextBillingDate(
     DateTime currentBillingDate,
     RecurrenceFrequency frequency,
@@ -98,8 +124,13 @@ class DateCycleService {
     final today = DateTime(now.year, now.month, now.day);
     DateTime baseBilling = DateTime(currentBillingDate.year, currentBillingDate.month, currentBillingDate.day);
 
-    // If billing date is today or in the future, return it
-    if (baseBilling.isAfter(today) || _isSameDay(baseBilling, today)) {
+    // If billing date is in the future, return it
+    if (baseBilling.isAfter(today)) {
+      return baseBilling;
+    }
+
+    // If billing date is today, return it (valid billing day)
+    if (_isSameDay(baseBilling, today)) {
       return baseBilling;
     }
 
@@ -111,13 +142,26 @@ class DateCycleService {
       case RecurrenceFrequency.biweekly:
         return _calculateNextPeriodicDate(baseBilling, today, 14);
       case RecurrenceFrequency.monthly:
-        return _addMonthsSafely(baseBilling, _calculateMonthDiff(baseBilling, today) + 1);
+        return _calculateNextMonthlyDate(baseBilling, today);
       case RecurrenceFrequency.quarterly:
-        int monthsToAdd = (_calculateMonthDiff(baseBilling, today) / 3).ceil() * 3;
-        return _addMonthsSafely(baseBilling, monthsToAdd);
+        // Quarterly: Every 3 months from anchor date
+        int monthDiff = _calculateMonthDiff(baseBilling, today);
+        int cyclesPassed = (monthDiff / 3).floor();
+        DateTime candidate = _addMonthsSafely(baseBilling, cyclesPassed * 3);
+
+        if (candidate.isBefore(today)) {
+          return _addMonthsSafely(baseBilling, (cyclesPassed + 1) * 3);
+        }
+        return candidate;
       case RecurrenceFrequency.yearly:
-        int yearsToAdd = (today.year - baseBilling.year) + 1;
-        return _addMonthsSafely(baseBilling, yearsToAdd * 12);
+        // Yearly: Same date next year
+        int yearsPassed = today.year - baseBilling.year;
+        DateTime candidate = _addMonthsSafely(baseBilling, yearsPassed * 12);
+
+        if (candidate.isBefore(today)) {
+          return _addMonthsSafely(baseBilling, (yearsPassed + 1) * 12);
+        }
+        return candidate;
     }
   }
 
