@@ -4,11 +4,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:payday/core/theme/app_theme.dart';
 import 'package:payday/core/models/savings_goal.dart';
+import 'package:payday/core/models/transaction.dart';
 import 'package:payday/core/providers/repository_providers.dart';
 import 'package:payday/features/home/providers/home_providers.dart';
 import 'package:payday/shared/widgets/payday_button.dart';
 import 'package:payday/core/services/currency_service.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:uuid/uuid.dart';
 
 class SavingsGoalDetailScreen extends ConsumerStatefulWidget {
   final SavingsGoal goal;
@@ -43,12 +45,29 @@ class _SavingsGoalDetailScreenState extends ConsumerState<SavingsGoalDetailScree
     if (result != null && result > 0) {
       setState(() => _isLoading = true);
       try {
-        final repository = ref.read(savingsGoalRepositoryProvider);
-        await repository.addMoneyToGoal(
+        final savingsRepository = ref.read(savingsGoalRepositoryProvider);
+        final transactionRepository = ref.read(transactionRepositoryProvider);
+
+        // Add money to the savings goal
+        await savingsRepository.addMoneyToGoal(
           _currentGoal.id,
           result,
           _currentGoal.userId,
         );
+
+        // Create an expense transaction to deduct from budget
+        final transaction = Transaction(
+          id: const Uuid().v4(),
+          userId: _currentGoal.userId,
+          amount: result,
+          categoryId: 'savings',
+          categoryName: 'Savings',
+          categoryEmoji: _currentGoal.emoji,
+          date: DateTime.now(),
+          note: 'Transfer to ${_currentGoal.name}',
+          isExpense: true, // This is an expense - money leaving the budget
+        );
+        await transactionRepository.addTransaction(transaction);
 
         setState(() {
           _currentGoal = _currentGoal.copyWith(
@@ -60,7 +79,7 @@ class _SavingsGoalDetailScreenState extends ConsumerState<SavingsGoalDetailScree
           HapticFeedback.mediumImpact();
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('✅ ${_formatCurrency(result)} added'),
+              content: Text('✅ ${_formatCurrency(result)} added to savings'),
               backgroundColor: AppColors.success,
             ),
           );
@@ -93,12 +112,29 @@ class _SavingsGoalDetailScreenState extends ConsumerState<SavingsGoalDetailScree
     if (result != null && result > 0) {
       setState(() => _isLoading = true);
       try {
-        final repository = ref.read(savingsGoalRepositoryProvider);
-        await repository.withdrawMoneyFromGoal(
+        final savingsRepository = ref.read(savingsGoalRepositoryProvider);
+        final transactionRepository = ref.read(transactionRepositoryProvider);
+
+        // Withdraw money from the savings goal
+        await savingsRepository.withdrawMoneyFromGoal(
           _currentGoal.id,
           result,
           _currentGoal.userId,
         );
+
+        // Create an income transaction to add back to budget
+        final transaction = Transaction(
+          id: const Uuid().v4(),
+          userId: _currentGoal.userId,
+          amount: result,
+          categoryId: 'savings',
+          categoryName: 'Savings',
+          categoryEmoji: _currentGoal.emoji,
+          date: DateTime.now(),
+          note: 'Withdrawal from ${_currentGoal.name}',
+          isExpense: false, // This is income - money coming back to budget
+        );
+        await transactionRepository.addTransaction(transaction);
 
         setState(() {
           _currentGoal = _currentGoal.copyWith(
