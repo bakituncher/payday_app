@@ -5,6 +5,8 @@ buildscript {
     }
     dependencies {
         classpath("com.google.gms:google-services:4.4.0")
+        // 👇 EKLENDİ: Crashlytics Gradle Plugin
+        classpath("com.google.firebase:firebase-crashlytics-gradle:3.0.2")
     }
 }
 
