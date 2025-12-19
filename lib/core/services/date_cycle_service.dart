@@ -4,6 +4,7 @@
 library;
 
 import 'package:payday/core/models/subscription.dart';
+import 'package:payday/core/models/pay_period.dart';
 
 class DateCycleService {
   /// Calculate next payday optimized without loops
@@ -32,8 +33,10 @@ class DateCycleService {
       case 'Fortnightly':
         nextDate = _calculateNextPeriodicDate(basePayday, today, 14);
         break;
-      case 'Semi-Monthly': // NEW: Twice per month (e.g., 15th and Last day)
-        nextDate = _calculateNextSemiMonthlyDate(basePayday, today);
+      case 'Semi-Monthly':
+        // Deterministic calendar-based semi-monthly:
+        // Periods are [1-15] and [16-lastDay].
+        nextDate = _calculateNextSemiMonthlyCalendarDate(today);
         break;
       case 'Monthly':
         nextDate = _calculateNextMonthlyDate(basePayday, today);
@@ -44,6 +47,38 @@ class DateCycleService {
 
     // Finansal standart: Maaş günü hafta sonuna gelirse Cuma'ya çek
     return _adjustForWeekend(nextDate);
+  }
+
+  /// Calendar-based semi-monthly next payday.
+  ///
+  /// Rule:
+  /// - If today is on/before 15th => next is 15th (or today if it's 15th)
+  /// - If today is after 15th => next is last day of month
+  /// - If today is last day => next becomes 15th of next month
+  ///
+  /// This avoids drift in 28/29/30/31 day months.
+  static DateTime _calculateNextSemiMonthlyCalendarDate(DateTime today) {
+    final t = DateTime(today.year, today.month, today.day);
+    final lastDay = DateTime(t.year, t.month + 1, 0).day;
+
+    // If we're before the 15th, next is 15th.
+    if (t.day < 15) {
+      return DateTime(t.year, t.month, 15);
+    }
+
+    // If today is exactly the 15th, it's a valid payday.
+    if (t.day == 15) {
+      return t;
+    }
+
+    // If we're between 16 and (lastDay-1), next is end of month.
+    if (t.day < lastDay) {
+      return DateTime(t.year, t.month, lastDay);
+    }
+
+    // If today is the last day, move to 15th of next month.
+    final nextMonth = DateTime(t.year, t.month + 1, 1);
+    return DateTime(nextMonth.year, nextMonth.month, 15);
   }
 
   /// Calculates next recurring date using math instead of loops (O(1) complexity)
@@ -88,16 +123,8 @@ class DateCycleService {
     return candidate;
   }
 
-  /// Industry Standard: Semi-Monthly (Usually 15th and Last Day of Month)
-  /// Common in US corporate payroll: twice per month on fixed dates
-  /// This implementation uses a 15-day cycle as approximation
-  /// Note: Production systems typically store two separate anchor dates in UserSettings
-  static DateTime _calculateNextSemiMonthlyDate(DateTime startDate, DateTime today) {
-    // Simple implementation: Use 15-day periodic cycle
-    // More sophisticated approach: Track two anchor dates (e.g., 15th and 30th)
-    // For now, treat as 15-day recurring cycle
-    return _calculateNextPeriodicDate(startDate, today, 15);
-  }
+  // REMOVE: _calculateNextSemiMonthlyDate (15-day approximation). We now use
+  // _calculateNextSemiMonthlyCalendarDate for deterministic calendar behavior.
 
   /// Industry Standard: If payday falls on weekend, move to Friday
   static DateTime _adjustForWeekend(DateTime date) {
@@ -208,5 +235,92 @@ class DateCycleService {
     final today = DateTime(now.year, now.month, now.day);
     return date.isBefore(today);
   }
-}
 
+  /// Get current pay period bounds based on nextPayday.
+  ///
+  /// Contract:
+  /// - start: previous payday (inclusive)
+  /// - end: next payday (exclusive)
+  ///
+  /// Important: `nextPayday` is treated as the *upcoming* payday after calling
+  /// [calculateNextPayday]. Caller should ensure settings are refreshed.
+  static PayPeriod getCurrentPayPeriod({
+    required DateTime nextPayday,
+    required String payCycle,
+  }) {
+    final normalizedNext = DateTime(nextPayday.year, nextPayday.month, nextPayday.day);
+    final start = getPreviousPayday(nextPayday: normalizedNext, payCycle: payCycle);
+
+    // End is exclusive. This prevents double-counting a transaction that happens exactly
+    // at the boundary when user flips periods.
+    final end = normalizedNext;
+    return PayPeriod(start: start, end: end);
+  }
+
+  /// Get previous payday for a given nextPayday.
+  ///
+  /// NOTE: This is intentionally kept here (instead of in UI providers) so all layers
+  /// share the exact same rules.
+  static DateTime getPreviousPayday({
+    required DateTime nextPayday,
+    required String payCycle,
+  }) {
+    final normalizedNext = DateTime(nextPayday.year, nextPayday.month, nextPayday.day);
+
+    switch (payCycle) {
+      case 'Weekly':
+        return normalizedNext.subtract(const Duration(days: 7));
+      case 'Bi-Weekly':
+      case 'Fortnightly':
+        return normalizedNext.subtract(const Duration(days: 14));
+      case 'Semi-Monthly':
+        return _getPreviousSemiMonthlyCalendarDate(normalizedNext);
+      case 'Monthly':
+      default:
+        return _subtractOneMonth(normalizedNext);
+    }
+  }
+
+  /// Calendar-based semi-monthly previous payday.
+  ///
+  /// We assume anchor days are 15th and last day of month.
+  /// - If nextPayday is 15th => previous is last day of previous month
+  /// - If nextPayday is last day => previous is 15th of same month
+  /// - Otherwise fallback: 15 days (keeps behavior reasonable if user has a custom date)
+  static DateTime _getPreviousSemiMonthlyCalendarDate(DateTime nextPayday) {
+    final n = DateTime(nextPayday.year, nextPayday.month, nextPayday.day);
+    final lastDay = DateTime(n.year, n.month + 1, 0).day;
+
+    if (n.day == 15) {
+      final prevMonth = DateTime(n.year, n.month - 1, 1);
+      final prevLastDay = DateTime(prevMonth.year, prevMonth.month + 1, 0).day;
+      return DateTime(prevMonth.year, prevMonth.month, prevLastDay);
+    }
+
+    if (n.day == lastDay) {
+      return DateTime(n.year, n.month, 15);
+    }
+
+    // Fallback for non-standard semi-monthly anchors.
+    return n.subtract(const Duration(days: 15));
+  }
+
+  /// Subtract one month from a date, handling edge cases (e.g., Mar 31 -> Feb 28)
+  static DateTime _subtractOneMonth(DateTime date) {
+    int year = date.year;
+    int month = date.month - 1;
+    int day = date.day;
+
+    if (month < 1) {
+      month = 12;
+      year--;
+    }
+
+    final lastDayOfPrevMonth = DateTime(year, month + 1, 0).day;
+    if (day > lastDayOfPrevMonth) {
+      day = lastDayOfPrevMonth;
+    }
+
+    return DateTime(year, month, day);
+  }
+}

@@ -16,6 +16,7 @@ import 'package:payday/features/transactions/screens/add_transaction_screen.dart
 import 'package:payday/features/settings/screens/settings_screen.dart';
 import 'package:payday/shared/widgets/payday_button.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:payday/features/home/providers/period_balance_providers.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -214,9 +215,16 @@ class HomeScreen extends ConsumerWidget {
                           const SizedBox(height: AppSpacing.sm),
 
                           // Budget Progress Card
-                          BudgetProgressCard(
-                            currency: settings.currency,
-                            currentBalance: settings.currentBalance,
+                          Consumer(
+                            builder: (context, ref, _) {
+                              final periodBalanceAsync = ref.watch(selectedPeriodBalanceProvider);
+                              final effectiveBalance = periodBalanceAsync.value?.closingBalance ?? settings.currentBalance;
+
+                              return BudgetProgressCard(
+                                currency: settings.currency,
+                                currentBalance: effectiveBalance,
+                              );
+                            },
                           )
                               .animate()
                               .fadeIn(duration: 500.ms, delay: 300.ms)
@@ -567,4 +575,3 @@ class _PremiumFABState extends State<_PremiumFAB> {
     );
   }
 }
-

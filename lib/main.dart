@@ -13,7 +13,6 @@ import 'package:payday/features/subscriptions/screens/subscriptions_screen.dart'
 import 'package:payday/features/insights/screens/monthly_summary_screen.dart';
 import 'package:payday/core/providers/repository_providers.dart';
 import 'package:payday/core/providers/theme_providers.dart';
-import 'package:payday/core/providers/auth_providers.dart';
 
 void main() async {
   // Ensure Flutter bindings are initialized

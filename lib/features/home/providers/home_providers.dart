@@ -2,6 +2,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:payday/core/models/user_settings.dart';
 import 'package:payday/core/models/transaction.dart';
+import 'package:payday/core/models/pay_period.dart';
 import 'package:payday/core/providers/repository_providers.dart';
 import 'package:payday/core/services/date_cycle_service.dart';
 
@@ -90,72 +91,26 @@ final currentCycleTransactionsProvider = FutureProvider<List<Transaction>>((ref)
 
   if (settings == null) return [];
 
-  // Use DateCycleService to calculate cycle boundaries consistently
   final now = DateTime.now();
   final today = DateTime(now.year, now.month, now.day);
-  final nextPayday = DateTime(
+
+  final normalizedNextPayday = DateTime(
     settings.nextPayday.year,
     settings.nextPayday.month,
     settings.nextPayday.day,
   );
 
-  // Calculate the start of current pay cycle
-  DateTime cycleStart;
+  final nextPayday = (normalizedNextPayday.isAfter(today) || normalizedNextPayday.isAtSameMomentAs(today))
+      ? normalizedNextPayday
+      : DateCycleService.calculateNextPayday(settings.nextPayday, settings.payCycle);
 
-  // If payday is today or in the future, calculate when the cycle started
-  if (nextPayday.isAfter(today) || nextPayday.isAtSameMomentAs(today)) {
-    cycleStart = _getPreviousPayday(nextPayday, settings.payCycle);
-  } else {
-    // Payday has passed, this shouldn't happen as userSettingsProvider should update it
-    // But as a fallback, calculate the next payday and get its cycle start
-    final actualNextPayday = DateCycleService.calculateNextPayday(
-      settings.nextPayday,
-      settings.payCycle,
-    );
-    cycleStart = _getPreviousPayday(actualNextPayday, settings.payCycle);
-  }
+  final PayPeriod period = DateCycleService.getCurrentPayPeriod(
+    nextPayday: nextPayday,
+    payCycle: settings.payCycle,
+  );
 
-  return repository.getTransactionsForCurrentCycle(userId, cycleStart);
+  return repository.getTransactionsForCurrentCycle(userId, period.start);
 });
-
-/// Get the previous payday (start of current cycle) from next payday
-DateTime _getPreviousPayday(DateTime nextPayday, String payCycle) {
-  switch (payCycle) {
-    case 'Weekly':
-      return nextPayday.subtract(const Duration(days: 7));
-    case 'Bi-Weekly':
-    case 'Fortnightly':
-      return nextPayday.subtract(const Duration(days: 14));
-    case 'Monthly':
-      return _subtractOneMonth(nextPayday);
-    default:
-      return _subtractOneMonth(nextPayday);
-  }
-}
-
-/// Subtract one month from a date, handling edge cases
-DateTime _subtractOneMonth(DateTime date) {
-  int year = date.year;
-  int month = date.month - 1;
-  int day = date.day;
-
-  // Handle year rollover
-  if (month < 1) {
-    month = 12;
-    year--;
-  }
-
-  // Get the last day of the previous month
-  final lastDayOfPrevMonth = DateTime(year, month + 1, 0).day;
-
-  // If the day doesn't exist in previous month, use the last day
-  if (day > lastDayOfPrevMonth) {
-    day = lastDayOfPrevMonth;
-  }
-
-
-  return DateTime(year, month, day);
-}
 
 /// Total Expenses for Current Cycle Provider (DÜZELTİLMİŞ VERSİYON)
 final totalExpensesProvider = FutureProvider<double>((ref) async {
@@ -254,4 +209,3 @@ enum BudgetHealth {
   danger,
   unknown,
 }
-

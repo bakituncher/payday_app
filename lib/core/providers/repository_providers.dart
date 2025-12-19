@@ -21,6 +21,7 @@ import 'package:payday/core/services/notification_service.dart';
 import 'package:payday/core/services/auto_transfer_service.dart';
 import 'package:payday/core/services/transaction_manager_service.dart';
 import 'package:payday/core/services/subscription_processor_service.dart';
+import 'package:payday/core/services/period_balance_service.dart';
 
 /// Repository Providers - Using Local implementations with SharedPreferences
 /// Data persists across app restarts
@@ -115,3 +116,7 @@ final subscriptionProcessorServiceProvider = Provider<SubscriptionProcessorServi
   );
 });
 
+final periodBalanceServiceProvider = Provider<PeriodBalanceService>((ref) {
+  final txRepo = ref.watch(transactionRepositoryProvider);
+  return PeriodBalanceService(transactionRepository: txRepo);
+});
