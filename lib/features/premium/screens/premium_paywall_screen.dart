@@ -1,14 +1,18 @@
 /// Premium Paywall Screen
-/// Industry-grade premium UI for ad-free subscription
+/// Industry-grade premium UI for ad-free subscription with RevenueCat Integration
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:payday/core/theme/app_theme.dart';
-import 'package:payday/core/providers/currency_providers.dart';
 import 'package:payday/shared/widgets/payday_button.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
+// ✅ EKSİK OLAN IMPORTLAR EKLENDİ
+import 'package:purchases_flutter/purchases_flutter.dart';
+import 'package:payday/features/premium/providers/premium_providers.dart'; // Provider'lar burada
+import 'package:payday/core/services/revenue_cat_service.dart';
 
 class PremiumPaywallScreen extends ConsumerStatefulWidget {
   const PremiumPaywallScreen({super.key});
@@ -21,7 +25,9 @@ class _PremiumPaywallScreenState extends ConsumerState<PremiumPaywallScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   bool _isProcessing = false;
-  String _selectedPlan = 'yearly'; // 'monthly' or 'yearly'
+
+  // ✅ String yerine gerçek RevenueCat Paketi tutuyoruz
+  Package? _selectedPackage;
 
   @override
   void initState() {
@@ -38,94 +44,103 @@ class _PremiumPaywallScreenState extends ConsumerState<PremiumPaywallScreen>
     super.dispose();
   }
 
+  // ✅ GERÇEK SATIN ALMA İŞLEMİ
   Future<void> _handlePurchase() async {
+    if (_selectedPackage == null) return;
+
     HapticFeedback.mediumImpact();
     setState(() => _isProcessing = true);
 
-    // Simulate purchase process
-    await Future.delayed(const Duration(seconds: 2));
+    try {
+      final service = ref.read(revenueCatServiceProvider);
+      // Servis üzerinden satın al
+      final customerInfo = await service.purchasePackage(_selectedPackage!);
 
-    if (mounted) {
-      setState(() => _isProcessing = false);
-      // TODO: Implement actual purchase logic with in-app purchases
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const Icon(Icons.check_circle, color: Colors.white),
-              const SizedBox(width: 8),
-              Text('Purchase flow would start for $_selectedPlan plan'),
-            ],
+      if (mounted) {
+        setState(() => _isProcessing = false);
+
+        // İşlem başarılı mı kontrol et (İptal edilmediyse customerInfo döner)
+        if (customerInfo != null) {
+          final isPremium = customerInfo.entitlements.all['premium']?.isActive ?? false;
+
+          if (isPremium) {
+            // Global state'i güncelle
+            ref.read(isPremiumProvider.notifier).state = true;
+
+            Navigator.pop(context); // Ekranı kapat
+            _showSuccessSnackBar('Welcome to Premium!');
+          }
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isProcessing = false);
+        // Hata durumunda kullanıcıya bilgi ver (İptal hariç)
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Purchase failed. Please try again.'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
-          backgroundColor: AppColors.success,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      );
+        );
+      }
     }
   }
 
+  // ✅ RESTORE (GERİ YÜKLEME) İŞLEMİ
   Future<void> _restorePurchases() async {
     HapticFeedback.lightImpact();
-    // TODO: Implement restore purchases logic
+    setState(() => _isProcessing = true);
+
+    try {
+      final service = ref.read(revenueCatServiceProvider);
+      final customerInfo = await service.restorePurchases();
+
+      if (mounted) {
+        setState(() => _isProcessing = false);
+        final isPremium = customerInfo?.entitlements.all['premium']?.isActive ?? false;
+
+        if (isPremium) {
+          ref.read(isPremiumProvider.notifier).state = true;
+          Navigator.pop(context);
+          _showSuccessSnackBar('Purchases restored successfully!');
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('No active subscription found to restore.'),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) setState(() => _isProcessing = false);
+    }
+  }
+
+  void _showSuccessSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Restore purchases would be triggered here'),
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.check_circle, color: Colors.white),
+            const SizedBox(width: 8),
+            Text(message),
+          ],
+        ),
+        backgroundColor: AppColors.success,
         behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
-  }
-
-  /// Get localized price with user's currency
-  String _getLocalizedPrice(double usdPrice) {
-    final currencyCode = ref.read(currencyCodeProvider);
-    final currencySymbol = ref.read(currencySymbolProvider);
-
-    // Simple conversion rates (in real app, use actual exchange rates API)
-    final conversionRates = {
-      'USD': 1.0,
-      'EUR': 0.92,
-      'GBP': 0.79,
-      'TRY': 32.50,
-      'CAD': 1.36,
-      'AUD': 1.53,
-      'JPY': 149.0,
-      'INR': 83.0,
-    };
-
-    final rate = conversionRates[currencyCode] ?? 1.0;
-    final convertedPrice = usdPrice * rate;
-
-    return '$currencySymbol${convertedPrice.toStringAsFixed(2)}';
-  }
-
-  /// Get localized monthly price description
-  String _getLocalizedMonthlyPrice(double usdMonthlyPrice) {
-    final currencyCode = ref.read(currencyCodeProvider);
-    final currencySymbol = ref.read(currencySymbolProvider);
-
-    final conversionRates = {
-      'USD': 1.0,
-      'EUR': 0.92,
-      'GBP': 0.79,
-      'TRY': 32.50,
-      'CAD': 1.36,
-      'AUD': 1.53,
-      'JPY': 149.0,
-      'INR': 83.0,
-    };
-
-    final rate = conversionRates[currencyCode] ?? 1.0;
-    final convertedPrice = usdMonthlyPrice * rate;
-
-    return 'Just $currencySymbol${convertedPrice.toStringAsFixed(2)}/month';
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    // ✅ RevenueCat verilerini dinliyoruz
+    final offeringsAsync = ref.watch(offeringsProvider);
 
     return Scaffold(
       backgroundColor: AppColors.darkCharcoal,
@@ -136,124 +151,158 @@ class _PremiumPaywallScreenState extends ConsumerState<PremiumPaywallScreen>
 
           // Main content
           SafeArea(
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 48, 24, 24),
-                child: Column(
-                  children: [
-                    // Premium badge with glow effect
-                    _buildPremiumBadge()
-                        .animate()
-                        .fadeIn(delay: 100.ms)
-                        .scale(delay: 100.ms, duration: 600.ms, curve: Curves.elasticOut),
-
-                    const SizedBox(height: 20),
-
-                    // Title
-                    Text(
-                      'Remove Ads',
-                      style: theme.textTheme.headlineMedium?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: -0.5,
-                      ),
-                      textAlign: TextAlign.center,
-                    ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.2, end: 0),
-
-                    const SizedBox(height: 8),
-
-                    // Subtitle
-                    Text(
-                      'Focus on your finances without distractions',
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                        color: Colors.white.withValues(alpha: 0.7),
-                        fontWeight: FontWeight.w400,
-                      ),
-                      textAlign: TextAlign.center,
-                    ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.2, end: 0),
-
-                    const SizedBox(height: 28),
-
-                    // Features list
-                    _buildFeaturesList()
-                        .animate()
-                        .fadeIn(delay: 400.ms)
-                        .slideY(begin: 0.3, end: 0),
-
-                    const SizedBox(height: 28),
-
-                    // Pricing cards
-                    _buildPricingCards()
-                        .animate()
-                        .fadeIn(delay: 500.ms)
-                        .scale(delay: 500.ms),
-
-                    const SizedBox(height: 24),
-
-                    // Subscribe button
-                    PaydayButton(
-                      text: 'Remove Ads',
-                      icon: FontAwesomeIcons.ban,
-                      isLoading: _isProcessing,
-                      width: double.infinity,
-                      size: PaydayButtonSize.large,
-                      onPressed: _handlePurchase,
-                      gradient: AppColors.premiumGradient,
-                    ).animate().fadeIn(delay: 600.ms).slideY(begin: 0.2, end: 0),
-
-                    const SizedBox(height: 12),
-
-                    // Restore purchases
-                    TextButton(
-                      onPressed: _restorePurchases,
-                      child: Text(
-                        'Restore Purchases',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: Colors.white.withValues(alpha: 0.7),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ).animate().fadeIn(delay: 700.ms),
-
-                    const SizedBox(height: 8),
-
-                    // Terms
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: Text(
-                        'Subscription automatically renews unless auto-renew is turned off at least 24-hours before the end of the current period.',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: Colors.white.withValues(alpha: 0.5),
-                          fontSize: 11,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ).animate().fadeIn(delay: 800.ms),
-
-                    const SizedBox(height: 16),
-
-                    // Links
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        _buildLink('Terms of Service'),
-                        const SizedBox(width: 8),
-                        Text(
-                          '•',
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.5),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        _buildLink('Privacy Policy'),
-                      ],
-                    ).animate().fadeIn(delay: 900.ms),
-
-                    const SizedBox(height: 16),
-                  ],
+            child: offeringsAsync.when(
+              // Yükleniyor durumu
+              loading: () => const Center(
+                child: CircularProgressIndicator(color: Colors.white),
+              ),
+              // Hata durumu
+              error: (err, stack) => Center(
+                child: Text(
+                  'Could not load offers.\nPlease check your internet connection.',
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodyMedium?.copyWith(color: Colors.white),
                 ),
               ),
+              // Veri geldiğinde
+              data: (offerings) {
+                final currentOffering = offerings?.current;
+
+                // Paket kontrolü: Panelde paket yoksa uyarı göster
+                if (currentOffering == null || (currentOffering.monthly == null && currentOffering.annual == null)) {
+                  return Center(
+                    child: Text(
+                      'No subscription offers available right now.',
+                      style: theme.textTheme.bodyMedium?.copyWith(color: Colors.white),
+                    ),
+                  );
+                }
+
+                // Varsayılan seçim mantığı (Yıllık varsa onu seç, yoksa aylık)
+                if (_selectedPackage == null) {
+                  _selectedPackage = currentOffering.annual ?? currentOffering.monthly;
+                }
+
+                return SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 48, 24, 24),
+                    child: Column(
+                      children: [
+                        // Premium badge
+                        _buildPremiumBadge()
+                            .animate()
+                            .fadeIn(delay: 100.ms)
+                            .scale(delay: 100.ms, duration: 600.ms, curve: Curves.elasticOut),
+
+                        const SizedBox(height: 20),
+
+                        // Title
+                        Text(
+                          'Remove Ads',
+                          style: theme.textTheme.headlineMedium?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.5,
+                          ),
+                          textAlign: TextAlign.center,
+                        ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.2, end: 0),
+
+                        const SizedBox(height: 8),
+
+                        // Subtitle
+                        Text(
+                          'Focus on your finances without distractions',
+                          style: theme.textTheme.bodyLarge?.copyWith(
+                            color: Colors.white.withValues(alpha: 0.7),
+                            fontWeight: FontWeight.w400,
+                          ),
+                          textAlign: TextAlign.center,
+                        ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.2, end: 0),
+
+                        const SizedBox(height: 28),
+
+                        // Features list
+                        _buildFeaturesList()
+                            .animate()
+                            .fadeIn(delay: 400.ms)
+                            .slideY(begin: 0.3, end: 0),
+
+                        const SizedBox(height: 28),
+
+                        // Pricing cards - Dinamik oluşturuyoruz
+                        _buildPricingCards(currentOffering)
+                            .animate()
+                            .fadeIn(delay: 500.ms)
+                            .scale(delay: 500.ms),
+
+                        const SizedBox(height: 24),
+
+                        // Subscribe button
+                        PaydayButton(
+                          text: _isProcessing ? 'Processing...' : 'Subscribe Now',
+                          icon: _isProcessing ? null : FontAwesomeIcons.crown,
+                          isLoading: _isProcessing,
+                          width: double.infinity,
+                          size: PaydayButtonSize.large,
+                          onPressed: _handlePurchase,
+                          gradient: AppColors.premiumGradient,
+                        ).animate().fadeIn(delay: 600.ms).slideY(begin: 0.2, end: 0),
+
+                        const SizedBox(height: 12),
+
+                        // Restore purchases
+                        TextButton(
+                          onPressed: _isProcessing ? null : _restorePurchases,
+                          child: Text(
+                            'Restore Purchases',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: Colors.white.withValues(alpha: 0.7),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ).animate().fadeIn(delay: 700.ms),
+
+                        const SizedBox(height: 8),
+
+                        // Terms
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          child: Text(
+                            'Subscription automatically renews unless auto-renew is turned off at least 24-hours before the end of the current period.',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: Colors.white.withValues(alpha: 0.5),
+                              fontSize: 11,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ).animate().fadeIn(delay: 800.ms),
+
+                        const SizedBox(height: 16),
+
+                        // Links
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _buildLink('Terms of Service'),
+                            const SizedBox(width: 8),
+                            Text(
+                              '•',
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.5),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            _buildLink('Privacy Policy'),
+                          ],
+                        ).animate().fadeIn(delay: 900.ms),
+
+                        const SizedBox(height: 16),
+                      ],
+                    ),
+                  ),
+                );
+              },
             ),
           ),
 
@@ -463,96 +512,103 @@ class _PremiumPaywallScreenState extends ConsumerState<PremiumPaywallScreen>
     );
   }
 
-  Widget _buildPricingCards() {
+  // ✅ Dinamik Pricing Cards Oluşturucu
+  Widget _buildPricingCards(Offering offering) {
     return Column(
       children: [
-        Align(
-          alignment: Alignment.centerRight,
-          child: Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 11,
-              vertical: 6,
-            ),
-            margin: const EdgeInsets.only(bottom: 10, right: 4),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
-              ),
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFFFFD700).withValues(alpha: 0.4),
-                  blurRadius: 12,
-                  spreadRadius: 0,
+        if (offering.annual != null) ...[
+          // Best Value Badge
+          Align(
+            alignment: Alignment.centerRight,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+              margin: const EdgeInsets.only(bottom: 10, right: 4),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
                 ),
-              ],
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.star, size: 14, color: Colors.white),
-                const SizedBox(width: 6),
-                const Text(
-                  'BEST VALUE',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.5,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFFFFD700).withValues(alpha: 0.4),
+                    blurRadius: 12,
+                    spreadRadius: 0,
                   ),
-                ),
-              ],
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.star, size: 14, color: Colors.white),
+                  const SizedBox(width: 6),
+                  const Text(
+                    'BEST VALUE',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ],
+              ),
+            ).animate(onPlay: (controller) => controller.repeat()).shimmer(
+              duration: 2000.ms,
+              color: Colors.white.withValues(alpha: 0.3),
             ),
-          ).animate(onPlay: (controller) => controller.repeat()).shimmer(
-            duration: 2000.ms,
-            color: Colors.white.withValues(alpha: 0.3),
           ),
-        ),
 
-        _buildPricingCard(
-          isSelected: _selectedPlan == 'yearly',
-          isRecommended: true,
-          title: 'Yearly',
-          price: _getLocalizedPrice(9.99),
-          period: '/year',
-          savings: 'Save 60%',
-          description: _getLocalizedMonthlyPrice(0.83),
-          onTap: () {
-            HapticFeedback.selectionClick();
-            setState(() => _selectedPlan = 'yearly');
-          },
-        ),
+          // Yearly Card
+          _buildPricingCard(
+            package: offering.annual!,
+            isRecommended: true,
+            onTap: () {
+              HapticFeedback.selectionClick();
+              setState(() => _selectedPackage = offering.annual);
+            },
+          ),
 
-        const SizedBox(height: 14),
+          const SizedBox(height: 14),
+        ],
 
-        _buildPricingCard(
-          isSelected: _selectedPlan == 'monthly',
-          isRecommended: false,
-          title: 'Monthly',
-          price: _getLocalizedPrice(1.99),
-          period: '/month',
-          savings: null,
-          description: 'Billed monthly',
-          onTap: () {
-            HapticFeedback.selectionClick();
-            setState(() => _selectedPlan = 'monthly');
-          },
-        ),
+        if (offering.monthly != null)
+        // Monthly Card
+          _buildPricingCard(
+            package: offering.monthly!,
+            isRecommended: false,
+            onTap: () {
+              HapticFeedback.selectionClick();
+              setState(() => _selectedPackage = offering.monthly);
+            },
+          ),
       ],
     );
   }
 
+  // ✅ Dinamik Kart Widget'ı (Package alır)
   Widget _buildPricingCard({
-    required bool isSelected,
+    required Package package,
     required bool isRecommended,
-    required String title,
-    required String price,
-    required String period,
-    required String? savings,
-    required String description,
     required VoidCallback onTap,
   }) {
-    // Animasyon süresi
+    final isSelected = _selectedPackage == package;
+    final product = package.storeProduct;
+
+    // Yıllık pakette aylık maliyet hesabı
+    // Monthly için sadece "Billed monthly" yazısı
+    String description;
+    String? savings;
+
+    if (package.packageType == PackageType.annual) {
+      final monthlyPrice = product.price / 12;
+      // Örn: $0.83 / month
+      description = '${product.currencyCode} ${monthlyPrice.toStringAsFixed(2)} / month';
+      savings = 'Save 60%'; // Bunu dinamik hesaplamak da mümkün ama sabit kalsın şimdilik
+    } else {
+      description = 'Billed monthly';
+      savings = null;
+    }
+
     const duration = Duration(milliseconds: 300);
     const curve = Curves.easeInOut;
 
@@ -560,7 +616,7 @@ class _PremiumPaywallScreenState extends ConsumerState<PremiumPaywallScreen>
       onTap: onTap,
       child: Stack(
         children: [
-          // KATMAN 1: Pasif Arkaplan (Sürekli altta durur)
+          // KATMAN 1: Pasif Arkaplan
           Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
@@ -571,15 +627,14 @@ class _PremiumPaywallScreenState extends ConsumerState<PremiumPaywallScreen>
                 width: 2,
               ),
             ),
-            // İçeriği burada boş bir Container ile dolduruyoruz ki yükseklik aynı kalsın
-            // (Asıl içerik Stack'in en üstünde olacak)
-            child: const Opacity(
+            // Hayalet içerik (boyut korumak için)
+            child: Opacity(
               opacity: 0,
               child: _PricingCardContent(
-                title: '',
-                description: '',
-                price: '',
-                period: '',
+                title: 'Ghost',
+                description: 'Ghost',
+                price: 'Ghost',
+                period: 'Ghost',
                 savings: null,
                 isSelected: false,
               ),
@@ -587,8 +642,6 @@ class _PremiumPaywallScreenState extends ConsumerState<PremiumPaywallScreen>
           ),
 
           // KATMAN 2: Aktif Arkaplan (Gradient & Glow)
-          // AnimatedContainer yerine AnimatedOpacity kullanarak "cross-fade" yapıyoruz.
-          // Bu sayede gradient ve solid color arasındaki geçiş pürüzsüz olur.
           Positioned.fill(
             child: AnimatedOpacity(
               duration: duration,
@@ -606,7 +659,6 @@ class _PremiumPaywallScreenState extends ConsumerState<PremiumPaywallScreen>
                       offset: const Offset(0, 4),
                     ),
                   ],
-                  // Seçiliyken border'ı transparan yapıyoruz ki double border olmasın
                   border: Border.all(color: Colors.transparent, width: 2),
                 ),
               ),
@@ -618,10 +670,10 @@ class _PremiumPaywallScreenState extends ConsumerState<PremiumPaywallScreen>
             child: Padding(
               padding: const EdgeInsets.all(18),
               child: _PricingCardContent(
-                title: title,
+                title: package.packageType == PackageType.annual ? 'Yearly' : 'Monthly',
                 description: description,
-                price: price,
-                period: period,
+                price: product.priceString, // Örn: ₺329.99
+                period: package.packageType == PackageType.annual ? '/year' : '/month',
                 savings: savings,
                 isSelected: isSelected,
               ),
@@ -650,7 +702,6 @@ class _PremiumPaywallScreenState extends ConsumerState<PremiumPaywallScreen>
   }
 }
 
-// İçerik widget'ını ayırdım ki Stack içinde temiz kalsın
 class _PricingCardContent extends StatelessWidget {
   final String title;
   final String description;
@@ -693,7 +744,7 @@ class _PricingCardContent extends StatelessWidget {
             child: AnimatedScale(
               scale: isSelected ? 1.0 : 0.0,
               duration: duration,
-              curve: Curves.elasticOut, // Pıt diye çıkma efekti
+              curve: Curves.elasticOut,
               child: Container(
                 width: 10,
                 height: 10,
