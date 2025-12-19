@@ -13,20 +13,38 @@ final userSettingsProvider = FutureProvider<UserSettings?>((ref) async {
   var settings = await repository.getUserSettings(userId);
 
   if (settings != null) {
-    // Check if payday has passed and needs updating
-    final calculatedNextPayday = DateCycleService.calculateNextPayday(
-      settings.nextPayday,
-      settings.payCycle,
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    // Normalize stored nextPayday (drop time) and enforce weekend rule (Fri if weekend)
+    final storedNext = DateTime(
+      settings.nextPayday.year,
+      settings.nextPayday.month,
+      settings.nextPayday.day,
     );
 
-    // If payday was updated, save the new date AND process auto-transfers
-    if (calculatedNextPayday != settings.nextPayday) {
-      print('💰 Payday has passed! Processing payday actions...');
+    DateTime effectivePayday = storedNext;
+    if (effectivePayday.weekday == DateTime.saturday) {
+      effectivePayday = effectivePayday.subtract(const Duration(days: 1));
+    } else if (effectivePayday.weekday == DateTime.sunday) {
+      effectivePayday = effectivePayday.subtract(const Duration(days: 2));
+    }
+
+    // Payday is due if it's today or in the past
+    final isPaydayDue = !effectivePayday.isAfter(today);
+
+    if (isPaydayDue) {
+      print('💰 Payday is due! Processing payday actions...');
+
+      // Important: after processing, advance nextPayday to the next upcoming payday
+      final calculatedNextPayday = DateCycleService.calculateNextPayday(
+        effectivePayday.add(const Duration(days: 1)),
+        settings.payCycle,
+      );
 
       // Add income to current balance
       final newBalance = settings.currentBalance + settings.incomeAmount;
 
-      // Update both payday and balance
       final updatedSettings = settings.copyWith(
         nextPayday: calculatedNextPayday,
         currentBalance: newBalance,
@@ -48,15 +66,14 @@ final userSettingsProvider = FutureProvider<UserSettings?>((ref) async {
         }
       } catch (e) {
         print('❌ Error processing auto-transfers: $e');
-        // Don't fail the whole provider if auto-transfers fail
       }
 
-      // Process subscription payments (NEW)
+      // Process subscription payments
       try {
         final subscriptionProcessor = ref.read(subscriptionProcessorServiceProvider);
         final result = await subscriptionProcessor.checkAndProcessDueSubscriptions(
           userId,
-          processHistorical: true, // Geçmiş ödemeleri de işle
+          processHistorical: true,
         );
 
         if (result.success && result.processedCount > 0) {
@@ -64,13 +81,9 @@ final userSettingsProvider = FutureProvider<UserSettings?>((ref) async {
         }
       } catch (e) {
         print('❌ Error processing subscriptions: $e');
-        // Don't fail the whole provider if subscription processing fails
       }
 
-      // CRITICAL FIX: Stale Data Sorunu
-      // Transferler ve abonelikler bakiyeyi değiştirdi (veritabanında).
-      // Elimizdeki 'settings' değişkeni hala sadece maaşın yattığı hali (transferler ve ödemeler düşülmemiş).
-      // Veritabanından son güncel halini çekip UI'a doğru bakiyeyi göstermeliyiz.
+      // Refresh settings after payday operations (auto transfers/subscriptions may change balance)
       print('🔄 Refreshing settings after payday operations...');
       final freshSettings = await repository.getUserSettings(userId);
       if (freshSettings != null) {

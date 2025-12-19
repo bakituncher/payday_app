@@ -13,6 +13,7 @@ import 'package:payday/features/subscriptions/screens/subscriptions_screen.dart'
 import 'package:payday/features/insights/screens/monthly_summary_screen.dart';
 import 'package:payday/core/providers/repository_providers.dart';
 import 'package:payday/core/providers/theme_providers.dart';
+import 'package:payday/core/providers/auth_providers.dart';
 
 void main() async {
   // Ensure Flutter bindings are initialized
@@ -72,8 +73,19 @@ class _PaydayAppState extends ConsumerState<PaydayApp> {
   @override
   void initState() {
     super.initState();
-    // Otomatik anonymous auth KALDIRILDI.
-    // Anonymous oturum sadece kullanıcı "Buluta yedeklemeyi etkinleştir" dediğinde açılacak.
+    // UI'da anonim login gösterme ama cihazda temel uid sağlamak için
+    // app açılışında anonim oturum aç.
+    Future.microtask(() async {
+      try {
+        final authService = ref.read(authServiceProvider);
+        if (authService.currentUser == null) {
+          await authService.signInAnonymously();
+        }
+      } catch (e) {
+        // Auth yoksa uygulama yine açılsın; sadece bulut fonksiyonları kısıtlanır.
+        debugPrint('Anonymous sign-in failed: $e');
+      }
+    });
   }
 
   @override
