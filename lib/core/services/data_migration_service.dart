@@ -17,26 +17,27 @@ class DataMigrationService {
 
   DataMigrationService(this.ref);
 
+  /// Local (sourceUserId) verilerini Firestore'a (targetUserId) taşır.
+  /// NOT: Bu işlem mümkün olduğunca "idempotent" olmalı (aynı migration iki kez koşsa bile veri bozulmamalı).
   Future<void> migrateLocalToFirebase(String targetUserId, String sourceUserId) async {
     print('Starting migration from $sourceUserId to $targetUserId');
 
+    final errors = <Object>[];
+
     // 1. Migrate User Settings
     try {
-      // Direct instantiation to avoid provider state conflict
       final localSettingsRepo = LocalUserSettingsRepository();
-      // We read from the source ID (likely anonymous UID)
       final settings = await localSettingsRepo.getUserSettings(sourceUserId);
 
       if (settings != null) {
-        // Create a copy with the new userId
         final newSettings = settings.copyWith(userId: targetUserId);
-
         final firebaseSettingsRepo = FirebaseUserSettingsRepository();
         await firebaseSettingsRepo.saveUserSettings(newSettings);
         print('Migrated User Settings');
       }
     } catch (e) {
       print('Error migrating settings: $e');
+      errors.add(e);
     }
 
     // 2. Migrate Transactions
@@ -48,12 +49,15 @@ class DataMigrationService {
         final firebaseTxRepo = FirebaseTransactionRepository();
         for (final tx in transactions) {
           final newTx = tx.copyWith(userId: targetUserId);
+          // Firebase repo'nun id stratejisi tx.id'yi koruyorsa bu upsert gibi davranır.
+          // Korunmuyorsa bile en azından doğru userId ile yazılmış olur.
           await firebaseTxRepo.addTransaction(newTx);
         }
         print('Migrated ${transactions.length} transactions');
       }
     } catch (e) {
       print('Error migrating transactions: $e');
+      errors.add(e);
     }
 
     // 3. Migrate Savings Goals
@@ -71,6 +75,7 @@ class DataMigrationService {
       }
     } catch (e) {
       print('Error migrating savings goals: $e');
+      errors.add(e);
     }
 
     // 4. Migrate Subscriptions
@@ -88,16 +93,14 @@ class DataMigrationService {
       }
     } catch (e) {
       print('Error migrating subscriptions: $e');
+      errors.add(e);
     }
 
     // 5. Migrate Monthly Summaries
     try {
       final localSummaryRepo = LocalMonthlySummaryRepository();
-      // Note: Local repo doesn't expose getAllSummaries easily in interface but let's assume we fetch meaningful years.
-      // Or we iterate current year.
       final now = DateTime.now();
       final summaries = await localSummaryRepo.getSummariesForYear(sourceUserId, now.year);
-      // Also check previous year just in case
       final prevSummaries = await localSummaryRepo.getSummariesForYear(sourceUserId, now.year - 1);
 
       final allSummaries = [...summaries, ...prevSummaries];
@@ -112,7 +115,19 @@ class DataMigrationService {
       }
     } catch (e) {
       print('Error migrating monthly summaries: $e');
+      errors.add(e);
     }
+
+    if (errors.isNotEmpty) {
+      throw Exception('Migration completed with ${errors.length} error(s): $errors');
+    }
+
+    // Migration başarılıysa, local kaynak veriyi temizleyip yeniden kopyalama/çakışma riskini azalt.
+    // Şu an LocalUserSettingsRepository için toplu temizlik API'si var.
+    // Diğer local repository'lerde toplu silme metodu yok; bunu ileride ekleyebiliriz.
+    try {
+      await LocalUserSettingsRepository().deleteAllUserData(sourceUserId);
+    } catch (_) {}
   }
 }
 
