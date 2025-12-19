@@ -19,6 +19,8 @@ import 'package:payday/core/repositories/firebase/firebase_monthly_summary_repos
 import 'package:payday/core/providers/auth_providers.dart';
 import 'package:payday/core/services/notification_service.dart';
 import 'package:payday/core/services/auto_transfer_service.dart';
+import 'package:payday/core/services/transaction_manager_service.dart';
+import 'package:payday/core/services/subscription_processor_service.dart';
 
 /// Repository Providers - Using Local implementations with SharedPreferences
 /// Data persists across app restarts
@@ -80,13 +82,36 @@ final currentUserIdProvider = Provider<String>((ref) {
   return user?.uid ?? 'local_user';
 });
 
-/// Auto Transfer Service Provider
+/// Transaction Manager Service Provider
+/// Merkezi işlem yöneticisi - Tüm finansal işlemler bu servisi kullanmalı
+final transactionManagerServiceProvider = Provider<TransactionManagerService>((ref) {
+  final transactionRepository = ref.watch(transactionRepositoryProvider);
+  final userSettingsRepository = ref.watch(userSettingsRepositoryProvider);
+  return TransactionManagerService(
+    transactionRepo: transactionRepository,
+    settingsRepo: userSettingsRepository,
+  );
+});
+
+/// Auto Transfer Service Provider (UPDATED)
+/// Artık TransactionManagerService kullanıyor - Bakiye otomatik güncelleniyor
 final autoTransferServiceProvider = Provider<AutoTransferService>((ref) {
   final savingsGoalRepository = ref.watch(savingsGoalRepositoryProvider);
-  final transactionRepository = ref.watch(transactionRepositoryProvider);
+  final transactionManager = ref.watch(transactionManagerServiceProvider);
   return AutoTransferService(
     savingsGoalRepository: savingsGoalRepository,
-    transactionRepository: transactionRepository,
+    transactionManager: transactionManager,
+  );
+});
+
+/// Subscription Processor Service Provider
+/// Abonelikleri otomatik işler - Uygulama açılışında çağrılmalı
+final subscriptionProcessorServiceProvider = Provider<SubscriptionProcessorService>((ref) {
+  final subscriptionRepository = ref.watch(subscriptionRepositoryProvider);
+  final transactionManager = ref.watch(transactionManagerServiceProvider);
+  return SubscriptionProcessorService(
+    subscriptionRepo: subscriptionRepository,
+    transactionManager: transactionManager,
   );
 });
 

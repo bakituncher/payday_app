@@ -1,21 +1,22 @@
 /// Auto Transfer Service
 /// Handles automatic transfers to savings goals on payday
+/// UPDATED: Now uses TransactionManagerService for atomic balance updates
 import 'package:payday/core/models/savings_goal.dart';
 import 'package:payday/core/models/transaction.dart';
 import 'package:payday/core/repositories/savings_goal_repository.dart';
-import 'package:payday/core/repositories/transaction_repository.dart';
+import 'package:payday/core/services/transaction_manager_service.dart';
 import 'package:payday/core/constants/app_constants.dart';
 import 'package:uuid/uuid.dart';
 
 class AutoTransferService {
   final SavingsGoalRepository _savingsGoalRepository;
-  final TransactionRepository _transactionRepository;
+  final TransactionManagerService _transactionManager;
 
   AutoTransferService({
     required SavingsGoalRepository savingsGoalRepository,
-    required TransactionRepository transactionRepository,
+    required TransactionManagerService transactionManager,
   })  : _savingsGoalRepository = savingsGoalRepository,
-        _transactionRepository = transactionRepository;
+        _transactionManager = transactionManager;
 
   /// Process auto-transfers for all goals on payday
   /// Returns the total amount transferred
@@ -75,11 +76,15 @@ class AutoTransferService {
             relatedGoalId: goal.id,
           );
 
-          await _transactionRepository.addTransaction(transaction);
+          // DÜZELTME 3: TransactionManager kullan - Bakiye otomatik güncellenecek
+          await _transactionManager.processTransaction(
+            userId: userId,
+            transaction: transaction,
+          );
 
           totalTransferred += transferAmount;
           transferredGoals.add(goal.name);
-          print('💰 Auto-Transfer: Success for ${goal.name} - Transaction created');
+          print('💰 Auto-Transfer: Success for ${goal.name} - Transaction & Balance updated');
         } catch (e) {
           print('❌ Auto-Transfer: Failed for ${goal.name}: $e');
           // Continue with other goals even if one fails

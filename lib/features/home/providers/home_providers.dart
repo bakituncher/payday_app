@@ -49,6 +49,33 @@ final userSettingsProvider = FutureProvider<UserSettings?>((ref) async {
         print('❌ Error processing auto-transfers: $e');
         // Don't fail the whole provider if auto-transfers fail
       }
+
+      // Process subscription payments (NEW)
+      try {
+        final subscriptionProcessor = ref.read(subscriptionProcessorServiceProvider);
+        final result = await subscriptionProcessor.checkAndProcessDueSubscriptions(
+          userId,
+          processHistorical: true, // Geçmiş ödemeleri de işle
+        );
+
+        if (result.success && result.processedCount > 0) {
+          print('💳 Subscription payments processed: ${result.processedCount} subscriptions, Total: ${result.totalAmount}');
+        }
+      } catch (e) {
+        print('❌ Error processing subscriptions: $e');
+        // Don't fail the whole provider if subscription processing fails
+      }
+
+      // CRITICAL FIX: Stale Data Sorunu
+      // Transferler ve abonelikler bakiyeyi değiştirdi (veritabanında).
+      // Elimizdeki 'settings' değişkeni hala sadece maaşın yattığı hali (transferler ve ödemeler düşülmemiş).
+      // Veritabanından son güncel halini çekip UI'a doğru bakiyeyi göstermeliyiz.
+      print('🔄 Refreshing settings after payday operations...');
+      final freshSettings = await repository.getUserSettings(userId);
+      if (freshSettings != null) {
+        settings = freshSettings;
+        print('✅ Settings refreshed - Current balance: ${settings.currentBalance}');
+      }
     }
   }
 

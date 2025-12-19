@@ -259,7 +259,7 @@ class _SavingsGoalDetailScreenState extends ConsumerState<SavingsGoalDetailScree
       setState(() => _isLoading = true);
       try {
         final repository = ref.read(savingsGoalRepositoryProvider);
-        final transactionRepository = ref.read(transactionRepositoryProvider);
+        final transactionManager = ref.read(transactionManagerServiceProvider);
 
         // ADIM 1: Eğer hedefte para varsa, önce bunu bütçeye geri ekle (Transaction oluştur)
         if (_currentGoal.currentAmount > 0) {
@@ -273,24 +273,28 @@ class _SavingsGoalDetailScreenState extends ConsumerState<SavingsGoalDetailScree
             date: DateTime.now(),
             note: 'Refund from deleted goal: ${_currentGoal.name}',
             isExpense: false, // Gelir olarak ekle (Bütçeye geri dönüş)
-            relatedGoalId: null, // Hedef silineceği için null veya ID tutulabilir ama null daha güvenli
+            relatedGoalId: _currentGoal.id,
           );
 
-          await transactionRepository.addTransaction(refundTransaction);
+          // Use TransactionManager - Bakiye otomatik güncellenecek
+          await transactionManager.processTransaction(
+            userId: _currentGoal.userId,
+            transaction: refundTransaction,
+          );
         }
 
         // ADIM 2: Hedefi sil
         await repository.deleteSavingsGoal(_currentGoal.id, _currentGoal.userId);
 
-        // EKLENECEK SATIR: Ana sayfadaki işlem listesini yenile
+        // Ana sayfadaki işlem listesini yenile
         ref.invalidate(currentCycleTransactionsProvider);
 
         if (mounted) {
-          Navigator.pop(context); // Ekrandan çık
+          Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Goal deleted and ${_formatCurrency(_currentGoal.currentAmount)} returned to budget'),
-              backgroundColor: AppColors.success, // Pozitif bir işlem olduğu için yeşil/success
+              backgroundColor: AppColors.success,
             ),
           );
         }
