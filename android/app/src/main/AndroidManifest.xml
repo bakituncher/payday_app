@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.codenzi.payday.payday_flutter">
+    package="com.codenzi.payday">
 
     <uses-permission android:name="com.android.vending.BILLING" />
 
