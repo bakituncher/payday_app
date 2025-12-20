@@ -49,7 +49,7 @@ class AppConstants {
   // Savings Category ID (constant for system use)
   static const String savingsCategoryId = 'savings';
 
-  // Transaction Categories
+  // Transaction Categories (Expenses)
   // ⚠️ CRITICAL: The 'savings' category must be filtered out in UI screens
   // to prevent "ghost transactions" where money disappears from budget
   // without being added to any savings goal. See AddTransactionScreen.dart
@@ -66,6 +66,23 @@ class AppConstants {
     {'name': 'Savings Transfer', 'emoji': '💰', 'id': 'savings'}, // 🔒 SYSTEM ONLY - Never show in user-facing category selectors
     {'name': 'Other', 'emoji': '📌', 'id': 'other'},
   ];
+
+  // Income Categories (Pool Inflows)
+  // Used for manual Add Funds and automatic Payday Deposits
+  static const List<Map<String, String>> incomeCategories = [
+    {'name': 'Payday Deposit', 'emoji': '💵', 'id': 'income_salary'}, // 🔒 SYSTEM - Auto-deposit on payday
+    {'name': 'Bonus', 'emoji': '🎁', 'id': 'bonus'},
+    {'name': 'Gift', 'emoji': '����', 'id': 'gift'},
+    {'name': 'Freelance', 'emoji': '💻', 'id': 'freelance'},
+    {'name': 'Side Hustle', 'emoji': '🚀', 'id': 'side_hustle'},
+    {'name': 'Sold Item', 'emoji': '🏷️', 'id': 'sold_item'},
+    {'name': 'Refund', 'emoji': '💸', 'id': 'refund'},
+    {'name': 'Investment', 'emoji': '📈', 'id': 'investment'},
+    {'name': 'Other Income', 'emoji': '💰', 'id': 'other_income'},
+  ];
+
+  // Payday Deposit Category ID (constant for system use)
+  static const String paydayDepositCategoryId = 'income_salary';
 
   // Shared Preferences Keys
   static const String keyIsFirstLaunch = 'is_first_launch';

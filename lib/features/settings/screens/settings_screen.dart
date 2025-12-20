@@ -1127,7 +1127,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           const SizedBox(height: AppSpacing.md),
           Text(
-            'Current Balance',
+            'Total Pool',
             style: theme.textTheme.bodyMedium?.copyWith(
               color: AppColors.getTextSecondary(context),
             ),

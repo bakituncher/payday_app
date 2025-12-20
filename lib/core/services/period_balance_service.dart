@@ -4,8 +4,10 @@ import 'package:payday/core/repositories/transaction_repository.dart';
 
 /// Dönem (pay period) bazlı bakiyeyi ledger'dan (transactions) hesaplar.
 ///
-/// Not:
-/// - Bu servis currentBalance gibi snapshot alanlarına güvenmek zorunda değil.
+/// Pool System Integration:
+/// - Bu servis tüm gelir ve gider işlemlerini transaction log'dan çeker
+/// - Payday Deposit işlemleri otomatik olarak income olarak sayılır
+/// - Opening Balance, önceki dönemin Pool Balance'ıdır
 /// - UI'da "para kayboldu" hissini engellemek için dönem ekranlarında bu hesap kullanılır.
 class PeriodBalanceService {
   final TransactionRepository _transactionRepository;

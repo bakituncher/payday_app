@@ -26,7 +26,8 @@ mixin _$UserSettings {
   String get payCycle => throw _privateConstructorUsedError;
   DateTime get nextPayday => throw _privateConstructorUsedError;
   double get incomeAmount => throw _privateConstructorUsedError;
-  double get currentBalance => throw _privateConstructorUsedError;
+  double get currentBalance =>
+      throw _privateConstructorUsedError; // Total Pool Balance
   String get market => throw _privateConstructorUsedError;
   bool get notificationsEnabled => throw _privateConstructorUsedError;
   bool get paydayReminders =>
@@ -39,6 +40,9 @@ mixin _$UserSettings {
   bool get unusedSubscriptionAlerts => throw _privateConstructorUsedError;
   int get unusedThresholdDays =>
       throw _privateConstructorUsedError; // Days before marking as unused
+  // Auto-deposit tracking for Piggy Bank system
+  DateTime? get lastAutoDepositDate =>
+      throw _privateConstructorUsedError; // Tracks last automatic salary deposit to prevent duplicates
   DateTime? get createdAt => throw _privateConstructorUsedError;
   DateTime? get updatedAt => throw _privateConstructorUsedError;
 
@@ -75,6 +79,7 @@ abstract class $UserSettingsCopyWith<$Res> {
     bool weeklySubscriptionSummary,
     bool unusedSubscriptionAlerts,
     int unusedThresholdDays,
+    DateTime? lastAutoDepositDate,
     DateTime? createdAt,
     DateTime? updatedAt,
   });
@@ -110,6 +115,7 @@ class _$UserSettingsCopyWithImpl<$Res, $Val extends UserSettings>
     Object? weeklySubscriptionSummary = null,
     Object? unusedSubscriptionAlerts = null,
     Object? unusedThresholdDays = null,
+    Object? lastAutoDepositDate = freezed,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
   }) {
@@ -175,6 +181,10 @@ class _$UserSettingsCopyWithImpl<$Res, $Val extends UserSettings>
                 ? _value.unusedThresholdDays
                 : unusedThresholdDays // ignore: cast_nullable_to_non_nullable
                       as int,
+            lastAutoDepositDate: freezed == lastAutoDepositDate
+                ? _value.lastAutoDepositDate
+                : lastAutoDepositDate // ignore: cast_nullable_to_non_nullable
+                      as DateTime?,
             createdAt: freezed == createdAt
                 ? _value.createdAt
                 : createdAt // ignore: cast_nullable_to_non_nullable
@@ -214,6 +224,7 @@ abstract class _$$UserSettingsImplCopyWith<$Res>
     bool weeklySubscriptionSummary,
     bool unusedSubscriptionAlerts,
     int unusedThresholdDays,
+    DateTime? lastAutoDepositDate,
     DateTime? createdAt,
     DateTime? updatedAt,
   });
@@ -248,6 +259,7 @@ class __$$UserSettingsImplCopyWithImpl<$Res>
     Object? weeklySubscriptionSummary = null,
     Object? unusedSubscriptionAlerts = null,
     Object? unusedThresholdDays = null,
+    Object? lastAutoDepositDate = freezed,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
   }) {
@@ -313,6 +325,10 @@ class __$$UserSettingsImplCopyWithImpl<$Res>
             ? _value.unusedThresholdDays
             : unusedThresholdDays // ignore: cast_nullable_to_non_nullable
                   as int,
+        lastAutoDepositDate: freezed == lastAutoDepositDate
+            ? _value.lastAutoDepositDate
+            : lastAutoDepositDate // ignore: cast_nullable_to_non_nullable
+                  as DateTime?,
         createdAt: freezed == createdAt
             ? _value.createdAt
             : createdAt // ignore: cast_nullable_to_non_nullable
@@ -345,6 +361,7 @@ class _$UserSettingsImpl implements _UserSettings {
     this.weeklySubscriptionSummary = true,
     this.unusedSubscriptionAlerts = true,
     this.unusedThresholdDays = 30,
+    this.lastAutoDepositDate,
     this.createdAt,
     this.updatedAt,
   });
@@ -365,6 +382,7 @@ class _$UserSettingsImpl implements _UserSettings {
   @override
   @JsonKey()
   final double currentBalance;
+  // Total Pool Balance
   @override
   @JsonKey()
   final String market;
@@ -395,6 +413,10 @@ class _$UserSettingsImpl implements _UserSettings {
   @JsonKey()
   final int unusedThresholdDays;
   // Days before marking as unused
+  // Auto-deposit tracking for Piggy Bank system
+  @override
+  final DateTime? lastAutoDepositDate;
+  // Tracks last automatic salary deposit to prevent duplicates
   @override
   final DateTime? createdAt;
   @override
@@ -402,7 +424,7 @@ class _$UserSettingsImpl implements _UserSettings {
 
   @override
   String toString() {
-    return 'UserSettings(userId: $userId, currency: $currency, payCycle: $payCycle, nextPayday: $nextPayday, incomeAmount: $incomeAmount, currentBalance: $currentBalance, market: $market, notificationsEnabled: $notificationsEnabled, paydayReminders: $paydayReminders, billReminders: $billReminders, billReminderDaysBefore: $billReminderDaysBefore, subscriptionAlerts: $subscriptionAlerts, weeklySubscriptionSummary: $weeklySubscriptionSummary, unusedSubscriptionAlerts: $unusedSubscriptionAlerts, unusedThresholdDays: $unusedThresholdDays, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'UserSettings(userId: $userId, currency: $currency, payCycle: $payCycle, nextPayday: $nextPayday, incomeAmount: $incomeAmount, currentBalance: $currentBalance, market: $market, notificationsEnabled: $notificationsEnabled, paydayReminders: $paydayReminders, billReminders: $billReminders, billReminderDaysBefore: $billReminderDaysBefore, subscriptionAlerts: $subscriptionAlerts, weeklySubscriptionSummary: $weeklySubscriptionSummary, unusedSubscriptionAlerts: $unusedSubscriptionAlerts, unusedThresholdDays: $unusedThresholdDays, lastAutoDepositDate: $lastAutoDepositDate, createdAt: $createdAt, updatedAt: $updatedAt)';
   }
 
   @override
@@ -444,6 +466,8 @@ class _$UserSettingsImpl implements _UserSettings {
                 other.unusedSubscriptionAlerts == unusedSubscriptionAlerts) &&
             (identical(other.unusedThresholdDays, unusedThresholdDays) ||
                 other.unusedThresholdDays == unusedThresholdDays) &&
+            (identical(other.lastAutoDepositDate, lastAutoDepositDate) ||
+                other.lastAutoDepositDate == lastAutoDepositDate) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             (identical(other.updatedAt, updatedAt) ||
@@ -469,6 +493,7 @@ class _$UserSettingsImpl implements _UserSettings {
     weeklySubscriptionSummary,
     unusedSubscriptionAlerts,
     unusedThresholdDays,
+    lastAutoDepositDate,
     createdAt,
     updatedAt,
   );
@@ -504,6 +529,7 @@ abstract class _UserSettings implements UserSettings {
     final bool weeklySubscriptionSummary,
     final bool unusedSubscriptionAlerts,
     final int unusedThresholdDays,
+    final DateTime? lastAutoDepositDate,
     final DateTime? createdAt,
     final DateTime? updatedAt,
   }) = _$UserSettingsImpl;
@@ -522,7 +548,7 @@ abstract class _UserSettings implements UserSettings {
   @override
   double get incomeAmount;
   @override
-  double get currentBalance;
+  double get currentBalance; // Total Pool Balance
   @override
   String get market;
   @override
@@ -541,6 +567,9 @@ abstract class _UserSettings implements UserSettings {
   bool get unusedSubscriptionAlerts;
   @override
   int get unusedThresholdDays; // Days before marking as unused
+  // Auto-deposit tracking for Piggy Bank system
+  @override
+  DateTime? get lastAutoDepositDate; // Tracks last automatic salary deposit to prevent duplicates
   @override
   DateTime? get createdAt;
   @override

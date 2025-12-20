@@ -12,7 +12,6 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 // ✅ EKSİK OLAN IMPORTLAR EKLENDİ
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:payday/features/premium/providers/premium_providers.dart'; // Provider'lar burada
-import 'package:payday/core/services/revenue_cat_service.dart';
 
 class PremiumPaywallScreen extends ConsumerStatefulWidget {
   const PremiumPaywallScreen({super.key});

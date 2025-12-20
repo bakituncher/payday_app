@@ -26,6 +26,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   String _selectedPayCycle = AppConstants.payCycleMonthly;
   DateTime _nextPayday = DateTime.now().add(const Duration(days: 30));
   final _incomeController = TextEditingController();
+  final _initialBalanceController = TextEditingController();
   bool _isLoading = false;
 
   @override
@@ -38,6 +39,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   void dispose() {
     _pageController.dispose();
     _incomeController.dispose();
+    _initialBalanceController.dispose();
     super.dispose();
   }
 
@@ -74,12 +76,16 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   Future<void> _nextPage() async {
     if (_currentPage == 1) {
+      // Validate income on page 1
       if (_incomeController.text.isEmpty || double.tryParse(_incomeController.text) == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please enter a valid amount'), backgroundColor: AppColors.error),
+          const SnackBar(content: Text('Please enter a valid income amount'), backgroundColor: AppColors.error),
         );
         return;
       }
+      _pageController.nextPage(duration: 400.ms, curve: Curves.easeInOutCubic);
+    } else if (_currentPage == 2) {
+      // Save settings on final page (initial balance is optional, defaults to 0)
       await _saveSettings();
     } else {
       _pageController.nextPage(duration: 400.ms, curve: Curves.easeInOutCubic);
@@ -93,12 +99,16 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       // Onboarding yerel çalışır; buluta yedekleme istenirse ayarlardan giriş yapılır.
       final userId = ref.read(currentUserIdProvider);
 
+      // Parse initial pool balance (default to 0 if empty)
+      final initialBalance = double.tryParse(_initialBalanceController.text) ?? 0.0;
+
       final settings = UserSettings(
         userId: userId,
         currency: _selectedCurrency,
         payCycle: _selectedPayCycle,
         nextPayday: _nextPayday,
         incomeAmount: double.parse(_incomeController.text),
+        currentBalance: initialBalance, // Initial Pool Balance
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
@@ -207,7 +217,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                               style: theme.textTheme.labelMedium?.copyWith(fontWeight: FontWeight.bold, color: AppColors.darkCharcoal),
                             ),
                             Text(
-                              " / 2",
+                              " / 3",
                               style: theme.textTheme.labelMedium?.copyWith(color: AppColors.mediumGray),
                             ),
                           ],
@@ -228,6 +238,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     children: [
                       _buildSetupPage(theme),
                       _buildIncomePage(theme),
+                      _buildInitialBalancePage(theme),
                     ],
                   ),
                 ),
@@ -246,12 +257,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     ),
                   ),
                   child: PaydayButton(
-                    text: _currentPage == 1 ? 'Start Budgeting' : 'Continue',
+                    text: _currentPage == 2 ? 'Start Budgeting' : 'Continue',
                     onPressed: _isLoading ? null : _nextPage,
                     isLoading: _isLoading,
                     width: double.infinity,
                     size: PaydayButtonSize.large,
-                    icon: _currentPage == 1 ? Icons.rocket_launch_rounded : null,
+                    icon: _currentPage == 2 ? Icons.rocket_launch_rounded : null,
                   ).animate().slideY(begin: 0.5, end: 0, duration: 400.ms),
                 ),
               ],
@@ -424,7 +435,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               color: AppColors.primaryPink.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
-            child: const Text('🤑', style: TextStyle(fontSize: 40)),
+            child: const Text('💵', style: TextStyle(fontSize: 40)),
           ).animate().scale(duration: 500.ms, curve: Curves.elasticOut),
 
           const SizedBox(height: 24),
@@ -439,7 +450,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
           const SizedBox(height: 8),
           Text(
-            "Enter per-paycheck amount (after tax)",
+            "Enter your per-paycheck amount (after tax)",
             style: theme.textTheme.bodyMedium?.copyWith(color: AppColors.mediumGray),
           ),
 
@@ -499,6 +510,135 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             ),
             child: Row(
               children: [
+                Icon(Icons.info_outline_rounded, size: 18, color: AppColors.mediumGray),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    "This amount will be automatically added to your pool on each payday.",
+                    style: theme.textTheme.bodySmall?.copyWith(color: AppColors.mediumGray, height: 1.4),
+                  ),
+                ),
+              ],
+            ),
+          ).animate().fadeIn(delay: 400.ms),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInitialBalancePage(ThemeData theme) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        children: [
+          const SizedBox(height: 20),
+          // Icon Animation
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: AppColors.secondaryPurple.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: const Text('🏦', style: TextStyle(fontSize: 40)),
+          ).animate().scale(duration: 500.ms, curve: Curves.elasticOut),
+
+          const SizedBox(height: 24),
+
+          Text(
+            "Set your Pool",
+            style: theme.textTheme.headlineMedium?.copyWith(
+              fontWeight: FontWeight.w800,
+              color: AppColors.darkCharcoal,
+            ),
+          ).animate().fadeIn(),
+
+          const SizedBox(height: 8),
+          Text(
+            "How much money do you currently have in your accounts/pocket?",
+            style: theme.textTheme.bodyMedium?.copyWith(color: AppColors.mediumGray),
+            textAlign: TextAlign.center,
+          ),
+
+          const SizedBox(height: 48),
+
+          // Huge Input Field
+          Column(
+            children: [
+              Text(
+                  CurrencyFormatter.getSymbol(_selectedCurrency),
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.secondaryPurple.withOpacity(0.5))
+              ),
+              IntrinsicWidth(
+                child: TextField(
+                  controller: _initialBalanceController,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}'))],
+                  style: theme.textTheme.displayMedium?.copyWith(
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.darkCharcoal,
+                    fontSize: 48,
+                  ),
+                  textAlign: TextAlign.center,
+                  cursorColor: AppColors.secondaryPurple,
+                  cursorWidth: 3,
+                  cursorRadius: const Radius.circular(2),
+                  decoration: InputDecoration(
+                    hintText: '0',
+                    hintStyle: TextStyle(color: AppColors.lightGray.withOpacity(0.5)),
+                    border: InputBorder.none,
+                    isDense: true,
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+              ),
+              Container(
+                height: 2,
+                width: 100,
+                margin: const EdgeInsets.only(top: 8),
+                decoration: BoxDecoration(
+                  color: AppColors.secondaryPurple.withOpacity(0.5),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ],
+          ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.2, end: 0),
+
+          const SizedBox(height: 48),
+
+          // Info Box
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.lightGray.withOpacity(0.5)),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.savings_outlined, size: 18, color: AppColors.secondaryPurple),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    "This is your starting pool. All income and expenses will be tracked from here. Leave at 0 to start fresh.",
+                    style: theme.textTheme.bodySmall?.copyWith(color: AppColors.mediumGray, height: 1.4),
+                  ),
+                ),
+              ],
+            ),
+          ).animate().fadeIn(delay: 400.ms),
+
+          const SizedBox(height: 16),
+
+          // Security Info Box
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.lightGray.withOpacity(0.5)),
+            ),
+            child: Row(
+              children: [
                 Icon(Icons.lock_outline_rounded, size: 18, color: AppColors.mediumGray),
                 const SizedBox(width: 12),
                 Expanded(
@@ -509,7 +649,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 ),
               ],
             ),
-          ).animate().fadeIn(delay: 400.ms),
+          ).animate().fadeIn(delay: 500.ms),
         ],
       ),
     );

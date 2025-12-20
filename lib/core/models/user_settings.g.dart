@@ -25,6 +25,9 @@ _$UserSettingsImpl _$$UserSettingsImplFromJson(
   weeklySubscriptionSummary: json['weeklySubscriptionSummary'] as bool? ?? true,
   unusedSubscriptionAlerts: json['unusedSubscriptionAlerts'] as bool? ?? true,
   unusedThresholdDays: (json['unusedThresholdDays'] as num?)?.toInt() ?? 30,
+  lastAutoDepositDate: json['lastAutoDepositDate'] == null
+      ? null
+      : DateTime.parse(json['lastAutoDepositDate'] as String),
   createdAt: json['createdAt'] == null
       ? null
       : DateTime.parse(json['createdAt'] as String),
@@ -50,6 +53,7 @@ Map<String, dynamic> _$$UserSettingsImplToJson(_$UserSettingsImpl instance) =>
       'weeklySubscriptionSummary': instance.weeklySubscriptionSummary,
       'unusedSubscriptionAlerts': instance.unusedSubscriptionAlerts,
       'unusedThresholdDays': instance.unusedThresholdDays,
+      'lastAutoDepositDate': instance.lastAutoDepositDate?.toIso8601String(),
       'createdAt': instance.createdAt?.toIso8601String(),
       'updatedAt': instance.updatedAt?.toIso8601String(),
     };

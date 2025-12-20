@@ -12,7 +12,7 @@ class UserSettings with _$UserSettings {
     required String payCycle,
     required DateTime nextPayday,
     required double incomeAmount,
-    @Default(0.0) double currentBalance,
+    @Default(0.0) double currentBalance, // Total Pool Balance
     @Default('US') String market,
     @Default(true) bool notificationsEnabled,
     @Default(true) bool paydayReminders,
@@ -23,6 +23,8 @@ class UserSettings with _$UserSettings {
     @Default(true) bool weeklySubscriptionSummary,
     @Default(true) bool unusedSubscriptionAlerts,
     @Default(30) int unusedThresholdDays, // Days before marking as unused
+    // Auto-deposit tracking for Piggy Bank system
+    DateTime? lastAutoDepositDate, // Tracks last automatic salary deposit to prevent duplicates
     DateTime? createdAt,
     DateTime? updatedAt,
   }) = _UserSettings;

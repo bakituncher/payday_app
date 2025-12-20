@@ -19,6 +19,7 @@ import 'package:payday/core/repositories/firebase/firebase_monthly_summary_repos
 import 'package:payday/core/providers/auth_providers.dart';
 import 'package:payday/core/services/notification_service.dart';
 import 'package:payday/core/services/auto_transfer_service.dart';
+import 'package:payday/core/services/auto_deposit_service.dart';
 import 'package:payday/core/services/transaction_manager_service.dart';
 import 'package:payday/core/services/subscription_processor_service.dart';
 import 'package:payday/core/services/period_balance_service.dart';
@@ -120,3 +121,15 @@ final periodBalanceServiceProvider = Provider<PeriodBalanceService>((ref) {
   final txRepo = ref.watch(transactionRepositoryProvider);
   return PeriodBalanceService(transactionRepository: txRepo);
 });
+
+/// Auto Deposit Service Provider
+/// Handles automatic salary deposits on payday (Piggy Bank / Pool system)
+final autoDepositServiceProvider = Provider<AutoDepositService>((ref) {
+  final settingsRepo = ref.watch(userSettingsRepositoryProvider);
+  final transactionManager = ref.watch(transactionManagerServiceProvider);
+  return AutoDepositService(
+    settingsRepo: settingsRepo,
+    transactionManager: transactionManager,
+  );
+});
+
