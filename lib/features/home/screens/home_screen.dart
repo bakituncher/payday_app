@@ -16,14 +16,35 @@ import 'package:payday/features/transactions/screens/add_transaction_screen.dart
 import 'package:payday/features/transactions/screens/add_funds_screen.dart';
 import 'package:payday/features/settings/screens/settings_screen.dart';
 import 'package:payday/shared/widgets/payday_button.dart';
-import 'package:payday/shared/widgets/payday_banner_ad.dart'; // ✅ EKLENDİ: Reklam widget'ı importu
+import 'package:payday/shared/widgets/payday_banner_ad.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:payday/features/home/providers/period_balance_providers.dart';
+// ✅ EKLENDİ: Premium provider importu
+import 'package:payday/features/premium/providers/premium_providers.dart';
 
-class HomeScreen extends ConsumerWidget {
+// ✅ DEĞİŞTİ: ConsumerWidget -> ConsumerStatefulWidget
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
-  Future<void> _onRefresh(WidgetRef ref) async {
+  @override
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+
+  @override
+  void initState() {
+    super.initState();
+    // ✅ EKLENDİ: Ekran çizildikten hemen sonra Premium durumunu kontrol et
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      refreshPremiumStatus(ref);
+    });
+  }
+
+  Future<void> _onRefresh() async {
+    // ✅ EKLENDİ: Kullanıcı sayfayı yenilerse premium durumunu tekrar kontrol et
+    await refreshPremiumStatus(ref);
+
     // Refresh all data providers
     ref.invalidate(userSettingsProvider);
     ref.invalidate(currentCycleTransactionsProvider);
@@ -37,7 +58,8 @@ class HomeScreen extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
+    // ref artık class içinde mevcut (StatefulWidget olduğu için parametre olarak gelmiyor)
     final userSettingsAsync = ref.watch(userSettingsProvider);
     final theme = Theme.of(context);
 
@@ -91,7 +113,7 @@ class HomeScreen extends ConsumerWidget {
                 ),
                 // Main content
                 RefreshIndicator(
-                  onRefresh: () => _onRefresh(ref),
+                  onRefresh: _onRefresh, // Parametre gerekmez, yukarıdaki metodu çağırır
                   color: AppColors.primaryPink,
                   child: CustomScrollView(
                     physics: const AlwaysScrollableScrollPhysics(
@@ -296,8 +318,9 @@ class HomeScreen extends ConsumerWidget {
 
                             const SizedBox(height: AppSpacing.sm),
 
-                            // ✅ EKLENDİ: REKLAM ALANI
-                            // Premium ise widget kendini otomatik gizler
+                            // ✅ REKLAM ALANI
+                            // PaydayBannerAd, isPremiumProvider'ı dinlediği için
+                            // yukarıdaki initState içindeki kontrol sonucunda otomatik gizlenecek.
                             const PaydayBannerAd()
                                 .animate()
                                 .fadeIn(duration: 600.ms, delay: 500.ms),
@@ -539,12 +562,14 @@ class _GreetingSection extends StatelessWidget {
 
   ({String text, String emoji}) _getGreeting() {
     final hour = DateTime.now().hour;
-    if (hour < 12) {
+    if (hour >= 0 && hour < 6) {
+      return (text: 'Good Night', emoji: '🌙');
+    } else if (hour >= 6 && hour < 12) {
       return (text: 'Good Morning', emoji: '☀️');
-    } else if (hour < 17) {
+    } else if (hour >= 12 && hour < 17) {
       return (text: 'Good Afternoon', emoji: '👋');
     } else {
-      return (text: 'Good Evening', emoji: '🌙');
+      return (text: 'Good Evening', emoji: '🌆');
     }
   }
 }

@@ -19,6 +19,9 @@ import 'package:payday/core/services/data_migration_service.dart';
 import 'package:payday/shared/widgets/payday_button.dart';
 import 'package:intl/intl.dart';
 
+// ✅ EKLENDİ: Premium durumunu kontrol etmek için gerekli
+import 'package:payday/features/premium/providers/premium_providers.dart';
+
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
@@ -86,17 +89,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           data: Theme.of(context).copyWith(
             colorScheme: isDark
                 ? ColorScheme.dark(
-                    primary: AppColors.primaryPink,
-                    onPrimary: Colors.white,
-                    surface: AppColors.darkSurface,
-                    onSurface: AppColors.darkTextPrimary,
-                  )
+              primary: AppColors.primaryPink,
+              onPrimary: Colors.white,
+              surface: AppColors.darkSurface,
+              onSurface: AppColors.darkTextPrimary,
+            )
                 : const ColorScheme.light(
-                    primary: AppColors.primaryPink,
-                    onPrimary: Colors.white,
-                    surface: Colors.white,
-                    onSurface: AppColors.darkCharcoal,
-                  ),
+              primary: AppColors.primaryPink,
+              onPrimary: Colors.white,
+              surface: Colors.white,
+              onSurface: AppColors.darkCharcoal,
+            ),
             dialogTheme: DialogThemeData(
               backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
             ),
@@ -194,25 +197,24 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     try {
       final authService = ref.read(authServiceProvider);
       final wasAnonymous = authService.isAnonymous;
-      // Capture the anonymous ID before it changes (or use 'local_user' if not signed in)
       final sourceUserId = ref.read(currentUserIdProvider);
 
       final userCredential = await authService.signInWithGoogle();
 
       if (userCredential != null) {
         if (wasAnonymous && !userCredential.user!.isAnonymous) {
-             try {
-                final migrationService = ref.read(dataMigrationServiceProvider);
-                await migrationService.migrateLocalToFirebase(userCredential.user!.uid, sourceUserId);
+          try {
+            final migrationService = ref.read(dataMigrationServiceProvider);
+            await migrationService.migrateLocalToFirebase(userCredential.user!.uid, sourceUserId);
 
-                ref.invalidate(userSettingsRepositoryProvider);
-                ref.invalidate(transactionRepositoryProvider);
-             } catch (e) {
-               print("Migration error: $e");
-               if (mounted) {
-                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Data migration failed: $e")));
-               }
-             }
+            ref.invalidate(userSettingsRepositoryProvider);
+            ref.invalidate(transactionRepositoryProvider);
+          } catch (e) {
+            print("Migration error: $e");
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Data migration failed: $e")));
+            }
+          }
         }
 
         if (mounted) {
@@ -264,19 +266,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       final userCredential = await authService.signInWithApple();
 
       if (userCredential != null) {
-         if (wasAnonymous && !userCredential.user!.isAnonymous) {
-             try {
-                final migrationService = ref.read(dataMigrationServiceProvider);
-                await migrationService.migrateLocalToFirebase(userCredential.user!.uid, sourceUserId);
+        if (wasAnonymous && !userCredential.user!.isAnonymous) {
+          try {
+            final migrationService = ref.read(dataMigrationServiceProvider);
+            await migrationService.migrateLocalToFirebase(userCredential.user!.uid, sourceUserId);
 
-                ref.invalidate(userSettingsRepositoryProvider);
-                ref.invalidate(transactionRepositoryProvider);
-             } catch (e) {
-               print("Migration error: $e");
-               if (mounted) {
-                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Data migration failed: $e")));
-               }
-             }
+            ref.invalidate(userSettingsRepositoryProvider);
+            ref.invalidate(transactionRepositoryProvider);
+          } catch (e) {
+            print("Migration error: $e");
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Data migration failed: $e")));
+            }
+          }
         }
 
         if (mounted) {
@@ -526,17 +528,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         throw Exception('No user is currently signed in');
       }
 
-      // Delete all user data from repositories
       final userSettingsRepo = ref.read(userSettingsRepositoryProvider);
       final transactionRepo = ref.read(transactionRepositoryProvider);
 
-      // Delete user settings and transactions
       await Future.wait([
         userSettingsRepo.deleteAllUserData(user.uid),
         transactionRepo.deleteAllUserTransactions(user.uid),
       ]);
 
-      // Finally, delete the auth account
       await authService.deleteAccount();
 
       if (mounted) {
@@ -605,7 +604,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
         await repository.saveUserSettings(updatedSettings);
 
-        // Refresh all related providers
         ref.invalidate(userSettingsProvider);
         ref.invalidate(currentCycleTransactionsProvider);
         ref.invalidate(totalExpensesProvider);
@@ -697,56 +695,48 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Account Section
             _buildSectionTitle(theme, 'Account', Icons.person_rounded),
             const SizedBox(height: AppSpacing.sm),
             _buildAccountCard(theme, isSignedIn, currentUser),
 
             const SizedBox(height: AppSpacing.lg),
 
-            // Premium Section
             _buildSectionTitle(theme, 'Premium', Icons.workspace_premium_rounded),
             const SizedBox(height: AppSpacing.sm),
             _buildPremiumCard(theme),
 
             const SizedBox(height: AppSpacing.lg),
 
-            // Income Section
             _buildSectionTitle(theme, 'Income', Icons.attach_money_rounded),
             const SizedBox(height: AppSpacing.sm),
             _buildIncomeCard(theme),
 
             const SizedBox(height: AppSpacing.lg),
 
-            // Pay Cycle Section
             _buildSectionTitle(theme, 'Pay Cycle', Icons.calendar_today_rounded),
             const SizedBox(height: AppSpacing.sm),
             _buildPayCycleCard(theme),
 
             const SizedBox(height: AppSpacing.lg),
 
-            // Next Payday Section
             _buildSectionTitle(theme, 'Next Payday', Icons.event_rounded),
             const SizedBox(height: AppSpacing.sm),
             _buildPaydayCard(theme),
 
             const SizedBox(height: AppSpacing.lg),
 
-            // Theme Section
             _buildSectionTitle(theme, 'Appearance', Icons.palette_rounded),
             const SizedBox(height: AppSpacing.sm),
             _buildThemeCard(theme),
 
             const SizedBox(height: AppSpacing.lg),
 
-            // Currency Section
             _buildSectionTitle(theme, 'Currency', Icons.currency_exchange_rounded),
             const SizedBox(height: AppSpacing.sm),
             _buildCurrencyCard(theme),
 
             const SizedBox(height: AppSpacing.xxl),
 
-            // Save Button
             PaydayButton(
               text: 'Save Settings',
               icon: Icons.check_rounded,
@@ -790,10 +780,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (isSignedIn) ...[
-            // User Info
             Row(
               children: [
-                // User Avatar
                 Container(
                   width: 56,
                   height: 56,
@@ -803,23 +791,23 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ),
                   child: currentUser?.photoURL != null
                       ? ClipOval(
-                          child: Image.network(
-                            currentUser!.photoURL!,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return const Icon(
-                                Icons.person,
-                                color: Colors.white,
-                                size: 28,
-                              );
-                            },
-                          ),
-                        )
-                      : const Icon(
+                    child: Image.network(
+                      currentUser!.photoURL!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return const Icon(
                           Icons.person,
                           color: Colors.white,
                           size: 28,
-                        ),
+                        );
+                      },
+                    ),
+                  )
+                      : const Icon(
+                    Icons.person,
+                    color: Colors.white,
+                    size: 28,
+                  ),
                 ),
                 const SizedBox(width: AppSpacing.md),
                 Expanded(
@@ -849,7 +837,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             const SizedBox(height: AppSpacing.md),
             const Divider(),
             const SizedBox(height: AppSpacing.sm),
-            // Sign Out Button
             PaydayButton(
               text: 'Sign Out',
               icon: Icons.logout_rounded,
@@ -859,7 +846,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               style: PaydayButtonStyle.outlined,
             ),
             const SizedBox(height: AppSpacing.sm),
-            // Delete Account Button
             PaydayButton(
               text: 'Delete Account',
               icon: Icons.delete_forever_rounded,
@@ -870,7 +856,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               textColor: AppColors.error,
             ),
           ] else ...[
-            // Sign In Options
             Text(
               'Sign in to sync your data across devices',
               style: theme.textTheme.bodyMedium?.copyWith(
@@ -878,13 +863,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
             ),
             const SizedBox(height: AppSpacing.md),
-
-            // Google Sign In Button
             _buildGoogleSignInButton(),
-
             const SizedBox(height: AppSpacing.sm),
-
-            // Apple Sign In Button (if available)
             if (_isAppleSignInAvailable)
               _buildAppleSignInButton(),
           ],
@@ -915,34 +895,33 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ),
         child: _isSigningIn
             ? const SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.black54),
-                ),
-              )
+          width: 20,
+          height: 20,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            valueColor: AlwaysStoppedAnimation<Color>(Colors.black54),
+          ),
+        )
             : Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Google Logo
-                  SvgPicture.asset(
-                    'assets/google_logo.svg',
-                    width: 18,
-                    height: 18,
-                  ),
-                  const SizedBox(width: 12),
-                  const Text(
-                    'Sign in with Google',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      letterSpacing: 0.25,
-                      color: Colors.black87,
-                    ),
-                  ),
-                ],
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SvgPicture.asset(
+              'assets/google_logo.svg',
+              width: 18,
+              height: 18,
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              'Sign in with Google',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                letterSpacing: 0.25,
+                color: Colors.black87,
               ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -964,39 +943,42 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ),
         child: _isSigningIn
             ? const SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                ),
-              )
+          width: 20,
+          height: 20,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+          ),
+        )
             : Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Apple Logo
-                  const Icon(
-                    Icons.apple,
-                    size: 20,
-                    color: Colors.white,
-                  ),
-                  const SizedBox(width: 12),
-                  const Text(
-                    'Sign in with Apple',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: -0.31,
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.apple,
+              size: 20,
+              color: Colors.white,
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              'Sign in with Apple',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                letterSpacing: -0.31,
+                color: Colors.white,
               ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
+  // ✅ GÜNCELLENEN KISIM: Premium kart artık dinamik
   Widget _buildPremiumCard(ThemeData theme) {
+    // Premium durumu kontrol ediliyor
+    final isPremium = ref.watch(isPremiumProvider);
+
     return GestureDetector(
       onTap: () {
         HapticFeedback.mediumImpact();
@@ -1023,28 +1005,28 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ),
         child: Row(
           children: [
-            // Premium icon with glow
             Container(
               padding: const EdgeInsets.all(AppSpacing.md),
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(AppRadius.md),
               ),
-              child: const Icon(
-                Icons.workspace_premium_rounded,
+              child: Icon(
+                // İkon dinamik değişiyor
+                isPremium ? Icons.verified_rounded : Icons.workspace_premium_rounded,
                 color: Colors.white,
                 size: 32,
               ),
             ),
             const SizedBox(width: AppSpacing.md),
 
-            // Text content
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Upgrade to Premium',
+                    // Başlık dinamik değişiyor
+                    isPremium ? 'Premium Active' : 'Upgrade to Premium',
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                       color: Colors.white,
@@ -1052,7 +1034,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Remove ads and unlock exclusive features',
+                    // Alt metin dinamik değişiyor
+                    isPremium ? 'Thank you for your support!' : 'Remove ads and unlock exclusive features',
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: Colors.white.withValues(alpha: 0.9),
                     ),
@@ -1061,7 +1044,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
             ),
 
-            // Arrow
             const Icon(
               Icons.arrow_forward_ios_rounded,
               color: Colors.white,
@@ -1070,10 +1052,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ],
         ),
       ).animate().fadeIn(duration: 300.ms).slideY(begin: 0.1, end: 0).shimmer(
-            delay: 1000.ms,
-            duration: 2000.ms,
-            color: Colors.white.withValues(alpha: 0.3),
-          ),
+        delay: 1000.ms,
+        duration: 2000.ms,
+        color: Colors.white.withValues(alpha: 0.3),
+      ),
     );
   }
 
@@ -1286,8 +1268,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     daysUntil > 0
                         ? '$daysUntil days away'
                         : daysUntil == 0
-                            ? 'Today! 🎉'
-                            : 'Date has passed - tap to update',
+                        ? 'Today! 🎉'
+                        : 'Date has passed - tap to update',
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: daysUntil < 0 ? AppColors.error : AppColors.getTextSecondary(context),
                     ),
@@ -1328,7 +1310,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const SizedBox(height: AppSpacing.md),
           Row(
             children: [
-              // Light Theme
               Expanded(
                 child: _buildThemeOption(
                   theme: theme,
@@ -1342,7 +1323,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ),
               ),
               const SizedBox(width: AppSpacing.sm),
-              // Dark Theme
               Expanded(
                 child: _buildThemeOption(
                   theme: theme,
@@ -1356,7 +1336,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ),
               ),
               const SizedBox(width: AppSpacing.sm),
-              // System Theme
               Expanded(
                 child: _buildThemeOption(
                   theme: theme,
@@ -1424,10 +1403,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Widget _buildCurrencyCard(ThemeData theme) {
-    // currency_picker paketinden gelen bilgileri kullan
     final currencies = CurrencyService().getAll();
     final currencyPickerCurrency = currencies.firstWhere(
-      (c) => c.code == _selectedCurrency,
+          (c) => c.code == _selectedCurrency,
       orElse: () => currencies.first,
     );
     final currencySymbol = CurrencyFormatter.getSymbol(_selectedCurrency);
@@ -1446,7 +1424,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ),
         child: Row(
           children: [
-            // Currency Flag & Symbol
             Container(
               width: 56,
               height: 56,
@@ -1462,8 +1439,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
             ),
             const SizedBox(width: AppSpacing.md),
-
-            // Currency Info
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1509,8 +1484,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ],
               ),
             ),
-
-            // Arrow
             Icon(
               Icons.chevron_right_rounded,
               color: AppColors.getTextSecondary(context),
@@ -1521,4 +1494,3 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 }
-
