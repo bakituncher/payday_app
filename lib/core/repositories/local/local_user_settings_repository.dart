@@ -22,6 +22,7 @@ class LocalUserSettingsRepository implements UserSettingsRepository {
         nextPayday: DateTime.tryParse(prefs.getString('next_payday') ?? '') ??
             DateTime.now().add(const Duration(days: 30)),
         incomeAmount: prefs.getDouble('income_amount') ?? 0.0,
+        currentBalance: prefs.getDouble('current_balance') ?? 0.0,
         market: prefs.getString('user_market') ?? 'US',
         notificationsEnabled: prefs.getBool('notifications_enabled') ?? true,
         paydayReminders: prefs.getBool('payday_reminders') ?? true,
@@ -54,6 +55,7 @@ class LocalUserSettingsRepository implements UserSettingsRepository {
     await prefs.setString('user_pay_cycle', settings.payCycle);
     await prefs.setString('next_payday', settings.nextPayday.toIso8601String());
     await prefs.setDouble('income_amount', settings.incomeAmount);
+    await prefs.setDouble('current_balance', settings.currentBalance);
     await prefs.setString('user_market', settings.market);
     await prefs.setBool('notifications_enabled', settings.notificationsEnabled);
     await prefs.setBool('payday_reminders', settings.paydayReminders);
@@ -113,6 +115,7 @@ class LocalUserSettingsRepository implements UserSettingsRepository {
     await prefs.remove('user_pay_cycle');
     await prefs.remove('next_payday');
     await prefs.remove('income_amount');
+    await prefs.remove('current_balance');
     await prefs.remove('user_market');
     await prefs.remove('notifications_enabled');
     await prefs.remove('payday_reminders');
@@ -136,4 +139,3 @@ class LocalUserSettingsRepository implements UserSettingsRepository {
     _initialized = false;
   }
 }
-

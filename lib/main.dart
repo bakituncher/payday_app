@@ -73,23 +73,19 @@ class _PaydayAppState extends ConsumerState<PaydayApp> {
   @override
   void initState() {
     super.initState();
-    // Start anonymous auth if needed
-    _initializeAuth();
-  }
-
-  Future<void> _initializeAuth() async {
-    final authService = ref.read(authServiceProvider);
-    if (authService.currentUser == null) {
-      print('No user signed in. Signing in anonymously...');
+    // UI'da anonim login gösterme ama cihazda temel uid sağlamak için
+    // app açılışında anonim oturum aç.
+    Future.microtask(() async {
       try {
-        await authService.signInAnonymously();
-        print('Signed in anonymously.');
+        final authService = ref.read(authServiceProvider);
+        if (authService.currentUser == null) {
+          await authService.signInAnonymously();
+        }
       } catch (e) {
-        print('Error signing in anonymously: $e');
-        // İsteğe bağlı: Auth hatalarını da Crashlytics'e bildirebilirsiniz
-        FirebaseCrashlytics.instance.recordError(e, null, reason: 'Anonymous Auth Failed');
+        // Auth yoksa uygulama yine açılsın; sadece bulut fonksiyonları kısıtlanır.
+        debugPrint('Anonymous sign-in failed: $e');
       }
-    }
+    });
   }
 
   @override

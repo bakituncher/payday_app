@@ -6,7 +6,6 @@ import 'package:payday/core/theme/app_theme.dart';
 import 'package:payday/core/constants/app_constants.dart';
 import 'package:payday/core/models/user_settings.dart';
 import 'package:payday/core/providers/repository_providers.dart';
-import 'package:payday/core/providers/auth_providers.dart';
 import 'package:payday/core/utils/currency_formatter.dart';
 import 'package:payday/shared/widgets/payday_button.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -90,13 +89,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   Future<void> _saveSettings() async {
     setState(() { _isLoading = true; });
     try {
-      final authService = ref.read(authServiceProvider);
-      if (authService.currentUser == null) {
-        await authService.signInAnonymously();
-      }
+      // Anonymous otomatik giriş KALDIRILDI.
+      // Onboarding yerel çalışır; buluta yedekleme istenirse ayarlardan giriş yapılır.
+      final userId = ref.read(currentUserIdProvider);
 
       final settings = UserSettings(
-        userId: authService.currentUser?.uid ?? 'unknown',
+        userId: userId,
         currency: _selectedCurrency,
         payCycle: _selectedPayCycle,
         nextPayday: _nextPayday,
