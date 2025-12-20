@@ -1,8 +1,8 @@
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_analytics/firebase_analytics.dart'; // ✅ EKLENDİ: Analytics Import
-import 'package:firebase_crashlytics/firebase_crashlytics.dart'; // ✅ EKLENDİ: Crashlytics Import
-import 'package:flutter/foundation.dart'; // ✅ EKLENDİ: PlatformDispatcher ve kDebugMode için
-import 'firebase_options.dart'; // Bu dosyayı flutterfire configure ile oluşturmuştuk
+import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:flutter/foundation.dart';
+import 'firebase_options.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -25,7 +25,6 @@ void main() async {
   );
 
   // ✅ CRASHLYTICS ENTEGRASYONU BAŞLANGICI
-
   // Flutter framework hatalarını otomatik olarak Crashlytics'e bildir
   FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
 
@@ -73,22 +72,23 @@ class _PaydayAppState extends ConsumerState<PaydayApp> {
   @override
   void initState() {
     super.initState();
-    // Start anonymous auth if needed
-    _initializeAuth();
+    // UI build işlemi bitmeden state okumak bazen hata verebilir.
+    // Arkadaşının eklediği microtask yöntemi bunu güvenli hale getirir.
+    Future.microtask(() => _initializeAuth());
   }
 
   Future<void> _initializeAuth() async {
-    final authService = ref.read(authServiceProvider);
-    if (authService.currentUser == null) {
-      print('No user signed in. Signing in anonymously...');
-      try {
+    try {
+      final authService = ref.read(authServiceProvider);
+      if (authService.currentUser == null) {
+        debugPrint('No user signed in. Signing in anonymously...');
         await authService.signInAnonymously();
-        print('Signed in anonymously.');
-      } catch (e) {
-        print('Error signing in anonymously: $e');
-        // İsteğe bağlı: Auth hatalarını da Crashlytics'e bildirebilirsiniz
-        FirebaseCrashlytics.instance.recordError(e, null, reason: 'Anonymous Auth Failed');
+        debugPrint('Signed in anonymously.');
       }
+    } catch (e, stack) {
+      debugPrint('Error signing in anonymously: $e');
+      // Senin eklediğin Crashlytics raporlaması burada korunuyor:
+      FirebaseCrashlytics.instance.recordError(e, stack, reason: 'Anonymous Auth Failed');
     }
   }
 
@@ -106,8 +106,7 @@ class _PaydayAppState extends ConsumerState<PaydayApp> {
       darkTheme: AppTheme.darkTheme,
       themeMode: themeMode,
 
-      // ✅ EKLENDİ: Analytics Observer
-      // Bu sayede hangi ekranda ne kadar kalındığı otomatik takip edilir
+      // Analytics Observer
       navigatorObservers: [
         FirebaseAnalyticsObserver(analytics: FirebaseAnalytics.instance),
       ],
