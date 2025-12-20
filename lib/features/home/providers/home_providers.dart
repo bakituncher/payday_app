@@ -173,12 +173,15 @@ final budgetHealthProvider = FutureProvider<BudgetHealth>((ref) async {
     return BudgetHealth.unknown;
   }
 
-  // Protect against division by zero
-  if (settings.currentBalance <= 0) {
+  // currentBalance net bakiye. Toplam başlangıç bütçesi = net bakiye + harcama.
+  final totalBudget = settings.currentBalance + totalExpenses;
+
+  // Protect against invalid totals
+  if (totalBudget <= 0) {
     return BudgetHealth.unknown;
   }
 
-  final spentPercentage = (totalExpenses / settings.currentBalance) * 100;
+  final spentPercentage = (totalExpenses / totalBudget) * 100;
 
   if (spentPercentage < 50) {
     return BudgetHealth.excellent;

@@ -34,8 +34,19 @@ class BudgetProgressCard extends ConsumerWidget {
           loading: () => _buildShimmer(context),
           error: (error, stack) => _buildError(theme),
           data: (totalExpenses) {
-            final remaining = currentBalance - totalExpenses;
-            final progressPercentage = (totalExpenses / currentBalance).clamp(0.0, 1.0);
+            // DÜZELTME:
+            // currentBalance zaten veritabanında harcamalar düşüldükten sonraki NET bakiyedir.
+            // Bu yüzden 'Kalan' doğrudan currentBalance.
+            // Toplam başlangıç bütçesi = Harcanan + Kalan.
+            final remaining = currentBalance;
+            final totalBudget = currentBalance + totalExpenses;
+
+            // Yüzdeyi toplam bütçe üzerinden hesapla.
+            // totalBudget <= 0 (ör. negatif bakiye ve 0 harcama) gibi uç durumlarda 0'a düş.
+            final progressPercentage = totalBudget > 0
+                ? (totalExpenses / totalBudget).clamp(0.0, 1.0)
+                : 0.0;
+
             final budgetHealth = budgetHealthAsync.value ?? BudgetHealth.unknown;
 
             return Column(
@@ -130,8 +141,8 @@ class BudgetProgressCard extends ConsumerWidget {
                       child: _buildCompactStat(
                         context,
                         'Left',
-                        CurrencyFormatter.format(remaining.abs(), currency),
-                        remaining > 0 ? AppColors.success : AppColors.error,
+                        CurrencyFormatter.format(remaining, currency),
+                        remaining >= 0 ? AppColors.success : AppColors.error,
                       ),
                     ),
                   ],
@@ -380,4 +391,3 @@ class _AnimatedProgressBar extends StatelessWidget {
     }
   }
 }
-
