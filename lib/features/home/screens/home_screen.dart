@@ -16,6 +16,7 @@ import 'package:payday/features/transactions/screens/add_transaction_screen.dart
 import 'package:payday/features/transactions/screens/add_funds_screen.dart';
 import 'package:payday/features/settings/screens/settings_screen.dart';
 import 'package:payday/shared/widgets/payday_button.dart';
+import 'package:payday/shared/widgets/payday_banner_ad.dart'; // ✅ EKLENDİ: Reklam widget'ı importu
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:payday/features/home/providers/period_balance_providers.dart';
 
@@ -97,208 +98,216 @@ class HomeScreen extends ConsumerWidget {
                       parent: BouncingScrollPhysics(),
                     ),
                     slivers: [
-                    // Premium App Bar
-                    SliverAppBar(
-                      expandedHeight: 0,
-                      floating: true,
-                      pinned: false,
-                      backgroundColor: AppColors.getBackground(context),
-                      elevation: 0,
-                      surfaceTintColor: Colors.transparent,
-                      title: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              gradient: AppColors.pinkGradient,
-                              borderRadius: BorderRadius.circular(AppRadius.md),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppColors.primaryPink.withValues(alpha: 0.3),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
+                      // Premium App Bar
+                      SliverAppBar(
+                        expandedHeight: 0,
+                        floating: true,
+                        pinned: false,
+                        backgroundColor: AppColors.getBackground(context),
+                        elevation: 0,
+                        surfaceTintColor: Colors.transparent,
+                        title: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                gradient: AppColors.pinkGradient,
+                                borderRadius: BorderRadius.circular(AppRadius.md),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppColors.primaryPink.withValues(alpha: 0.3),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: const Icon(
+                                Icons.account_balance_wallet_rounded,
+                                color: Colors.white,
+                                size: 20,
+                              ),
                             ),
-                            child: const Icon(
-                              Icons.account_balance_wallet_rounded,
-                              color: Colors.white,
-                              size: 20,
+                            const SizedBox(width: AppSpacing.sm),
+                            Text(
+                              'Payday',
+                              style: theme.textTheme.headlineSmall?.copyWith(
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.getTextPrimary(context),
+                                letterSpacing: -0.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                        actions: [
+                          Container(
+                            margin: const EdgeInsets.only(right: AppSpacing.sm),
+                            decoration: BoxDecoration(
+                              color: AppColors.getSubtle(context),
+                              borderRadius: BorderRadius.circular(AppRadius.md),
+                            ),
+                            child: IconButton(
+                              icon: const Icon(Icons.notifications_none_rounded),
+                              onPressed: () {
+                                HapticFeedback.lightImpact();
+                                // TODO: Navigate to notifications
+                              },
+                              color: AppColors.getTextPrimary(context),
                             ),
                           ),
-                          const SizedBox(width: AppSpacing.sm),
-                          Text(
-                            'Payday',
-                            style: theme.textTheme.headlineSmall?.copyWith(
-                              fontWeight: FontWeight.w800,
+                          Container(
+                            margin: const EdgeInsets.only(right: AppSpacing.md),
+                            decoration: BoxDecoration(
+                              color: AppColors.getSubtle(context),
+                              borderRadius: BorderRadius.circular(AppRadius.md),
+                            ),
+                            child: IconButton(
+                              icon: const Icon(Icons.settings_outlined),
+                              onPressed: () {
+                                HapticFeedback.lightImpact();
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const SettingsScreen(),
+                                  ),
+                                );
+                              },
                               color: AppColors.getTextPrimary(context),
-                              letterSpacing: -0.5,
                             ),
                           ),
                         ],
                       ),
-                      actions: [
-                        Container(
-                          margin: const EdgeInsets.only(right: AppSpacing.sm),
-                          decoration: BoxDecoration(
-                            color: AppColors.getSubtle(context),
-                            borderRadius: BorderRadius.circular(AppRadius.md),
-                          ),
-                          child: IconButton(
-                            icon: const Icon(Icons.notifications_none_rounded),
-                            onPressed: () {
-                              HapticFeedback.lightImpact();
-                              // TODO: Navigate to notifications
-                            },
-                            color: AppColors.getTextPrimary(context),
-                          ),
+
+                      // Content
+                      SliverPadding(
+                        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                        sliver: SliverList(
+                          delegate: SliverChildListDelegate([
+                            const SizedBox(height: AppSpacing.sm),
+
+                            // Greeting
+                            _GreetingSection()
+                                .animate()
+                                .fadeIn(duration: 400.ms)
+                                .slideY(begin: -0.1, end: 0),
+
+                            const SizedBox(height: AppSpacing.md),
+
+                            // Countdown Card - THE HERO
+                            CountdownCard(
+                              nextPayday: settings.nextPayday,
+                              currency: settings.currency,
+                              incomeAmount: settings.incomeAmount,
+                            )
+                                .animate()
+                                .fadeIn(duration: 500.ms, delay: 100.ms)
+                                .scale(
+                              begin: const Offset(0.95, 0.95),
+                              end: const Offset(1, 1),
+                              curve: Curves.easeOutBack,
+                            ),
+
+                            const SizedBox(height: AppSpacing.sm),
+
+                            // Daily Allowable Spend Card
+                            const DailySpendCard()
+                                .animate()
+                                .fadeIn(duration: 500.ms, delay: 200.ms)
+                                .slideX(begin: -0.1, end: 0),
+
+                            const SizedBox(height: AppSpacing.sm),
+
+                            // Quick Actions Row
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _QuickActionButton(
+                                    icon: Icons.add_circle_outline_rounded,
+                                    label: 'Add Funds',
+                                    color: AppColors.success,
+                                    onTap: () => _showAddFundsSheet(context),
+                                  ),
+                                ),
+                                const SizedBox(width: AppSpacing.sm),
+                                Expanded(
+                                  child: _QuickActionButton(
+                                    icon: Icons.remove_circle_outline_rounded,
+                                    label: 'Add Expense',
+                                    color: AppColors.primaryPink,
+                                    onTap: () => _showAddTransactionSheet(context),
+                                  ),
+                                ),
+                              ],
+                            )
+                                .animate()
+                                .fadeIn(duration: 500.ms, delay: 250.ms)
+                                .slideY(begin: 0.1, end: 0),
+
+                            const SizedBox(height: AppSpacing.sm),
+
+                            // Budget Progress Card
+                            Consumer(
+                              builder: (context, ref, _) {
+                                final periodBalanceAsync = ref.watch(selectedPeriodBalanceProvider);
+                                final effectiveBalance = periodBalanceAsync.value?.closingBalance ?? settings.currentBalance;
+
+                                return BudgetProgressCard(
+                                  currency: settings.currency,
+                                  currentBalance: effectiveBalance,
+                                );
+                              },
+                            )
+                                .animate()
+                                .fadeIn(duration: 500.ms, delay: 300.ms)
+                                .slideX(begin: 0.1, end: 0),
+
+                            const SizedBox(height: AppSpacing.sm),
+
+                            // Savings Card
+                            const SavingsCard()
+                                .animate()
+                                .fadeIn(duration: 500.ms, delay: 325.ms)
+                                .slideX(begin: -0.1, end: 0),
+
+                            const SizedBox(height: AppSpacing.sm),
+
+                            // Active Subscriptions Card
+                            const ActiveSubscriptionsCard()
+                                .animate()
+                                .fadeIn(duration: 500.ms, delay: 350.ms)
+                                .slideY(begin: 0.1, end: 0),
+
+                            const SizedBox(height: AppSpacing.sm),
+
+                            // Monthly Summary Card
+                            const MonthlySummaryCard()
+                                .animate()
+                                .fadeIn(duration: 500.ms, delay: 375.ms)
+                                .slideY(begin: 0.1, end: 0),
+
+                            const SizedBox(height: AppSpacing.sm),
+
+                            // Recent Transactions
+                            RecentTransactionsCard(
+                              currency: settings.currency,
+                            )
+                                .animate()
+                                .fadeIn(duration: 500.ms, delay: 400.ms)
+                                .slideY(begin: 0.1, end: 0),
+
+                            const SizedBox(height: AppSpacing.sm),
+
+                            // ✅ EKLENDİ: REKLAM ALANI
+                            // Premium ise widget kendini otomatik gizler
+                            const PaydayBannerAd()
+                                .animate()
+                                .fadeIn(duration: 600.ms, delay: 500.ms),
+
+                            const SizedBox(height: 120), // Space for FAB
+                          ]),
                         ),
-                        Container(
-                          margin: const EdgeInsets.only(right: AppSpacing.md),
-                          decoration: BoxDecoration(
-                            color: AppColors.getSubtle(context),
-                            borderRadius: BorderRadius.circular(AppRadius.md),
-                          ),
-                          child: IconButton(
-                            icon: const Icon(Icons.settings_outlined),
-                            onPressed: () {
-                              HapticFeedback.lightImpact();
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const SettingsScreen(),
-                                ),
-                              );
-                            },
-                            color: AppColors.getTextPrimary(context),
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    // Content
-                    SliverPadding(
-                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-                      sliver: SliverList(
-                        delegate: SliverChildListDelegate([
-                          const SizedBox(height: AppSpacing.sm),
-
-                          // Greeting
-                          _GreetingSection()
-                              .animate()
-                              .fadeIn(duration: 400.ms)
-                              .slideY(begin: -0.1, end: 0),
-
-                          const SizedBox(height: AppSpacing.md),
-
-                          // Countdown Card - THE HERO
-                          CountdownCard(
-                            nextPayday: settings.nextPayday,
-                            currency: settings.currency,
-                            incomeAmount: settings.incomeAmount,
-                          )
-                              .animate()
-                              .fadeIn(duration: 500.ms, delay: 100.ms)
-                              .scale(
-                                begin: const Offset(0.95, 0.95),
-                                end: const Offset(1, 1),
-                                curve: Curves.easeOutBack,
-                              ),
-
-                          const SizedBox(height: AppSpacing.sm),
-
-                          // Daily Allowable Spend Card
-                          const DailySpendCard()
-                              .animate()
-                              .fadeIn(duration: 500.ms, delay: 200.ms)
-                              .slideX(begin: -0.1, end: 0),
-
-                          const SizedBox(height: AppSpacing.sm),
-
-                          // Quick Actions Row
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _QuickActionButton(
-                                  icon: Icons.add_circle_outline_rounded,
-                                  label: 'Add Funds',
-                                  color: AppColors.success,
-                                  onTap: () => _showAddFundsSheet(context),
-                                ),
-                              ),
-                              const SizedBox(width: AppSpacing.sm),
-                              Expanded(
-                                child: _QuickActionButton(
-                                  icon: Icons.remove_circle_outline_rounded,
-                                  label: 'Add Expense',
-                                  color: AppColors.primaryPink,
-                                  onTap: () => _showAddTransactionSheet(context),
-                                ),
-                              ),
-                            ],
-                          )
-                              .animate()
-                              .fadeIn(duration: 500.ms, delay: 250.ms)
-                              .slideY(begin: 0.1, end: 0),
-
-                          const SizedBox(height: AppSpacing.sm),
-
-                          // Budget Progress Card
-                          Consumer(
-                            builder: (context, ref, _) {
-                              final periodBalanceAsync = ref.watch(selectedPeriodBalanceProvider);
-                              final effectiveBalance = periodBalanceAsync.value?.closingBalance ?? settings.currentBalance;
-
-                              return BudgetProgressCard(
-                                currency: settings.currency,
-                                currentBalance: effectiveBalance,
-                              );
-                            },
-                          )
-                              .animate()
-                              .fadeIn(duration: 500.ms, delay: 300.ms)
-                              .slideX(begin: 0.1, end: 0),
-
-                          const SizedBox(height: AppSpacing.sm),
-
-                          // Savings Card
-                          const SavingsCard()
-                              .animate()
-                              .fadeIn(duration: 500.ms, delay: 325.ms)
-                              .slideX(begin: -0.1, end: 0),
-
-                          const SizedBox(height: AppSpacing.sm),
-
-                          // Active Subscriptions Card
-                          const ActiveSubscriptionsCard()
-                              .animate()
-                              .fadeIn(duration: 500.ms, delay: 350.ms)
-                              .slideY(begin: 0.1, end: 0),
-
-                          const SizedBox(height: AppSpacing.sm),
-
-                          // Monthly Summary Card
-                          const MonthlySummaryCard()
-                              .animate()
-                              .fadeIn(duration: 500.ms, delay: 375.ms)
-                              .slideY(begin: 0.1, end: 0),
-
-                          const SizedBox(height: AppSpacing.sm),
-
-                          // Recent Transactions
-                          RecentTransactionsCard(
-                            currency: settings.currency,
-                          )
-                              .animate()
-                              .fadeIn(duration: 500.ms, delay: 400.ms)
-                              .slideY(begin: 0.1, end: 0),
-
-                          const SizedBox(height: 120), // Space for FAB
-                        ]),
                       ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
                 ), // RefreshIndicator end
               ],
             );
@@ -308,15 +317,15 @@ class HomeScreen extends ConsumerWidget {
       floatingActionButton: userSettingsAsync.maybeWhen(
         data: (settings) => settings != null
             ? _PremiumFAB(
-                onPressed: () => _showAddTransactionSheet(context),
-              )
-                  .animate()
-                  .fadeIn(duration: 400.ms, delay: 500.ms)
-                  .scale(
-                    begin: const Offset(0.8, 0.8),
-                    end: const Offset(1, 1),
-                    curve: Curves.elasticOut,
-                  )
+          onPressed: () => _showAddTransactionSheet(context),
+        )
+            .animate()
+            .fadeIn(duration: 400.ms, delay: 500.ms)
+            .scale(
+          begin: const Offset(0.8, 0.8),
+          end: const Offset(1, 1),
+          curve: Curves.elasticOut,
+        )
             : null,
         orElse: () => null,
       ),
@@ -624,9 +633,9 @@ class _PremiumFABState extends State<_PremiumFAB> {
         duration: const Duration(milliseconds: 150),
         transform: _isPressed
             ? (Matrix4.identity()
-              ..setEntry(0, 0, 0.95)
-              ..setEntry(1, 1, 0.95)
-              ..setEntry(2, 2, 0.95))
+          ..setEntry(0, 0, 0.95)
+          ..setEntry(1, 1, 0.95)
+          ..setEntry(2, 2, 0.95))
             : Matrix4.identity(),
         child: Container(
           padding: const EdgeInsets.symmetric(

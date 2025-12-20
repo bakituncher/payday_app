@@ -3,6 +3,7 @@ import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart'; // ✅ EKLENDİ: RevenueCat keyleri için
+import 'package:google_mobile_ads/google_mobile_ads.dart'; // ✅ EKLENDİ: AdMob paketi
 import 'package:payday/core/services/revenue_cat_service.dart'; // ✅ EKLENDİ: RevenueCat servisi
 import 'firebase_options.dart';
 import 'package:flutter/material.dart';
@@ -21,9 +22,13 @@ void main() async {
   // Ensure Flutter bindings are initialized
   WidgetsFlutterBinding.ensureInitialized();
 
-  // ✅ EKLENDİ: .env dosyasını yükle (RevenueCat API keyleri buradan okunuyor)
+  // ✅ EKLENDİ: .env dosyasını yükle (RevenueCat ve AdMob API keyleri buradan okunuyor)
   // Eğer bu yapılmazsa RevenueCatService null key hatası verir.
   await dotenv.load(fileName: ".env");
+
+  // ✅ EKLENDİ: Mobile Ads SDK Başlatma
+  // Await etmemize gerek yok, arkaplanda başlatabilir.
+  MobileAds.instance.initialize();
 
   // Firebase'i başlat
   await Firebase.initializeApp(
