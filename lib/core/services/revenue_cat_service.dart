@@ -1,11 +1,24 @@
 import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class RevenueCatService {
-  // RevenueCat Panelinden alacağın API Keyler
-  static const _apiKeyAndroid = 'goog_...'; // Android Key buraya
-  static const _apiKeyIOS = 'appl_...'; // iOS Key buraya
+  // RevenueCat API Keys (.env dosyasından okunur)
+  static String get _apiKeyAndroid =>
+      dotenv.env['REVENUECAT_ANDROID_API_KEY'] ?? '';
+  static String get _apiKeyIOS =>
+      dotenv.env['REVENUECAT_IOS_API_KEY'] ?? '';
+
+  // Ürün ID'leri (RevenueCat Dashboard'daki Product IDs)
+  static String get monthlyProductId =>
+      dotenv.env['REVENUECAT_MONTHLY_PRODUCT_ID'] ?? 'premium-monthly';
+  static String get annualProductId =>
+      dotenv.env['REVENUECAT_ANNUAL_PRODUCT_ID'] ?? 'premium-annual';
+
+  // Entitlement ID
+  static String get premiumEntitlementId =>
+      dotenv.env['REVENUECAT_PREMIUM_ENTITLEMENT_ID'] ?? 'premium';
 
   /// Singleton instance (Opsiyonel ama servisi tek tutmak iyidir)
   static final RevenueCatService _instance = RevenueCatService._internal();
@@ -69,7 +82,7 @@ class RevenueCatService {
   Future<bool> getPremiumStatus() async {
     try {
       final customerInfo = await Purchases.getCustomerInfo();
-      return customerInfo.entitlements.all['premium']?.isActive ?? false;
+      return customerInfo.entitlements.all[premiumEntitlementId]?.isActive ?? false;
     } catch (e) {
       return false;
     }

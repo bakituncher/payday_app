@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 // ✅ RevenueCat ve Servis Importları
 import 'package:purchases_flutter/purchases_flutter.dart';
@@ -23,6 +24,9 @@ import 'package:payday/core/providers/auth_providers.dart';
 void main() async {
   // Ensure Flutter bindings are initialized
   WidgetsFlutterBinding.ensureInitialized();
+
+  // .env dosyasını yükle
+  await dotenv.load(fileName: ".env");
 
   // Firebase'i başlat
   await Firebase.initializeApp(
