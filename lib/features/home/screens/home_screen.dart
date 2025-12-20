@@ -13,6 +13,7 @@ import 'package:payday/features/home/widgets/recent_transactions_card.dart';
 import 'package:payday/features/home/widgets/active_subscriptions_card.dart';
 import 'package:payday/features/home/widgets/monthly_summary_card.dart';
 import 'package:payday/features/transactions/screens/add_transaction_screen.dart';
+import 'package:payday/features/transactions/screens/add_funds_screen.dart';
 import 'package:payday/features/settings/screens/settings_screen.dart';
 import 'package:payday/shared/widgets/payday_button.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -211,6 +212,34 @@ class HomeScreen extends ConsumerWidget {
                               .animate()
                               .fadeIn(duration: 500.ms, delay: 200.ms)
                               .slideX(begin: -0.1, end: 0),
+
+                          const SizedBox(height: AppSpacing.sm),
+
+                          // Quick Actions Row
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _QuickActionButton(
+                                  icon: Icons.add_circle_outline_rounded,
+                                  label: 'Add Funds',
+                                  color: AppColors.success,
+                                  onTap: () => _showAddFundsSheet(context),
+                                ),
+                              ),
+                              const SizedBox(width: AppSpacing.sm),
+                              Expanded(
+                                child: _QuickActionButton(
+                                  icon: Icons.remove_circle_outline_rounded,
+                                  label: 'Add Expense',
+                                  color: AppColors.primaryPink,
+                                  onTap: () => _showAddTransactionSheet(context),
+                                ),
+                              ),
+                            ],
+                          )
+                              .animate()
+                              .fadeIn(duration: 500.ms, delay: 250.ms)
+                              .slideY(begin: 0.1, end: 0),
 
                           const SizedBox(height: AppSpacing.sm),
 
@@ -451,6 +480,16 @@ class HomeScreen extends ConsumerWidget {
       builder: (context) => const AddTransactionScreen(),
     );
   }
+
+  void _showAddFundsSheet(BuildContext context) {
+    HapticFeedback.mediumImpact();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const AddFundsScreen(),
+    );
+  }
 }
 
 class _GreetingSection extends StatelessWidget {
@@ -498,6 +537,67 @@ class _GreetingSection extends StatelessWidget {
     } else {
       return (text: 'Good Evening', emoji: '🌙');
     }
+  }
+}
+
+class _QuickActionButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _QuickActionButton({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap();
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.sm,
+        ),
+        decoration: BoxDecoration(
+          color: AppColors.getCardBackground(context),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          boxShadow: AppColors.getCardShadow(context),
+          border: Border.all(
+            color: color.withValues(alpha: 0.2),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+              ),
+              child: Icon(icon, color: color, size: 18),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Text(
+              label,
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: AppColors.getTextPrimary(context),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

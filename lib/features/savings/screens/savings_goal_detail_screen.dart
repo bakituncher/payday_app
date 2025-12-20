@@ -48,7 +48,7 @@ class _SavingsGoalDetailScreenState extends ConsumerState<SavingsGoalDetailScree
       setState(() => _isLoading = true);
       try {
         final savingsRepository = ref.read(savingsGoalRepositoryProvider);
-        final transactionRepository = ref.read(transactionRepositoryProvider);
+        final transactionManager = ref.read(transactionManagerServiceProvider);
 
         // STEP 1: Add money to the savings goal (this changes the savings balance)
         await savingsRepository.addMoneyToGoal(
@@ -64,20 +64,24 @@ class _SavingsGoalDetailScreenState extends ConsumerState<SavingsGoalDetailScree
             id: const Uuid().v4(),
             userId: _currentGoal.userId,
             amount: result,
-            categoryId: AppConstants.savingsCategoryId, // Use constant instead of hardcoded string
+            categoryId: AppConstants.savingsCategoryId,
             categoryName: 'Savings Transfer',
             categoryEmoji: _currentGoal.emoji,
             date: DateTime.now(),
             note: 'Transfer to ${_currentGoal.name}',
-            isExpense: true, // This is an expense - money leaving the budget
-            relatedGoalId: _currentGoal.id, // Link transaction to savings goal
+            isExpense: true, // Budget'ten düş
+            relatedGoalId: _currentGoal.id,
           );
-          await transactionRepository.addTransaction(transaction);
+
+          // TransactionManager: hem transaction kaydı hem bakiye güncellemesi
+          await transactionManager.processTransaction(
+            userId: _currentGoal.userId,
+            transaction: transaction,
+          );
 
           // SUCCESS: Both operations completed, update UI
-          // -----> Ana sayfadaki işlem listesini yenile: <-----
           ref.invalidate(currentCycleTransactionsProvider);
-          // ------------------------------------
+          ref.invalidate(userSettingsProvider);
 
           setState(() {
             _currentGoal = _currentGoal.copyWith(
@@ -106,9 +110,7 @@ class _SavingsGoalDetailScreenState extends ConsumerState<SavingsGoalDetailScree
             print('✅ Rollback successful');
           } catch (rollbackError) {
             print('❌ CRITICAL: Rollback failed! Data inconsistency possible: $rollbackError');
-            // In production, you should log this to a monitoring service
           }
-          // Re-throw the original error
           throw transactionError;
         }
       } catch (e) {
@@ -122,7 +124,9 @@ class _SavingsGoalDetailScreenState extends ConsumerState<SavingsGoalDetailScree
         }
         print('Error in _addMoney: $e');
       } finally {
-        setState(() => _isLoading = false);
+        if (mounted) {
+          setState(() => _isLoading = false);
+        }
       }
     }
   }
@@ -131,14 +135,15 @@ class _SavingsGoalDetailScreenState extends ConsumerState<SavingsGoalDetailScree
     // Get the latest goal data for max amount
     final goalsAsync = ref.read(savingsGoalsProvider);
     final currentGoalData = goalsAsync.whenOrNull(
-      data: (goals) {
-        try {
-          return goals.firstWhere((g) => g.id == widget.goal.id);
-        } catch (e) {
-          return _currentGoal;
-        }
-      },
-    ) ?? _currentGoal;
+          data: (goals) {
+            try {
+              return goals.firstWhere((g) => g.id == widget.goal.id);
+            } catch (e) {
+              return _currentGoal;
+            }
+          },
+        ) ??
+        _currentGoal;
 
     final controller = TextEditingController();
     final result = await showDialog<double>(
@@ -153,7 +158,7 @@ class _SavingsGoalDetailScreenState extends ConsumerState<SavingsGoalDetailScree
       setState(() => _isLoading = true);
       try {
         final savingsRepository = ref.read(savingsGoalRepositoryProvider);
-        final transactionRepository = ref.read(transactionRepositoryProvider);
+        final transactionManager = ref.read(transactionManagerServiceProvider);
 
         // STEP 1: Withdraw money from the savings goal
         await savingsRepository.withdrawMoneyFromGoal(
@@ -169,19 +174,24 @@ class _SavingsGoalDetailScreenState extends ConsumerState<SavingsGoalDetailScree
             id: const Uuid().v4(),
             userId: _currentGoal.userId,
             amount: result,
-            categoryId: AppConstants.savingsCategoryId, // Use constant instead of hardcoded string
+            categoryId: AppConstants.savingsCategoryId,
             categoryName: 'Savings Transfer',
             categoryEmoji: _currentGoal.emoji,
             date: DateTime.now(),
             note: 'Withdrawal from ${_currentGoal.name}',
-            isExpense: false, // This is income - money coming back to budget
-            relatedGoalId: _currentGoal.id, // Link transaction to savings goal
+            isExpense: false, // Budget'e geri ekle
+            relatedGoalId: _currentGoal.id,
           );
-          await transactionRepository.addTransaction(transaction);
+
+          // TransactionManager: hem transaction kaydı hem bakiye güncellemesi
+          await transactionManager.processTransaction(
+            userId: _currentGoal.userId,
+            transaction: transaction,
+          );
 
           // SUCCESS: Both operations completed, update UI
-          // EKLENECEK SATIR: Ana sayfadaki işlem listesini yenile
           ref.invalidate(currentCycleTransactionsProvider);
+          ref.invalidate(userSettingsProvider);
 
           setState(() {
             _currentGoal = _currentGoal.copyWith(
@@ -210,9 +220,7 @@ class _SavingsGoalDetailScreenState extends ConsumerState<SavingsGoalDetailScree
             print('✅ Rollback successful');
           } catch (rollbackError) {
             print('❌ CRITICAL: Rollback failed! Data inconsistency possible: $rollbackError');
-            // In production, you should log this to a monitoring service
           }
-          // Re-throw the original error
           throw transactionError;
         }
       } catch (e) {
@@ -226,7 +234,9 @@ class _SavingsGoalDetailScreenState extends ConsumerState<SavingsGoalDetailScree
         }
         print('Error in _withdrawMoney: $e');
       } finally {
-        setState(() => _isLoading = false);
+        if (mounted) {
+          setState(() => _isLoading = false);
+        }
       }
     }
   }

@@ -21,8 +21,12 @@ class TransactionManagerService {
   ///
   /// Bu metod finansal tutarlılığı garanti eder:
   /// - İşlem kaydedilir (Transaction History)
-  /// - Bakiye güncellenir (Current Balance)
+  /// - Pool Balance güncellenir (Total Pool)
   /// - Hata durumunda rollback yapılır (Transaction başarısız olursa bakiye değişmez)
+  ///
+  /// Pool Logic:
+  /// - Expense: Pool = Pool - Amount
+  /// - Income: Pool = Pool + Amount
   ///
   /// [userId] - Kullanıcı ID
   /// [transaction] - Kaydedilecek işlem

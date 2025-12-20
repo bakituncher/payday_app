@@ -228,6 +228,8 @@ class RecentTransactionsCard extends ConsumerWidget {
     WidgetRef ref,
     Transaction transaction,
   ) async {
+    final isExpense = transaction.isExpense;
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -253,7 +255,7 @@ class RecentTransactionsCard extends ConsumerWidget {
           ],
         ),
         content: Text(
-          'Are you sure you want to delete this ${transaction.categoryName} expense of ${CurrencyFormatter.format(transaction.amount, currency)}?',
+          'Are you sure you want to delete this ${isExpense ? 'expense' : 'income'} of ${CurrencyFormatter.format(transaction.amount, currency)}?',
         ),
         actions: [
           TextButton(
@@ -281,15 +283,16 @@ class RecentTransactionsCard extends ConsumerWidget {
     if (confirmed == true) {
       try {
         final repository = ref.read(transactionRepositoryProvider);
-        // Pass userId from transaction object
         await repository.deleteTransaction(transaction.id, transaction.userId);
 
-        // Update current balance - add back the deleted expense
+        // Update current balance
         final settingsRepo = ref.read(userSettingsRepositoryProvider);
         final currentSettings = await ref.read(userSettingsProvider.future);
-        if (currentSettings != null && transaction.isExpense) {
+
+        if (currentSettings != null) {
+          final balanceDelta = isExpense ? transaction.amount : -transaction.amount;
           final updatedSettings = currentSettings.copyWith(
-            currentBalance: currentSettings.currentBalance + transaction.amount,
+            currentBalance: currentSettings.currentBalance + balanceDelta,
             updatedAt: DateTime.now(),
           );
           await settingsRepo.saveUserSettings(updatedSettings);
@@ -350,6 +353,7 @@ class _TransactionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isExpense = transaction.isExpense;
 
     return Dismissible(
       key: Key(transaction.id),
@@ -381,7 +385,9 @@ class _TransactionTile extends StatelessWidget {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: AppColors.primaryPink.withValues(alpha: 0.15),
+                  color: isExpense
+                      ? AppColors.primaryPink.withValues(alpha: 0.15)
+                      : AppColors.success.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
                 child: Center(
@@ -419,10 +425,10 @@ class _TransactionTile extends StatelessWidget {
 
               // Amount - Compact
               Text(
-                '-${CurrencyFormatter.format(transaction.amount, currency)}',
+                '${isExpense ? '-' : '+'}${CurrencyFormatter.format(transaction.amount, currency)}',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.w700,
-                  color: AppColors.error,
+                  color: isExpense ? AppColors.error : AppColors.success,
                 ),
               ),
             ],
@@ -447,4 +453,3 @@ class _TransactionTile extends StatelessWidget {
     }
   }
 }
-

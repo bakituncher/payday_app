@@ -172,7 +172,12 @@ class _AllTransactionsScreenState extends ConsumerState<AllTransactionsScreen> {
     String dateHeader,
     List<Transaction> transactions,
   ) {
-    final total = transactions.fold<double>(0, (sum, t) => sum + t.amount);
+    // Net değişimi hesapla: Gelirler (+), Giderler (-)
+    final netTotal = transactions.fold<double>(0, (sum, t) {
+      return sum + (t.isExpense ? -t.amount : t.amount);
+    });
+
+    final isNegative = netTotal < 0;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -190,10 +195,10 @@ class _AllTransactionsScreenState extends ConsumerState<AllTransactionsScreen> {
                 ),
               ),
               Text(
-                '-${CurrencyFormatter.format(total, widget.currency)}',
+                '${netTotal > 0 ? '+' : ''}${CurrencyFormatter.format(netTotal, widget.currency)}',
                 style: theme.textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w600,
-                  color: AppColors.error,
+                  color: isNegative ? AppColors.error : AppColors.success,
                 ),
               ),
             ],
@@ -206,6 +211,8 @@ class _AllTransactionsScreenState extends ConsumerState<AllTransactionsScreen> {
   }
 
   Widget _buildTransactionTile(ThemeData theme, Transaction transaction) {
+    final isExpense = transaction.isExpense;
+
     return Dismissible(
       key: Key(transaction.id),
       direction: DismissDirection.endToStart,
@@ -243,7 +250,10 @@ class _AllTransactionsScreenState extends ConsumerState<AllTransactionsScreen> {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: AppColors.lightPink.withValues(alpha: 0.6),
+                  // Gelirse Yeşil, Giderse Pembe arka plan
+                  color: isExpense
+                      ? AppColors.lightPink.withValues(alpha: 0.6)
+                      : AppColors.success.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
                 child: Center(
@@ -283,11 +293,12 @@ class _AllTransactionsScreenState extends ConsumerState<AllTransactionsScreen> {
                   ],
                 ),
               ),
+              // Tutar Renklendirme ve İşaret
               Text(
-                '-${CurrencyFormatter.format(transaction.amount, widget.currency)}',
+                '${isExpense ? '-' : '+'}${CurrencyFormatter.format(transaction.amount, widget.currency)}',
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w700,
-                  color: AppColors.error,
+                  color: isExpense ? AppColors.error : AppColors.success,
                 ),
               ),
             ],
@@ -362,7 +373,7 @@ class _AllTransactionsScreenState extends ConsumerState<AllTransactionsScreen> {
           ],
         ),
         content: Text(
-          'Delete this ${transaction.categoryName} expense of ${CurrencyFormatter.format(transaction.amount, widget.currency)}?',
+          'Delete this ${transaction.categoryName} ${transaction.isExpense ? 'expense' : 'income'} of ${CurrencyFormatter.format(transaction.amount, widget.currency)}?',
         ),
         actions: [
           TextButton(
@@ -406,12 +417,14 @@ class _AllTransactionsScreenState extends ConsumerState<AllTransactionsScreen> {
       final repository = ref.read(transactionRepositoryProvider);
       await repository.deleteTransaction(transaction.id, transaction.userId);
 
-      // Update current balance - add back the deleted expense
+      // Bakiye güncelleme: expense silinince +, income silinince -
       final settingsRepo = ref.read(userSettingsRepositoryProvider);
       final currentSettings = await ref.read(userSettingsProvider.future);
-      if (currentSettings != null && transaction.isExpense) {
+
+      if (currentSettings != null) {
+        final balanceDelta = transaction.isExpense ? transaction.amount : -transaction.amount;
         final updatedSettings = currentSettings.copyWith(
-          currentBalance: currentSettings.currentBalance + transaction.amount,
+          currentBalance: currentSettings.currentBalance + balanceDelta,
           updatedAt: DateTime.now(),
         );
         await settingsRepo.saveUserSettings(updatedSettings);

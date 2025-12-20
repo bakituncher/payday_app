@@ -6,56 +6,32 @@ import 'package:payday/core/models/pay_period.dart';
 import 'package:payday/core/providers/repository_providers.dart';
 import 'package:payday/core/services/date_cycle_service.dart';
 
-/// User Settings Provider - Auto-updates payday if it has passed
+/// User Settings Provider - Auto-deposits salary on payday using Pool system
+///
+/// This provider uses AutoDepositService to:
+/// 1. Check if payday has arrived
+/// 2. Create an income transaction (Payday Deposit)
+/// 3. Update the Pool balance via TransactionManagerService
+/// 4. Advance nextPayday to next cycle
+/// 5. Track lastAutoDepositDate to prevent duplicates
 final userSettingsProvider = FutureProvider<UserSettings?>((ref) async {
   final repository = ref.watch(userSettingsRepositoryProvider);
   final userId = ref.watch(currentUserIdProvider);
   var settings = await repository.getUserSettings(userId);
 
   if (settings != null) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
+    // Process automatic payday deposit using AutoDepositService
+    final autoDepositService = ref.read(autoDepositServiceProvider);
+    final depositResult = await autoDepositService.processPaydayDeposit(userId);
 
-    // Normalize stored nextPayday (drop time) and enforce weekend rule (Fri if weekend)
-    final storedNext = DateTime(
-      settings.nextPayday.year,
-      settings.nextPayday.month,
-      settings.nextPayday.day,
-    );
-
-    DateTime effectivePayday = storedNext;
-    if (effectivePayday.weekday == DateTime.saturday) {
-      effectivePayday = effectivePayday.subtract(const Duration(days: 1));
-    } else if (effectivePayday.weekday == DateTime.sunday) {
-      effectivePayday = effectivePayday.subtract(const Duration(days: 2));
+    if (depositResult.depositMade) {
+      print('💰 Payday deposit processed: ${depositResult.depositAmount}');
     }
 
-    // Payday is due if it's today or in the past
-    final isPaydayDue = !effectivePayday.isAfter(today);
+    // Refresh settings after deposit (balance may have changed)
+    settings = await repository.getUserSettings(userId);
 
-    if (isPaydayDue) {
-      print('💰 Payday is due! Processing payday actions...');
-
-      // Important: after processing, advance nextPayday to the next upcoming payday
-      final calculatedNextPayday = DateCycleService.calculateNextPayday(
-        effectivePayday.add(const Duration(days: 1)),
-        settings.payCycle,
-      );
-
-      // Add income to current balance
-      final newBalance = settings.currentBalance + settings.incomeAmount;
-
-      final updatedSettings = settings.copyWith(
-        nextPayday: calculatedNextPayday,
-        currentBalance: newBalance,
-        updatedAt: DateTime.now(),
-      );
-
-      await repository.saveUserSettings(updatedSettings);
-      settings = updatedSettings;
-
-      print('💰 Income added to balance: ${settings.incomeAmount} -> New balance: $newBalance');
-
+    if (settings != null) {
       // Process auto-transfers to savings goals
       try {
         final autoTransferService = ref.read(autoTransferServiceProvider);
@@ -88,7 +64,7 @@ final userSettingsProvider = FutureProvider<UserSettings?>((ref) async {
       final freshSettings = await repository.getUserSettings(userId);
       if (freshSettings != null) {
         settings = freshSettings;
-        print('✅ Settings refreshed - Current balance: ${settings.currentBalance}');
+        print('✅ Settings refreshed - Total Pool Balance: ${settings.currentBalance}');
       }
     }
   }
@@ -197,12 +173,15 @@ final budgetHealthProvider = FutureProvider<BudgetHealth>((ref) async {
     return BudgetHealth.unknown;
   }
 
-  // Protect against division by zero
-  if (settings.currentBalance <= 0) {
+  // currentBalance net bakiye. Toplam başlangıç bütçesi = net bakiye + harcama.
+  final totalBudget = settings.currentBalance + totalExpenses;
+
+  // Protect against invalid totals
+  if (totalBudget <= 0) {
     return BudgetHealth.unknown;
   }
 
-  final spentPercentage = (totalExpenses / settings.currentBalance) * 100;
+  final spentPercentage = (totalExpenses / totalBudget) * 100;
 
   if (spentPercentage < 50) {
     return BudgetHealth.excellent;
