@@ -56,9 +56,17 @@ class _TransactionDetailScreenState extends ConsumerState<TransactionDetailScree
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final isExpense = widget.transaction.isExpense;
+
+    // 'Add Funds' gibi kategoriler standart listede olmayabilir.
+    // Listede yoksa mevcut işlem bilgisini fallback olarak kullan.
     final category = AppConstants.transactionCategories.firstWhere(
       (c) => c['id'] == _selectedCategoryId,
-      orElse: () => AppConstants.transactionCategories.first,
+      orElse: () => {
+        'id': widget.transaction.categoryId,
+        'name': widget.transaction.categoryName,
+        'emoji': widget.transaction.categoryEmoji,
+      },
     );
 
     return Scaffold(
@@ -118,7 +126,9 @@ class _TransactionDetailScreenState extends ConsumerState<TransactionDetailScree
                       width: 80,
                       height: 80,
                       decoration: BoxDecoration(
-                        color: AppColors.lightPink.withValues(alpha: 0.6),
+                        color: isExpense
+                            ? AppColors.lightPink.withValues(alpha: 0.6)
+                            : AppColors.success.withValues(alpha: 0.2),
                         shape: BoxShape.circle,
                       ),
                       child: Center(
@@ -132,7 +142,8 @@ class _TransactionDetailScreenState extends ConsumerState<TransactionDetailScree
                     const SizedBox(height: AppSpacing.md),
 
                     // Category Name
-                    if (_isEditing)
+                    // DÜZELTME: Sadece Gider (Expense) ise kategori seçimini göster.
+                    if (_isEditing && isExpense)
                       _buildCategorySelector(theme, isDark)
                     else
                       Text(
@@ -153,7 +164,7 @@ class _TransactionDetailScreenState extends ConsumerState<TransactionDetailScree
                         textAlign: TextAlign.center,
                         style: theme.textTheme.displaySmall?.copyWith(
                           fontWeight: FontWeight.w700,
-                          color: AppColors.error,
+                          color: isExpense ? AppColors.error : AppColors.success,
                         ),
                         inputFormatters: [
                           FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
@@ -162,7 +173,7 @@ class _TransactionDetailScreenState extends ConsumerState<TransactionDetailScree
                           prefixText: widget.currency == 'AUD' ? 'A\$' : '\$',
                           prefixStyle: theme.textTheme.displaySmall?.copyWith(
                             fontWeight: FontWeight.w700,
-                            color: AppColors.error,
+                            color: isExpense ? AppColors.error : AppColors.success,
                           ),
                           border: UnderlineInputBorder(
                             borderSide: BorderSide(color: AppColors.getBorder(context)),
@@ -186,10 +197,10 @@ class _TransactionDetailScreenState extends ConsumerState<TransactionDetailScree
                       )
                     else
                       Text(
-                        '-${CurrencyFormatter.format(widget.transaction.amount, widget.currency)}',
+                        '${isExpense ? '-' : '+'}${CurrencyFormatter.format(widget.transaction.amount, widget.currency)}',
                         style: theme.textTheme.displaySmall?.copyWith(
                           fontWeight: FontWeight.w700,
-                          color: AppColors.error,
+                          color: isExpense ? AppColors.error : AppColors.success,
                         ),
                       ).animate().fadeIn(duration: 300.ms),
                   ],
@@ -490,15 +501,34 @@ class _TransactionDetailScreenState extends ConsumerState<TransactionDetailScree
 
     try {
       final amount = double.parse(_amountController.text);
-      final category = AppConstants.transactionCategories.firstWhere(
-        (c) => c['id'] == _selectedCategoryId,
-      );
+      final isExpense = widget.transaction.isExpense;
+
+      // Kategori bilgisi: sadece giderlerde dropdown'dan gelir.
+      // Gelirde categoryId listede yoksa da mevcut işlem değerlerini koru.
+      String categoryName;
+      String categoryEmoji;
+
+      if (isExpense) {
+        final selectedCategory = AppConstants.transactionCategories.firstWhere(
+          (c) => c['id'] == _selectedCategoryId,
+          orElse: () => {
+            'id': widget.transaction.categoryId,
+            'name': widget.transaction.categoryName,
+            'emoji': widget.transaction.categoryEmoji,
+          },
+        );
+        categoryName = selectedCategory['name'] as String;
+        categoryEmoji = selectedCategory['emoji'] as String;
+      } else {
+        categoryName = widget.transaction.categoryName;
+        categoryEmoji = widget.transaction.categoryEmoji;
+      }
 
       final updatedTransaction = widget.transaction.copyWith(
         amount: amount,
         categoryId: _selectedCategoryId,
-        categoryName: category['name'] as String,
-        categoryEmoji: category['emoji'] as String,
+        categoryName: categoryName,
+        categoryEmoji: categoryEmoji,
         date: _selectedDate,
         note: _noteController.text.trim(),
       );
@@ -509,13 +539,18 @@ class _TransactionDetailScreenState extends ConsumerState<TransactionDetailScree
       // Update current balance based on the difference
       final settingsRepo = ref.read(userSettingsRepositoryProvider);
       final currentSettings = await ref.read(userSettingsProvider.future);
-      if (currentSettings != null && widget.transaction.isExpense) {
+
+      if (currentSettings != null) {
         final oldAmount = widget.transaction.amount;
         final newAmount = updatedTransaction.amount;
         final difference = newAmount - oldAmount;
 
+        // Expense amount ↑ => balance ↓  (subtract difference)
+        // Income amount ↑  => balance ↑  (add difference)
+        final signedDelta = isExpense ? -difference : difference;
+
         final updatedSettings = currentSettings.copyWith(
-          currentBalance: currentSettings.currentBalance - difference,
+          currentBalance: currentSettings.currentBalance + signedDelta,
           updatedAt: DateTime.now(),
         );
         await settingsRepo.saveUserSettings(updatedSettings);
@@ -626,12 +661,17 @@ class _TransactionDetailScreenState extends ConsumerState<TransactionDetailScree
       final repository = ref.read(transactionRepositoryProvider);
       await repository.deleteTransaction(widget.transaction.id, widget.transaction.userId);
 
-      // Update current balance - add back the deleted expense
+      // Update current balance
       final settingsRepo = ref.read(userSettingsRepositoryProvider);
       final currentSettings = await ref.read(userSettingsProvider.future);
-      if (currentSettings != null && widget.transaction.isExpense) {
+
+      if (currentSettings != null) {
+        final isExpense = widget.transaction.isExpense;
+        // Expense delete => +amount, Income delete => -amount
+        final balanceDelta = isExpense ? widget.transaction.amount : -widget.transaction.amount;
+
         final updatedSettings = currentSettings.copyWith(
-          currentBalance: currentSettings.currentBalance + widget.transaction.amount,
+          currentBalance: currentSettings.currentBalance + balanceDelta,
           updatedAt: DateTime.now(),
         );
         await settingsRepo.saveUserSettings(updatedSettings);
@@ -680,4 +720,3 @@ class _TransactionDetailScreenState extends ConsumerState<TransactionDetailScree
     }
   }
 }
-
