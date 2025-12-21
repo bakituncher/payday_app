@@ -1154,6 +1154,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Widget _buildPayCycleCard(ThemeData theme) {
+    // Kısa metinler kullan
+    final cycleLabels = {
+      'Monthly': 'Monthly',
+      'Bi-Weekly': 'Bi-Weekly',
+      'Semi-Monthly': 'Semi-Mo.',
+    };
+
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
@@ -1176,6 +1183,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               final index = entry.key;
               final cycle = entry.value;
               final isSelected = _selectedPayCycle == cycle;
+              final label = cycleLabels[cycle] ?? cycle;
+
               return Expanded(
                 child: Padding(
                   padding: EdgeInsets.only(
@@ -1192,25 +1201,31 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     },
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
+                      height: 48, // Sabit yükseklik
                       padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.sm,
+                        horizontal: AppSpacing.xs,
                         vertical: AppSpacing.sm,
                       ),
                       decoration: BoxDecoration(
                         gradient: isSelected ? AppColors.pinkGradient : null,
                         color: isSelected ? null : AppColors.getSubtle(context),
-                        borderRadius: BorderRadius.circular(AppRadius.round),
+                        borderRadius: BorderRadius.circular(AppRadius.md),
                         border: Border.all(
                           color: isSelected ? AppColors.primaryPink : Colors.transparent,
                           width: 2,
                         ),
                       ),
-                      child: Text(
-                        cycle,
-                        textAlign: TextAlign.center,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: isSelected ? Colors.white : AppColors.getTextPrimary(context),
-                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                      child: Center(
+                        child: Text(
+                          label,
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: isSelected ? Colors.white : AppColors.getTextPrimary(context),
+                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                            fontSize: 13,
+                          ),
                         ),
                       ),
                     ),

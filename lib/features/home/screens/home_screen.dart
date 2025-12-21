@@ -596,9 +596,10 @@ class _QuickActionButton extends StatelessWidget {
         onTap();
       },
       child: Container(
+        height: 56, // Sabit yükseklik
         padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md,
-          vertical: AppSpacing.sm,
+          horizontal: AppSpacing.sm,
+          vertical: AppSpacing.xs,
         ),
         decoration: BoxDecoration(
           color: AppColors.getCardBackground(context),
@@ -611,6 +612,7 @@ class _QuickActionButton extends StatelessWidget {
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Container(
               padding: const EdgeInsets.all(6),
@@ -620,12 +622,18 @@ class _QuickActionButton extends StatelessWidget {
               ),
               child: Icon(icon, color: color, size: 18),
             ),
-            const SizedBox(width: AppSpacing.sm),
-            Text(
-              label,
-              style: theme.textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: AppColors.getTextPrimary(context),
+            const SizedBox(width: AppSpacing.xs),
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.getTextPrimary(context),
+                  fontSize: 14,
+                ),
               ),
             ),
           ],
