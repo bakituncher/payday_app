@@ -21,7 +21,6 @@ final activeSubscriptionsProvider = FutureProvider<List<Subscription>>((ref) asy
   final repository = ref.watch(subscriptionRepositoryProvider);
   final subscriptions = await repository.getActiveSubscriptions(userId);
 
-  // Check and update any subscriptions with passed billing dates
   final updatedSubscriptions = <Subscription>[];
   for (final sub in subscriptions) {
     final calculatedNextBilling = DateCycleService.calculateNextBillingDate(
@@ -30,9 +29,16 @@ final activeSubscriptionsProvider = FutureProvider<List<Subscription>>((ref) asy
     );
 
     if (calculatedNextBilling != sub.nextBillingDate) {
-      // Billing date passed, update it
       final updatedSub = sub.copyWith(nextBillingDate: calculatedNextBilling);
       await repository.updateSubscription(updatedSub);
+      // reschedule notifications on auto-advance
+      try {
+        final notificationService = ref.read(notificationServiceProvider);
+        await notificationService.cancelNotification('sub_${updatedSub.id}');
+        await notificationService.scheduleSubscriptionDueNotification(updatedSub);
+      } catch (e) {
+        print('Warning: Failed to reschedule notification on auto-advance: $e');
+      }
       updatedSubscriptions.add(updatedSub);
     } else {
       updatedSubscriptions.add(sub);
@@ -98,13 +104,10 @@ final selectedCategoryFilterProvider = StateProvider<SubscriptionCategory?>((ref
 final filteredSubscriptionsProvider = FutureProvider<List<Subscription>>((ref) async {
   final selectedCategory = ref.watch(selectedCategoryFilterProvider);
   final allSubscriptions = await ref.watch(subscriptionsProvider.future);
-  final visible = allSubscriptions.where((s) => s.status != SubscriptionStatus.cancelled).toList();
-
   if (selectedCategory == null) {
-    return visible;
+    return allSubscriptions;
   }
-
-  return visible.where((s) => s.category == selectedCategory).toList();
+  return allSubscriptions.where((s) => s.category == selectedCategory).toList();
 });
 
 /// Selected subscription for detail view
@@ -154,6 +157,7 @@ class SubscriptionNotifier extends StateNotifier<AsyncValue<void>> {
     try {
       final repository = _ref.read(subscriptionRepositoryProvider);
       await repository.updateSubscription(updatedSub.copyWith(updatedAt: DateTime.now()));
+      await _rescheduleNotification(updatedSub);
       _invalidateProviders();
       state = const AsyncValue.data(null);
     } catch (e, st) {
@@ -166,6 +170,7 @@ class SubscriptionNotifier extends StateNotifier<AsyncValue<void>> {
     try {
       final repository = _ref.read(subscriptionRepositoryProvider);
       await repository.updateSubscription(subscription);
+      await _rescheduleNotification(subscription);
       _invalidateProviders();
       state = const AsyncValue.data(null);
     } catch (e, st) {
@@ -193,7 +198,15 @@ class SubscriptionNotifier extends StateNotifier<AsyncValue<void>> {
     state = const AsyncValue.loading();
     try {
       final repository = _ref.read(subscriptionRepositoryProvider);
-      await repository.cancelSubscription(subscriptionId, userId);
+      // Grace period: disable autoRenew, keep active until processor cancels at billing date
+      final sub = await repository.getSubscription(subscriptionId);
+      if (sub == null) throw Exception('Subscription not found');
+
+      final updated = sub.copyWith(
+        autoRenew: false,
+        updatedAt: DateTime.now(),
+      );
+      await repository.updateSubscription(updated);
 
       final notificationService = _ref.read(notificationServiceProvider);
       await notificationService.cancelNotification('sub_$subscriptionId');
@@ -223,6 +236,7 @@ class SubscriptionNotifier extends StateNotifier<AsyncValue<void>> {
       );
 
       await repository.updateSubscription(updatedSub);
+      await _rescheduleNotification(updatedSub);
       _invalidateProviders();
       state = const AsyncValue.data(null);
     } catch (e, st) {
@@ -255,6 +269,7 @@ class SubscriptionNotifier extends StateNotifier<AsyncValue<void>> {
       );
 
       await repository.updateSubscription(updatedSub);
+      await _rescheduleNotification(updatedSub);
       _invalidateProviders();
       state = const AsyncValue.data(null);
     } catch (e, st) {
@@ -317,6 +332,16 @@ class SubscriptionNotifier extends StateNotifier<AsyncValue<void>> {
     _ref.invalidate(subscriptionsDueSoonProvider);
     _ref.invalidate(selectedSubscriptionProvider);
     _ref.invalidate(currentMonthlySummaryProvider);
+  }
+
+  Future<void> _rescheduleNotification(Subscription subscription) async {
+    try {
+      final notificationService = _ref.read(notificationServiceProvider);
+      await notificationService.cancelNotification('sub_${subscription.id}');
+      await notificationService.scheduleSubscriptionDueNotification(subscription);
+    } catch (e) {
+      print('Warning: Failed to reschedule notification: $e');
+    }
   }
 }
 

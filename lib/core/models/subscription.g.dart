@@ -22,6 +22,7 @@ _$SubscriptionImpl _$$SubscriptionImplFromJson(Map<String, dynamic> json) =>
       status:
           $enumDecodeNullable(_$SubscriptionStatusEnumMap, json['status']) ??
           SubscriptionStatus.active,
+      autoRenew: json['autoRenew'] as bool? ?? true,
       reminderEnabled: json['reminderEnabled'] as bool? ?? true,
       reminderDaysBefore: (json['reminderDaysBefore'] as num?)?.toInt() ?? 2,
       startDate: json['startDate'] == null
@@ -58,6 +59,7 @@ Map<String, dynamic> _$$SubscriptionImplToJson(_$SubscriptionImpl instance) =>
       'logoUrl': instance.logoUrl,
       'emoji': instance.emoji,
       'status': _$SubscriptionStatusEnumMap[instance.status]!,
+      'autoRenew': instance.autoRenew,
       'reminderEnabled': instance.reminderEnabled,
       'reminderDaysBefore': instance.reminderDaysBefore,
       'startDate': instance.startDate?.toIso8601String(),

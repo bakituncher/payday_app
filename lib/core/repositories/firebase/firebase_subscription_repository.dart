@@ -46,12 +46,21 @@ class FirebaseSubscriptionRepository implements SubscriptionRepository {
 
   @override
   Future<void> pauseSubscription(String subscriptionId, String userId) async {
-      await _getCollection(userId).doc(subscriptionId).update({'status': 'paused'});
+    await _getCollection(userId).doc(subscriptionId).update({
+      'status': 'paused',
+      'pausedAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
   }
 
   @override
   Future<void> resumeSubscription(String subscriptionId, String userId) async {
-      await _getCollection(userId).doc(subscriptionId).update({'status': 'active'});
+    // No-op: smart resume handled in notifier to adjust nextBillingDate.
+    await _getCollection(userId).doc(subscriptionId).update({
+      'status': 'active',
+      'pausedAt': null,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
   }
 
   // Implementing other required methods with basic logic or throw unimplemented for now if complex
@@ -82,7 +91,7 @@ class FirebaseSubscriptionRepository implements SubscriptionRepository {
     final futureDate = now.add(Duration(days: days));
 
     final snapshot = await _getCollection(userId)
-        .where('status', isEqualTo: 'active')
+        .where('status', whereIn: ['active', 'trial'])
         .where('nextBillingDate', isGreaterThanOrEqualTo: now)
         .where('nextBillingDate', isLessThanOrEqualTo: futureDate)
         .orderBy('nextBillingDate')

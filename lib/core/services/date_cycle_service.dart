@@ -123,9 +123,6 @@ class DateCycleService {
     return candidate;
   }
 
-  // REMOVE: _calculateNextSemiMonthlyDate (15-day approximation). We now use
-  // _calculateNextSemiMonthlyCalendarDate for deterministic calendar behavior.
-
   /// Industry Standard: If payday falls on weekend, move to Friday
   static DateTime _adjustForWeekend(DateTime date) {
     if (date.weekday == DateTime.saturday) {
@@ -139,58 +136,42 @@ class DateCycleService {
   /// Check if subscription billing date has passed and calculate next billing date
   /// Returns current billing date if it's today (for consistency with payday logic)
   /// FIXED: Now uses corrected _calculateNextPeriodicDate that doesn't skip today
-  static DateTime calculateNextBillingDate(
-    DateTime currentBillingDate,
-    RecurrenceFrequency frequency,
-  ) {
+  static DateTime calculateNextBillingDate(DateTime currentNextBilling, RecurrenceFrequency frequency) {
+    DateTime next = currentNextBilling;
     final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    DateTime baseBilling = DateTime(currentBillingDate.year, currentBillingDate.month, currentBillingDate.day);
 
-    // If billing date is in the future, return it
-    if (baseBilling.isAfter(today)) {
-      return baseBilling;
-    }
-
-    // If billing date is today, return it (valid billing day)
-    if (_isSameDay(baseBilling, today)) {
-      return baseBilling;
-    }
-
+    int stepDays;
     switch (frequency) {
       case RecurrenceFrequency.daily:
-        return today.add(const Duration(days: 1));
+        stepDays = 1;
+        break;
       case RecurrenceFrequency.weekly:
-        return _calculateNextPeriodicDate(baseBilling, today, 7);
+        stepDays = 7;
+        break;
       case RecurrenceFrequency.biweekly:
-        return _calculateNextPeriodicDate(baseBilling, today, 14);
+        stepDays = 14;
+        break;
       case RecurrenceFrequency.monthly:
-        return _calculateNextMonthlyDate(baseBilling, today);
+        while (!next.isAfter(now)) {
+          next = DateTime(next.year, next.month + 1, next.day);
+        }
+        return next;
       case RecurrenceFrequency.quarterly:
-        // Quarterly: Every 3 months from anchor date
-        int monthDiff = _calculateMonthDiff(baseBilling, today);
-        int cyclesPassed = (monthDiff / 3).floor();
-        DateTime candidate = _addMonthsSafely(baseBilling, cyclesPassed * 3);
-
-        if (candidate.isBefore(today)) {
-          return _addMonthsSafely(baseBilling, (cyclesPassed + 1) * 3);
+        while (!next.isAfter(now)) {
+          next = DateTime(next.year, next.month + 3, next.day);
         }
-        return candidate;
+        return next;
       case RecurrenceFrequency.yearly:
-        // Yearly: Same date next year
-        int yearsPassed = today.year - baseBilling.year;
-        DateTime candidate = _addMonthsSafely(baseBilling, yearsPassed * 12);
-
-        if (candidate.isBefore(today)) {
-          return _addMonthsSafely(baseBilling, (yearsPassed + 1) * 12);
+        while (!next.isAfter(now)) {
+          next = DateTime(next.year + 1, next.month, next.day);
         }
-        return candidate;
+        return next;
     }
-  }
 
-  /// Helper to calculate difference in months
-  static int _calculateMonthDiff(DateTime from, DateTime to) {
-    return (to.year - from.year) * 12 + to.month - from.month;
+    while (!next.isAfter(now)) {
+      next = next.add(Duration(days: stepDays));
+    }
+    return next;
   }
 
   /// Robust month addition handling day clamping (e.g. Jan 31 + 1 month -> Feb 28)

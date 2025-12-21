@@ -78,6 +78,7 @@ class Subscription with _$Subscription {
     @Default('') String logoUrl,
     @Default('💳') String emoji,
     @Default(SubscriptionStatus.active) SubscriptionStatus status,
+    @Default(true) bool autoRenew,
     @Default(true) bool reminderEnabled,
     @Default(2) int reminderDaysBefore,
     DateTime? startDate,

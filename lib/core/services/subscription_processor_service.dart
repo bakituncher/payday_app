@@ -142,12 +142,40 @@ class SubscriptionProcessorService {
     double totalAmount = 0.0;
     DateTime currentBillingDate = subscription.nextBillingDate;
 
+    // Grace period: if autoRenew is false, keep active until billing date, then cancel instead of charging
+    if (!subscription.autoRenew && currentBillingDate.isAfter(today)) {
+      return _SubscriptionProcessDetails(
+        transactionsCreated: const [],
+        totalAmount: 0.0,
+        updatedSubscription: subscription,
+      );
+    }
+
     // Eğer ödeme günü henüz gelmediyse, işlem yapma
     if (currentBillingDate.isAfter(today)) {
       return _SubscriptionProcessDetails(
         transactionsCreated: [],
         totalAmount: 0.0,
         updatedSubscription: subscription,
+      );
+    }
+
+    // If autoRenew is disabled and billing date is due/past: cancel without charging
+    if (!subscription.autoRenew) {
+      final nextDate = DateCycleService.calculateNextBillingDate(
+        currentBillingDate,
+        subscription.frequency,
+      );
+      final updatedSubscription = subscription.copyWith(
+        status: SubscriptionStatus.cancelled,
+        cancelledAt: DateTime.now(),
+        nextBillingDate: nextDate,
+        updatedAt: DateTime.now(),
+      );
+      return _SubscriptionProcessDetails(
+        transactionsCreated: const [],
+        totalAmount: 0.0,
+        updatedSubscription: updatedSubscription,
       );
     }
 
@@ -313,4 +341,3 @@ class _SubscriptionProcessDetails {
     required this.updatedSubscription,
   });
 }
-
