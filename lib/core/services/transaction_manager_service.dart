@@ -47,34 +47,28 @@ class TransactionManagerService {
 
       // ADIM 2: Bakiyeyi Güncelle (eğer istenmişse)
       if (updateBalance) {
-        final settings = await _settingsRepo.getUserSettings(userId);
+        // Firestore tarafı için atomik increment destekle
+        final delta = transaction.isExpense ? -transaction.amount : transaction.amount;
+        final handled = await _settingsRepo.incrementBalance(userId, delta);
 
-        if (settings == null) {
-          throw Exception('User settings not found for userId: $userId');
+        if (!handled) {
+          // Local/mock repo veya increment'i desteklemeyen implemantasyonlar için geri dönüş
+          final settings = await _settingsRepo.getUserSettings(userId);
+
+          if (settings == null) {
+            throw Exception('User settings not found for userId: $userId');
+          }
+
+          final newBalance = settings.currentBalance + delta;
+          if (newBalance < 0) {
+            print('⚠️ TransactionManager: Warning - Balance is negative: $newBalance');
+          }
+
+          await _settingsRepo.saveUserSettings(settings.copyWith(
+            currentBalance: newBalance,
+            updatedAt: DateTime.now(),
+          ));
         }
-
-        double currentBalance = settings.currentBalance;
-        double newBalance = currentBalance;
-
-        // ADIM 3: Bakiyeyi Hesapla
-        if (transaction.isExpense) {
-          newBalance = currentBalance - transaction.amount;
-          print('💼 TransactionManager: Expense - Balance: $currentBalance -> $newBalance');
-        } else {
-          newBalance = currentBalance + transaction.amount;
-          print('💼 TransactionManager: Income - Balance: $currentBalance -> $newBalance');
-        }
-
-        // Güvenlik Kontrolü: Negatif bakiye uyarısı (ama işlemi engelleme - kullanıcı ekside olabilir)
-        if (newBalance < 0) {
-          print('⚠️ TransactionManager: Warning - Balance is negative: $newBalance');
-        }
-
-        // ADIM 4: Yeni Bakiyeyi Kaydet
-        await _settingsRepo.saveUserSettings(settings.copyWith(
-          currentBalance: newBalance,
-          updatedAt: DateTime.now(),
-        ));
 
         print('💼 TransactionManager: Balance updated successfully');
       } else {
@@ -188,4 +182,3 @@ class TransactionManagerService {
     print('✅ TransactionManager: Balance corrected successfully');
   }
 }
-

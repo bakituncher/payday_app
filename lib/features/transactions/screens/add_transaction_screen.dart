@@ -171,7 +171,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                         color: AppColors.getTextPrimary(context),
                       ),
                       inputFormatters: [
-                        FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
+                        FilteringTextInputFormatter.allow(RegExp(r'^\d+([.,])?\d{0,2}')),
                       ],
                       decoration: InputDecoration(
                         hintText: '0.00',
@@ -421,7 +421,8 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
     });
 
     try {
-      final amount = double.parse(_amountController.text);
+      final amountText = _amountController.text.replaceAll(',', '.');
+      final amount = double.parse(amountText);
       final userId = ref.read(currentUserIdProvider);
       final category = AppConstants.transactionCategories
           .firstWhere((c) => c['id'] == _selectedCategoryId);

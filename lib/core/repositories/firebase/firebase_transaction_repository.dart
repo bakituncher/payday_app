@@ -80,13 +80,19 @@ class FirebaseTransactionRepository implements TransactionRepository {
         .where('date', isLessThan: date.toIso8601String())
         .get();
 
-    final batch = _firestore.batch();
-    for (final doc in snapshot.docs) {
-      batch.delete(doc.reference);
+    int deletedCount = 0;
+    // Chunk into batches of 500
+    for (var i = 0; i < snapshot.docs.length; i += 500) {
+      final chunk = snapshot.docs.sublist(i, i + 500 > snapshot.docs.length ? snapshot.docs.length : i + 500);
+      final batch = _firestore.batch();
+      for (final doc in chunk) {
+        batch.delete(doc.reference);
+      }
+      await batch.commit();
+      deletedCount += chunk.length;
     }
 
-    await batch.commit();
-    return snapshot.docs.length;
+    return deletedCount;
   }
 
   @override
@@ -99,11 +105,13 @@ class FirebaseTransactionRepository implements TransactionRepository {
   Future<void> deleteAllUserTransactions(String userId) async {
     final snapshot = await _getCollection(userId).get();
 
-    final batch = _firestore.batch();
-    for (final doc in snapshot.docs) {
-      batch.delete(doc.reference);
+    for (var i = 0; i < snapshot.docs.length; i += 500) {
+      final chunk = snapshot.docs.sublist(i, i + 500 > snapshot.docs.length ? snapshot.docs.length : i + 500);
+      final batch = _firestore.batch();
+      for (final doc in chunk) {
+        batch.delete(doc.reference);
+      }
+      await batch.commit();
     }
-
-    await batch.commit();
   }
 }
