@@ -39,3 +39,14 @@ final userPhotoUrlProvider = Provider<String?>((ref) {
   return userAsync.asData?.value?.photoURL;
 });
 
+// Anonymous state helper
+final isAnonymousUserProvider = Provider<bool>((ref) {
+  final user = ref.watch(currentUserProvider).asData?.value;
+  return user != null && user.isAnonymous;
+});
+
+// Fully authenticated (non-anonymous) helper
+final isFullyAuthenticatedProvider = Provider<bool>((ref) {
+  final user = ref.watch(currentUserProvider).asData?.value;
+  return user != null && !user.isAnonymous;
+});

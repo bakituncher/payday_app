@@ -652,7 +652,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final currentUser = ref.watch(currentUserProvider).asData?.value;
-    final isSignedIn = currentUser != null;
+    final isFullyAuthenticated = ref.watch(isFullyAuthenticatedProvider);
 
     return Scaffold(
       backgroundColor: AppColors.getBackground(context),
@@ -697,7 +697,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           children: [
             _buildSectionTitle(theme, 'Account', Icons.person_rounded),
             const SizedBox(height: AppSpacing.sm),
-            _buildAccountCard(theme, isSignedIn, currentUser),
+            _buildAccountCard(theme, isFullyAuthenticated, currentUser),
 
             const SizedBox(height: AppSpacing.lg),
 
@@ -768,7 +768,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
-  Widget _buildAccountCard(ThemeData theme, bool isSignedIn, dynamic currentUser) {
+  Widget _buildAccountCard(ThemeData theme, bool isFullyAuthenticated, dynamic currentUser) {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
@@ -779,7 +779,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (isSignedIn) ...[
+          if (isFullyAuthenticated) ...[
             Row(
               children: [
                 Container(
@@ -1525,3 +1525,4 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 }
+
