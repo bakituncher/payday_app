@@ -1,6 +1,8 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+// 👇 App Check import eklendi
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
@@ -30,6 +32,14 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // 👇 App Check Aktivasyonu
+  // Firebase.initializeApp'ten hemen sonra, diğer servislerden önce çağırıyoruz.
+  await FirebaseAppCheck.instance.activate(
+    // Android için: Debug moddaysa debug provider, değilse Play Integrity
+    androidProvider: kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
+    // iOS için: Debug moddaysa debug provider, değilse App Attest
+    appleProvider: kDebugMode ? AppleProvider.debug : AppleProvider.appAttest,  );
 
   // RevenueCat'i başlat
   await RevenueCatService().init();
@@ -222,7 +232,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
-    // ... UI kodları aynen kalacak (kısaltmak için burayı yazmıyorum, yukarıdaki UI kodunun aynısı)
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 

@@ -10,6 +10,8 @@
 		1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */ = {isa = PBXBuildFile; fileRef = 1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */; };
 		21BD33D93B62464984677145 /* Pods_RunnerTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6B77A42AB65DAC95992250C7 /* Pods_RunnerTests.framework */; };
 		2428A31E2653885D70DA24B1 /* Pods_Runner.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5942A637C0CC239668B2404F /* Pods_Runner.framework */; };
+		2DAF9E742EF85C9B00C4879B /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 2DAF9E732EF85C9B00C4879B /* GoogleService-Info.plist */; };
+		2DAF9E762EF85E0500C4879B /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2DAF9E752EF85E0500C4879B /* StoreKit.framework */; };
 		331C808B294A63AB00263BE5 /* RunnerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 331C807B294A618700263BE5 /* RunnerTests.swift */; };
 		3B3967161E833CAA004F5970 /* AppFrameworkInfo.plist in Resources */ = {isa = PBXBuildFile; fileRef = 3B3967151E833CAA004F5970 /* AppFrameworkInfo.plist */; };
 		423FC9A97187797D5E8D412F /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = A56802EACF8E01B0EDED4868 /* GoogleService-Info.plist */; };
@@ -46,6 +48,8 @@
 		1498D2321E8E86230040F4C2 /* GeneratedPluginRegistrant.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GeneratedPluginRegistrant.h; sourceTree = "<group>"; };
 		1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GeneratedPluginRegistrant.m; sourceTree = "<group>"; };
 		2B4165C3BA954B28E71C3EBF /* Pods-RunnerTests.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.profile.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.profile.xcconfig"; sourceTree = "<group>"; };
+		2DAF9E732EF85C9B00C4879B /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		2DAF9E752EF85E0500C4879B /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
 		2DD1EF202EF0E22400AA6310 /* Runner.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Runner.entitlements; sourceTree = "<group>"; };
 		331C807B294A618700263BE5 /* RunnerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunnerTests.swift; sourceTree = "<group>"; };
 		331C8081294A63A400263BE5 /* RunnerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RunnerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -84,6 +88,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				2428A31E2653885D70DA24B1 /* Pods_Runner.framework in Frameworks */,
+				2DAF9E762EF85E0500C4879B /* StoreKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -134,6 +139,7 @@
 		97C146F01CF9000F007C117D /* Runner */ = {
 			isa = PBXGroup;
 			children = (
+				2DAF9E732EF85C9B00C4879B /* GoogleService-Info.plist */,
 				2DD1EF202EF0E22400AA6310 /* Runner.entitlements */,
 				97C146FA1CF9000F007C117D /* Main.storyboard */,
 				97C146FD1CF9000F007C117D /* Assets.xcassets */,
@@ -150,6 +156,7 @@
 		CABB595FFBAC1A7C66318B41 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				2DAF9E752EF85E0500C4879B /* StoreKit.framework */,
 				5942A637C0CC239668B2404F /* Pods_Runner.framework */,
 				6B77A42AB65DAC95992250C7 /* Pods_RunnerTests.framework */,
 			);
@@ -266,6 +273,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				97C147011CF9000F007C117D /* LaunchScreen.storyboard in Resources */,
+				2DAF9E742EF85C9B00C4879B /* GoogleService-Info.plist in Resources */,
 				3B3967161E833CAA004F5970 /* AppFrameworkInfo.plist in Resources */,
 				97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */,
 				97C146FC1CF9000F007C117D /* Main.storyboard in Resources */,
