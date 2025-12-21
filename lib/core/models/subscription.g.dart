@@ -33,6 +33,9 @@ _$SubscriptionImpl _$$SubscriptionImplFromJson(Map<String, dynamic> json) =>
       trialEndsAt: json['trialEndsAt'] == null
           ? null
           : DateTime.parse(json['trialEndsAt'] as String),
+      pausedAt: json['pausedAt'] == null
+          ? null
+          : DateTime.parse(json['pausedAt'] as String),
       createdAt: json['createdAt'] == null
           ? null
           : DateTime.parse(json['createdAt'] as String),
@@ -60,6 +63,7 @@ Map<String, dynamic> _$$SubscriptionImplToJson(_$SubscriptionImpl instance) =>
       'startDate': instance.startDate?.toIso8601String(),
       'cancelledAt': instance.cancelledAt?.toIso8601String(),
       'trialEndsAt': instance.trialEndsAt?.toIso8601String(),
+      'pausedAt': instance.pausedAt?.toIso8601String(),
       'createdAt': instance.createdAt?.toIso8601String(),
       'updatedAt': instance.updatedAt?.toIso8601String(),
     };

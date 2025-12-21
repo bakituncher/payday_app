@@ -38,6 +38,7 @@ mixin _$Subscription {
   DateTime? get startDate => throw _privateConstructorUsedError;
   DateTime? get cancelledAt => throw _privateConstructorUsedError;
   DateTime? get trialEndsAt => throw _privateConstructorUsedError;
+  DateTime? get pausedAt => throw _privateConstructorUsedError;
   DateTime? get createdAt => throw _privateConstructorUsedError;
   DateTime? get updatedAt => throw _privateConstructorUsedError;
 
@@ -76,6 +77,7 @@ abstract class $SubscriptionCopyWith<$Res> {
     DateTime? startDate,
     DateTime? cancelledAt,
     DateTime? trialEndsAt,
+    DateTime? pausedAt,
     DateTime? createdAt,
     DateTime? updatedAt,
   });
@@ -113,6 +115,7 @@ class _$SubscriptionCopyWithImpl<$Res, $Val extends Subscription>
     Object? startDate = freezed,
     Object? cancelledAt = freezed,
     Object? trialEndsAt = freezed,
+    Object? pausedAt = freezed,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
   }) {
@@ -186,6 +189,10 @@ class _$SubscriptionCopyWithImpl<$Res, $Val extends Subscription>
                 ? _value.trialEndsAt
                 : trialEndsAt // ignore: cast_nullable_to_non_nullable
                       as DateTime?,
+            pausedAt: freezed == pausedAt
+                ? _value.pausedAt
+                : pausedAt // ignore: cast_nullable_to_non_nullable
+                      as DateTime?,
             createdAt: freezed == createdAt
                 ? _value.createdAt
                 : createdAt // ignore: cast_nullable_to_non_nullable
@@ -227,6 +234,7 @@ abstract class _$$SubscriptionImplCopyWith<$Res>
     DateTime? startDate,
     DateTime? cancelledAt,
     DateTime? trialEndsAt,
+    DateTime? pausedAt,
     DateTime? createdAt,
     DateTime? updatedAt,
   });
@@ -263,6 +271,7 @@ class __$$SubscriptionImplCopyWithImpl<$Res>
     Object? startDate = freezed,
     Object? cancelledAt = freezed,
     Object? trialEndsAt = freezed,
+    Object? pausedAt = freezed,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
   }) {
@@ -336,6 +345,10 @@ class __$$SubscriptionImplCopyWithImpl<$Res>
             ? _value.trialEndsAt
             : trialEndsAt // ignore: cast_nullable_to_non_nullable
                   as DateTime?,
+        pausedAt: freezed == pausedAt
+            ? _value.pausedAt
+            : pausedAt // ignore: cast_nullable_to_non_nullable
+                  as DateTime?,
         createdAt: freezed == createdAt
             ? _value.createdAt
             : createdAt // ignore: cast_nullable_to_non_nullable
@@ -370,6 +383,7 @@ class _$SubscriptionImpl extends _Subscription {
     this.startDate,
     this.cancelledAt,
     this.trialEndsAt,
+    this.pausedAt,
     this.createdAt,
     this.updatedAt,
   }) : super._();
@@ -418,13 +432,15 @@ class _$SubscriptionImpl extends _Subscription {
   @override
   final DateTime? trialEndsAt;
   @override
+  final DateTime? pausedAt;
+  @override
   final DateTime? createdAt;
   @override
   final DateTime? updatedAt;
 
   @override
   String toString() {
-    return 'Subscription(id: $id, userId: $userId, name: $name, amount: $amount, currency: $currency, frequency: $frequency, category: $category, nextBillingDate: $nextBillingDate, description: $description, logoUrl: $logoUrl, emoji: $emoji, status: $status, reminderEnabled: $reminderEnabled, reminderDaysBefore: $reminderDaysBefore, startDate: $startDate, cancelledAt: $cancelledAt, trialEndsAt: $trialEndsAt, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'Subscription(id: $id, userId: $userId, name: $name, amount: $amount, currency: $currency, frequency: $frequency, category: $category, nextBillingDate: $nextBillingDate, description: $description, logoUrl: $logoUrl, emoji: $emoji, status: $status, reminderEnabled: $reminderEnabled, reminderDaysBefore: $reminderDaysBefore, startDate: $startDate, cancelledAt: $cancelledAt, trialEndsAt: $trialEndsAt, pausedAt: $pausedAt, createdAt: $createdAt, updatedAt: $updatedAt)';
   }
 
   @override
@@ -459,6 +475,8 @@ class _$SubscriptionImpl extends _Subscription {
                 other.cancelledAt == cancelledAt) &&
             (identical(other.trialEndsAt, trialEndsAt) ||
                 other.trialEndsAt == trialEndsAt) &&
+            (identical(other.pausedAt, pausedAt) ||
+                other.pausedAt == pausedAt) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             (identical(other.updatedAt, updatedAt) ||
@@ -486,6 +504,7 @@ class _$SubscriptionImpl extends _Subscription {
     startDate,
     cancelledAt,
     trialEndsAt,
+    pausedAt,
     createdAt,
     updatedAt,
   ]);
@@ -523,6 +542,7 @@ abstract class _Subscription extends Subscription {
     final DateTime? startDate,
     final DateTime? cancelledAt,
     final DateTime? trialEndsAt,
+    final DateTime? pausedAt,
     final DateTime? createdAt,
     final DateTime? updatedAt,
   }) = _$SubscriptionImpl;
@@ -565,6 +585,8 @@ abstract class _Subscription extends Subscription {
   DateTime? get cancelledAt;
   @override
   DateTime? get trialEndsAt;
+  @override
+  DateTime? get pausedAt;
   @override
   DateTime? get createdAt;
   @override

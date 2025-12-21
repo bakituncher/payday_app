@@ -12,7 +12,9 @@ import 'package:payday/core/providers/currency_providers.dart';
 import 'package:uuid/uuid.dart';
 
 class AddSubscriptionScreen extends ConsumerStatefulWidget {
-  const AddSubscriptionScreen({super.key});
+  const AddSubscriptionScreen({super.key, this.existingSubscription});
+
+  final Subscription? existingSubscription;
 
   @override
   ConsumerState<AddSubscriptionScreen> createState() => _AddSubscriptionScreenState();
@@ -60,35 +62,46 @@ class _AddSubscriptionScreenState extends ConsumerState<AddSubscriptionScreen> {
 
     try {
       final userId = ref.read(currentUserIdProvider);
+      final base = widget.existingSubscription;
       final subscription = Subscription(
-        id: const Uuid().v4(),
+        id: base?.id ?? const Uuid().v4(),
         userId: userId,
         name: _nameController.text.trim(),
         amount: double.parse(_amountController.text),
-        currency: 'USD',
+        currency: base?.currency ?? 'USD',
         frequency: _selectedFrequency,
         category: _selectedCategory,
         nextBillingDate: _nextBillingDate,
         description: _descriptionController.text.trim(),
         emoji: _selectedEmoji,
-        status: SubscriptionStatus.active,
+        status: base?.status ?? SubscriptionStatus.active,
         reminderEnabled: _reminderEnabled,
         reminderDaysBefore: _reminderDaysBefore,
-        startDate: DateTime.now(),
-        createdAt: DateTime.now(),
+        startDate: base?.startDate ?? DateTime.now(),
+        createdAt: base?.createdAt ?? DateTime.now(),
+        updatedAt: DateTime.now(),
+        cancelledAt: base?.cancelledAt,
+        trialEndsAt: base?.trialEndsAt,
+        pausedAt: base?.pausedAt,
       );
 
-      await ref.read(subscriptionNotifierProvider.notifier).addSubscription(subscription);
+      final notifier = ref.read(subscriptionNotifierProvider.notifier);
+      if (base == null) {
+        await notifier.addSubscription(subscription);
+      } else {
+        await notifier.editSubscription(base, subscription);
+      }
 
       if (mounted) {
         HapticFeedback.mediumImpact();
+        final isEdit = base != null;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
               children: [
                 const Icon(Icons.check_circle, color: Colors.white),
                 const SizedBox(width: 8),
-                Text('${subscription.name} added successfully!'),
+                Text('${subscription.name} ${isEdit ? 'updated' : 'added'} successfully!'),
               ],
             ),
             backgroundColor: AppColors.success,
@@ -135,6 +148,23 @@ class _AddSubscriptionScreenState extends ConsumerState<AddSubscriptionScreen> {
 
     if (date != null) {
       setState(() => _nextBillingDate = date);
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    final existing = widget.existingSubscription;
+    if (existing != null) {
+      _nameController.text = existing.name;
+      _amountController.text = existing.amount.toStringAsFixed(2);
+      _descriptionController.text = existing.description;
+      _selectedCategory = existing.category;
+      _selectedFrequency = existing.frequency;
+      _nextBillingDate = existing.nextBillingDate;
+      _selectedEmoji = existing.emoji;
+      _reminderEnabled = existing.reminderEnabled;
+      _reminderDaysBefore = existing.reminderDaysBefore;
     }
   }
 
@@ -544,9 +574,11 @@ class _AddSubscriptionScreenState extends ConsumerState<AddSubscriptionScreen> {
                         color: Colors.white,
                       ),
                     )
-                  : const Text(
-                      'Add Subscription',
-                      style: TextStyle(
+                  : Text(
+                      widget.existingSubscription == null
+                          ? 'Add Subscription'
+                          : 'Save Changes',
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
                       ),

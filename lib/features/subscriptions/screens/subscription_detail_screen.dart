@@ -10,6 +10,7 @@ import 'package:payday/features/subscriptions/providers/subscription_providers.d
 import 'package:payday/core/providers/currency_providers.dart';
 import 'package:payday/core/utils/currency_formatter.dart';
 import 'package:intl/intl.dart';
+import 'package:payday/features/subscriptions/screens/add_subscription_screen.dart';
 
 class SubscriptionDetailScreen extends ConsumerWidget {
   final Subscription subscription;
@@ -439,7 +440,13 @@ class SubscriptionDetailScreen extends ConsumerWidget {
 
     switch (action) {
       case 'edit':
-        // TODO: Navigate to edit screen
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => AddSubscriptionScreen(
+              existingSubscription: subscription,
+            ),
+          ),
+        );
         break;
 
       case 'pause':
@@ -536,4 +543,3 @@ class SubscriptionDetailScreen extends ConsumerWidget {
     );
   }
 }
-

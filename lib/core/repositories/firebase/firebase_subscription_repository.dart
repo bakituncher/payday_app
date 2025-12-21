@@ -78,8 +78,17 @@ class FirebaseSubscriptionRepository implements SubscriptionRepository {
 
   @override
   Future<List<Subscription>> getSubscriptionsDueSoon(String userId, int days) async {
-     // Complex query, skipping for MVP/Infrastructure setup
-     return [];
+    final now = DateTime.now();
+    final futureDate = now.add(Duration(days: days));
+
+    final snapshot = await _getCollection(userId)
+        .where('status', isEqualTo: 'active')
+        .where('nextBillingDate', isGreaterThanOrEqualTo: now)
+        .where('nextBillingDate', isLessThanOrEqualTo: futureDate)
+        .orderBy('nextBillingDate')
+        .get();
+
+    return snapshot.docs.map((d) => Subscription.fromJson(d.data())).toList();
   }
 
   @override
@@ -96,8 +105,11 @@ class FirebaseSubscriptionRepository implements SubscriptionRepository {
 
   @override
   Future<List<Subscription>> getSubscriptionsByCategory(String userId, SubscriptionCategory category) async {
-      // Need to map Enum to string/int for query
-      return [];
+    final snapshot = await _getCollection(userId)
+        .where('category', isEqualTo: category.name)
+        .get();
+
+    return snapshot.docs.map((d) => Subscription.fromJson(d.data())).toList();
   }
 
   @override

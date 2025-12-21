@@ -83,6 +83,7 @@ class Subscription with _$Subscription {
     DateTime? startDate,
     DateTime? cancelledAt,
     DateTime? trialEndsAt,
+    DateTime? pausedAt,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) = _Subscription;
@@ -139,6 +140,9 @@ class Subscription with _$Subscription {
     if (status != SubscriptionStatus.trial || trialEndsAt == null) return false;
     return DateTime.now().isBefore(trialEndsAt!);
   }
+
+  bool get isActiveOrTrial =>
+      status == SubscriptionStatus.active || status == SubscriptionStatus.trial;
 
   /// Days until next billing
   int get daysUntilBilling {
@@ -248,4 +252,3 @@ class SubscriptionTemplates {
     {'name': 'Duolingo Plus', 'category': SubscriptionCategory.education, 'emoji': '🦉', 'amount': 6.99},
   ];
 }
-
