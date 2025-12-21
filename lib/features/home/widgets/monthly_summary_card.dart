@@ -9,6 +9,7 @@ import 'package:payday/core/models/subscription.dart';
 import 'package:payday/features/home/providers/home_providers.dart';
 import 'package:payday/features/subscriptions/providers/subscription_providers.dart';
 import 'package:payday/features/insights/screens/monthly_summary_screen.dart';
+import 'package:payday/core/utils/currency_formatter.dart';
 import 'package:intl/intl.dart';
 
 class MonthlySummaryCard extends ConsumerWidget {
@@ -75,7 +76,7 @@ class MonthlySummaryCard extends ConsumerWidget {
     List<Subscription> subscriptions,
   ) {
     final theme = Theme.of(context);
-    final currencyFormat = NumberFormat.currency(symbol: _getCurrencySymbol(currency));
+    final currencyFormat = NumberFormat.currency(symbol: CurrencyFormatter.getSymbol(currency));
 
     // Calculate expenses
     final expenses = transactions.where((t) => t.isExpense).toList();
@@ -179,7 +180,7 @@ class MonthlySummaryCard extends ConsumerWidget {
 
   Widget _buildMiniChart(BuildContext context, List<Transaction> transactions, String currency) {
     final theme = Theme.of(context);
-    final currencyFormat = NumberFormat.currency(symbol: _getCurrencySymbol(currency));
+    final currencyFormat = NumberFormat.currency(symbol: CurrencyFormatter.getSymbol(currency));
 
     // Group expenses by date (last 7 days)
     final expenses = transactions.where((t) => t.isExpense).toList();
@@ -465,54 +466,6 @@ class MonthlySummaryCard extends ConsumerWidget {
         return sub.amount / 6.5;
       case RecurrenceFrequency.yearly:
         return sub.amount / 26;
-    }
-  }
-
-  String _getCurrencySymbol(String currency) {
-    // Common currency symbols
-    switch (currency.toUpperCase()) {
-      case 'USD':
-        return '\$';
-      case 'EUR':
-        return '€';
-      case 'GBP':
-        return '£';
-      case 'JPY':
-        return '¥';
-      case 'TRY':
-        return '₺';
-      case 'INR':
-        return '₹';
-      case 'RUB':
-        return '₽';
-      case 'CNY':
-        return '¥';
-      case 'KRW':
-        return '₩';
-      case 'AUD':
-      case 'CAD':
-      case 'NZD':
-      case 'SGD':
-      case 'HKD':
-        return '\$';
-      case 'CHF':
-        return 'CHF';
-      case 'SEK':
-        return 'kr';
-      case 'NOK':
-        return 'kr';
-      case 'DKK':
-        return 'kr';
-      case 'PLN':
-        return 'zł';
-      case 'BRL':
-        return 'R\$';
-      case 'ZAR':
-        return 'R';
-      case 'MXN':
-        return '\$';
-      default:
-        return currency;
     }
   }
 }

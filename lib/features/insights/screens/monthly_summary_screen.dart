@@ -7,6 +7,7 @@ import 'package:payday/core/models/transaction.dart';
 import 'package:payday/core/models/subscription.dart';
 import 'package:payday/features/home/providers/home_providers.dart';
 import 'package:payday/features/subscriptions/providers/subscription_providers.dart';
+import 'package:payday/core/utils/currency_formatter.dart';
 import 'package:intl/intl.dart';
 
 class MonthlySummaryScreen extends ConsumerWidget {
@@ -76,7 +77,7 @@ class MonthlySummaryScreen extends ConsumerWidget {
     List<Subscription> subscriptions,
   ) {
     final theme = Theme.of(context);
-    final currencyFormat = NumberFormat.currency(symbol: _getCurrencySymbol(currency));
+    final currencyFormat = NumberFormat.currency(symbol: CurrencyFormatter.getSymbol(currency));
 
     // Filter only expenses
     final expenses = transactions.where((t) => t.isExpense).toList();
@@ -277,7 +278,7 @@ class MonthlySummaryScreen extends ConsumerWidget {
 
     // Prepare chart data - sorted by date (most recent first)
     final sortedDates = expensesByDate.keys.toList()..sort((a, b) => b.compareTo(a));
-    final currencyFormat = NumberFormat.currency(symbol: _getCurrencySymbol(currency));
+    final currencyFormat = NumberFormat.currency(symbol: CurrencyFormatter.getSymbol(currency));
     final theme = Theme.of(context);
 
     return Container(
@@ -372,7 +373,7 @@ class MonthlySummaryScreen extends ConsumerWidget {
 
   Widget _buildExpensesList(BuildContext context, List<Transaction> expenses, String currency) {
     final theme = Theme.of(context);
-    final currencyFormat = NumberFormat.currency(symbol: _getCurrencySymbol(currency));
+    final currencyFormat = NumberFormat.currency(symbol: CurrencyFormatter.getSymbol(currency));
 
     // Group by category
     final byCategory = <String, List<Transaction>>{};
@@ -441,7 +442,7 @@ class MonthlySummaryScreen extends ConsumerWidget {
     String currency,
   ) {
     final theme = Theme.of(context);
-    final currencyFormat = NumberFormat.currency(symbol: _getCurrencySymbol(currency));
+    final currencyFormat = NumberFormat.currency(symbol: CurrencyFormatter.getSymbol(currency));
 
     return Container(
       decoration: BoxDecoration(
@@ -600,53 +601,6 @@ class MonthlySummaryScreen extends ConsumerWidget {
     }
   }
 
-  String _getCurrencySymbol(String currency) {
-    // Common currency symbols
-    switch (currency.toUpperCase()) {
-      case 'USD':
-        return '\$';
-      case 'EUR':
-        return '€';
-      case 'GBP':
-        return '£';
-      case 'JPY':
-        return '¥';
-      case 'TRY':
-        return '₺';
-      case 'INR':
-        return '₹';
-      case 'RUB':
-        return '₽';
-      case 'CNY':
-        return '¥';
-      case 'KRW':
-        return '₩';
-      case 'AUD':
-      case 'CAD':
-      case 'NZD':
-      case 'SGD':
-      case 'HKD':
-        return '\$';
-      case 'CHF':
-        return 'CHF';
-      case 'SEK':
-        return 'kr';
-      case 'NOK':
-        return 'kr';
-      case 'DKK':
-        return 'kr';
-      case 'PLN':
-        return 'zł';
-      case 'BRL':
-        return 'R\$';
-      case 'ZAR':
-        return 'R';
-      case 'MXN':
-        return '\$';
-      default:
-        return currency;
-    }
-  }
 
   Widget _buildErrorState(BuildContext context, Object error) {
     return Center(
