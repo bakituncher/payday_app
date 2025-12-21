@@ -82,22 +82,22 @@ class SubscriptionCard extends ConsumerWidget {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      if (subscription.status != SubscriptionStatus.active)
+                      if (subscription.status != SubscriptionStatus.active || !subscription.autoRenew)
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 8,
                             vertical: 2,
                           ),
                           decoration: BoxDecoration(
-                            color: _getStatusColor(subscription.status).withValues(alpha: 0.1),
+                            color: _getBadgeColor(subscription).withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(AppRadius.sm),
                           ),
                           child: Text(
-                            subscription.status.name.toUpperCase(),
+                            _getBadgeLabel(subscription),
                             style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w600,
-                              color: _getStatusColor(subscription.status),
+                              color: _getBadgeColor(subscription),
                             ),
                           ),
                         ),
@@ -219,5 +219,30 @@ class SubscriptionCard extends ConsumerWidget {
         return AppColors.info;
     }
   }
-}
 
+  String _getBadgeLabel(Subscription sub) {
+    if (sub.status == SubscriptionStatus.cancelled) {
+      return 'CANCELLED';
+    }
+    if (!sub.autoRenew && sub.status == SubscriptionStatus.active) {
+      return 'ENDS SOON';
+    }
+    if (sub.status == SubscriptionStatus.paused) {
+      return 'PAUSED';
+    }
+    if (sub.status == SubscriptionStatus.trial) {
+      return 'TRIAL';
+    }
+    return sub.status.name.toUpperCase();
+  }
+
+  Color _getBadgeColor(Subscription sub) {
+    if (sub.status == SubscriptionStatus.cancelled) {
+      return AppColors.error;
+    }
+    if (!sub.autoRenew && sub.status == SubscriptionStatus.active) {
+      return AppColors.error;
+    }
+    return _getStatusColor(sub.status);
+  }
+}

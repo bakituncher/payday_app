@@ -5,7 +5,6 @@ import 'package:payday/core/models/subscription.dart';
 import 'package:payday/core/models/subscription_analysis.dart';
 import 'package:payday/core/models/bill_reminder.dart';
 import 'package:payday/core/providers/repository_providers.dart';
-import 'package:payday/core/services/date_cycle_service.dart';
 import 'package:payday/features/insights/providers/monthly_summary_providers.dart';
 
 /// All subscriptions for current user
@@ -15,31 +14,12 @@ final subscriptionsProvider = FutureProvider<List<Subscription>>((ref) async {
   return repository.getSubscriptions(userId);
 });
 
-/// Active subscriptions only - Auto-updates billing dates if passed
+/// Active subscriptions only
 final activeSubscriptionsProvider = FutureProvider<List<Subscription>>((ref) async {
   final userId = ref.watch(currentUserIdProvider);
   final repository = ref.watch(subscriptionRepositoryProvider);
-  final subscriptions = await repository.getActiveSubscriptions(userId);
-
-  // Check and update any subscriptions with passed billing dates
-  final updatedSubscriptions = <Subscription>[];
-  for (final sub in subscriptions) {
-    final calculatedNextBilling = DateCycleService.calculateNextBillingDate(
-      sub.nextBillingDate,
-      sub.frequency,
-    );
-
-    if (calculatedNextBilling != sub.nextBillingDate) {
-      // Billing date passed, update it
-      final updatedSub = sub.copyWith(nextBillingDate: calculatedNextBilling);
-      await repository.updateSubscription(updatedSub);
-      updatedSubscriptions.add(updatedSub);
-    } else {
-      updatedSubscriptions.add(sub);
-    }
-  }
-
-  return updatedSubscriptions;
+  // Read-only: no auto-updates here to avoid race with processor
+  return repository.getActiveSubscriptions(userId);
 });
 
 /// Subscriptions due within 7 days
@@ -97,12 +77,10 @@ final selectedCategoryFilterProvider = StateProvider<SubscriptionCategory?>((ref
 /// Filtered subscriptions based on selected category
 final filteredSubscriptionsProvider = FutureProvider<List<Subscription>>((ref) async {
   final selectedCategory = ref.watch(selectedCategoryFilterProvider);
-  final allSubscriptions = await ref.watch(activeSubscriptionsProvider.future);
-
+  final allSubscriptions = await ref.watch(subscriptionsProvider.future);
   if (selectedCategory == null) {
     return allSubscriptions;
   }
-
   return allSubscriptions.where((s) => s.category == selectedCategory).toList();
 });
 
@@ -130,24 +108,15 @@ class SubscriptionNotifier extends StateNotifier<AsyncValue<void>> {
       final repository = _ref.read(subscriptionRepositoryProvider);
       await repository.addSubscription(subscription);
 
-      // Schedule notification for the subscription
       try {
         final notificationService = _ref.read(notificationServiceProvider);
         await notificationService.scheduleSubscriptionDueNotification(subscription);
       } catch (notificationError) {
-        // Log notification error but don't fail the whole operation
+        // Keep silent for notification scheduling issues
         print('Warning: Failed to schedule notification: $notificationError');
       }
 
-      // Invalidate cached data
-      _ref.invalidate(subscriptionsProvider);
-      _ref.invalidate(activeSubscriptionsProvider);
-      _ref.invalidate(filteredSubscriptionsProvider);
-      _ref.invalidate(totalMonthlyCostProvider);
-      _ref.invalidate(totalYearlyCostProvider);
-      _ref.invalidate(subscriptionsDueSoonProvider);
-      _ref.invalidate(currentMonthlySummaryProvider); // Update monthly summary
-
+      _invalidateProviders();
       state = const AsyncValue.data(null);
     } catch (e, st) {
       print('Error adding subscription: $e');
@@ -157,21 +126,26 @@ class SubscriptionNotifier extends StateNotifier<AsyncValue<void>> {
     }
   }
 
+  Future<void> editSubscription(Subscription originalSub, Subscription updatedSub) async {
+    state = const AsyncValue.loading();
+    try {
+      final repository = _ref.read(subscriptionRepositoryProvider);
+      await repository.updateSubscription(updatedSub.copyWith(updatedAt: DateTime.now()));
+      await _rescheduleNotification(updatedSub);
+      _invalidateProviders();
+      state = const AsyncValue.data(null);
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+    }
+  }
+
   Future<void> updateSubscription(Subscription subscription) async {
     state = const AsyncValue.loading();
     try {
       final repository = _ref.read(subscriptionRepositoryProvider);
       await repository.updateSubscription(subscription);
-
-      // Invalidate cached data
-      _ref.invalidate(subscriptionsProvider);
-      _ref.invalidate(activeSubscriptionsProvider);
-      _ref.invalidate(filteredSubscriptionsProvider);
-      _ref.invalidate(totalMonthlyCostProvider);
-      _ref.invalidate(totalYearlyCostProvider);
-      _ref.invalidate(selectedSubscriptionProvider);
-      _ref.invalidate(currentMonthlySummaryProvider); // Update monthly summary
-
+      await _rescheduleNotification(subscription);
+      _invalidateProviders();
       state = const AsyncValue.data(null);
     } catch (e, st) {
       state = AsyncValue.error(e, st);
@@ -184,19 +158,10 @@ class SubscriptionNotifier extends StateNotifier<AsyncValue<void>> {
       final repository = _ref.read(subscriptionRepositoryProvider);
       await repository.deleteSubscription(subscriptionId, userId);
 
-      // Cancel notification
       final notificationService = _ref.read(notificationServiceProvider);
       await notificationService.cancelNotification('sub_$subscriptionId');
 
-      // Invalidate cached data
-      _ref.invalidate(subscriptionsProvider);
-      _ref.invalidate(activeSubscriptionsProvider);
-      _ref.invalidate(filteredSubscriptionsProvider);
-      _ref.invalidate(totalMonthlyCostProvider);
-      _ref.invalidate(totalYearlyCostProvider);
-      _ref.invalidate(subscriptionsDueSoonProvider);
-      _ref.invalidate(currentMonthlySummaryProvider); // Update monthly summary
-
+      _invalidateProviders();
       state = const AsyncValue.data(null);
     } catch (e, st) {
       state = AsyncValue.error(e, st);
@@ -207,20 +172,20 @@ class SubscriptionNotifier extends StateNotifier<AsyncValue<void>> {
     state = const AsyncValue.loading();
     try {
       final repository = _ref.read(subscriptionRepositoryProvider);
-      await repository.cancelSubscription(subscriptionId, userId);
+      // Grace period: disable autoRenew, keep active until processor cancels at billing date
+      final sub = await repository.getSubscription(subscriptionId);
+      if (sub == null) throw Exception('Subscription not found');
 
-      // Cancel notification
+      final updated = sub.copyWith(
+        autoRenew: false,
+        updatedAt: DateTime.now(),
+      );
+      await repository.updateSubscription(updated);
+
       final notificationService = _ref.read(notificationServiceProvider);
       await notificationService.cancelNotification('sub_$subscriptionId');
 
-      // Invalidate cached data
-      _ref.invalidate(subscriptionsProvider);
-      _ref.invalidate(activeSubscriptionsProvider);
-      _ref.invalidate(filteredSubscriptionsProvider);
-      _ref.invalidate(totalMonthlyCostProvider);
-      _ref.invalidate(subscriptionAnalysisProvider);
-      _ref.invalidate(currentMonthlySummaryProvider); // Update monthly summary
-
+      _invalidateProviders();
       state = const AsyncValue.data(null);
     } catch (e, st) {
       state = AsyncValue.error(e, st);
@@ -231,12 +196,22 @@ class SubscriptionNotifier extends StateNotifier<AsyncValue<void>> {
     state = const AsyncValue.loading();
     try {
       final repository = _ref.read(subscriptionRepositoryProvider);
-      await repository.pauseSubscription(subscriptionId, userId);
+      final subscription = await repository.getSubscription(subscriptionId);
+      if (subscription == null) throw Exception('Subscription not found');
+      if (subscription.status == SubscriptionStatus.paused) {
+        state = const AsyncValue.data(null);
+        return;
+      }
 
-      _ref.invalidate(subscriptionsProvider);
-      _ref.invalidate(activeSubscriptionsProvider);
-      _ref.invalidate(filteredSubscriptionsProvider);
+      final updatedSub = subscription.copyWith(
+        status: SubscriptionStatus.paused,
+        pausedAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
 
+      await repository.updateSubscription(updatedSub);
+      await _rescheduleNotification(updatedSub);
+      _invalidateProviders();
       state = const AsyncValue.data(null);
     } catch (e, st) {
       state = AsyncValue.error(e, st);
@@ -247,12 +222,29 @@ class SubscriptionNotifier extends StateNotifier<AsyncValue<void>> {
     state = const AsyncValue.loading();
     try {
       final repository = _ref.read(subscriptionRepositoryProvider);
-      await repository.resumeSubscription(subscriptionId, userId);
+      final subscription = await repository.getSubscription(subscriptionId);
+      if (subscription == null) throw Exception('Subscription not found');
 
-      _ref.invalidate(subscriptionsProvider);
-      _ref.invalidate(activeSubscriptionsProvider);
-      _ref.invalidate(filteredSubscriptionsProvider);
+      DateTime newBillingDate = subscription.nextBillingDate;
+      if (subscription.pausedAt != null) {
+        final pauseDuration = DateTime.now().difference(subscription.pausedAt!);
+        newBillingDate = subscription.nextBillingDate.add(pauseDuration);
+      }
 
+      if (newBillingDate.isBefore(DateTime.now())) {
+        newBillingDate = DateTime.now().add(const Duration(days: 1));
+      }
+
+      final updatedSub = subscription.copyWith(
+        status: SubscriptionStatus.active,
+        pausedAt: null,
+        nextBillingDate: newBillingDate,
+        updatedAt: DateTime.now(),
+      );
+
+      await repository.updateSubscription(updatedSub);
+      await _rescheduleNotification(updatedSub);
+      _invalidateProviders();
       state = const AsyncValue.data(null);
     } catch (e, st) {
       state = AsyncValue.error(e, st);
@@ -302,6 +294,27 @@ class SubscriptionNotifier extends StateNotifier<AsyncValue<void>> {
       state = const AsyncValue.data(null);
     } catch (e, st) {
       state = AsyncValue.error(e, st);
+    }
+  }
+
+  void _invalidateProviders() {
+    _ref.invalidate(subscriptionsProvider);
+    _ref.invalidate(activeSubscriptionsProvider);
+    _ref.invalidate(filteredSubscriptionsProvider);
+    _ref.invalidate(totalMonthlyCostProvider);
+    _ref.invalidate(totalYearlyCostProvider);
+    _ref.invalidate(subscriptionsDueSoonProvider);
+    _ref.invalidate(selectedSubscriptionProvider);
+    _ref.invalidate(currentMonthlySummaryProvider);
+  }
+
+  Future<void> _rescheduleNotification(Subscription subscription) async {
+    try {
+      final notificationService = _ref.read(notificationServiceProvider);
+      await notificationService.cancelNotification('sub_${subscription.id}');
+      await notificationService.scheduleSubscriptionDueNotification(subscription);
+    } catch (e) {
+      print('Warning: Failed to reschedule notification: $e');
     }
   }
 }

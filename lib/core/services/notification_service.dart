@@ -152,7 +152,9 @@ class LocalNotificationService implements NotificationService {
     // In production:
     // await flutterLocalNotificationsPlugin.cancel(notificationId.hashCode);
 
-    _scheduledNotifications.removeWhere((n) => n.id == notificationId);
+    _scheduledNotifications.removeWhere(
+      (n) => n.id == notificationId || n.id.startsWith('$notificationId\_'),
+    );
     debugPrint('NotificationService: Cancelled - $notificationId');
   }
 
@@ -260,4 +262,3 @@ class LocalNotificationService implements NotificationService {
     return '${months[date.month - 1]} ${date.day}';
   }
 }
-

@@ -33,11 +33,13 @@ mixin _$Subscription {
   String get logoUrl => throw _privateConstructorUsedError;
   String get emoji => throw _privateConstructorUsedError;
   SubscriptionStatus get status => throw _privateConstructorUsedError;
+  bool get autoRenew => throw _privateConstructorUsedError;
   bool get reminderEnabled => throw _privateConstructorUsedError;
   int get reminderDaysBefore => throw _privateConstructorUsedError;
   DateTime? get startDate => throw _privateConstructorUsedError;
   DateTime? get cancelledAt => throw _privateConstructorUsedError;
   DateTime? get trialEndsAt => throw _privateConstructorUsedError;
+  DateTime? get pausedAt => throw _privateConstructorUsedError;
   DateTime? get createdAt => throw _privateConstructorUsedError;
   DateTime? get updatedAt => throw _privateConstructorUsedError;
 
@@ -71,11 +73,13 @@ abstract class $SubscriptionCopyWith<$Res> {
     String logoUrl,
     String emoji,
     SubscriptionStatus status,
+    bool autoRenew,
     bool reminderEnabled,
     int reminderDaysBefore,
     DateTime? startDate,
     DateTime? cancelledAt,
     DateTime? trialEndsAt,
+    DateTime? pausedAt,
     DateTime? createdAt,
     DateTime? updatedAt,
   });
@@ -108,11 +112,13 @@ class _$SubscriptionCopyWithImpl<$Res, $Val extends Subscription>
     Object? logoUrl = null,
     Object? emoji = null,
     Object? status = null,
+    Object? autoRenew = null,
     Object? reminderEnabled = null,
     Object? reminderDaysBefore = null,
     Object? startDate = freezed,
     Object? cancelledAt = freezed,
     Object? trialEndsAt = freezed,
+    Object? pausedAt = freezed,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
   }) {
@@ -166,6 +172,10 @@ class _$SubscriptionCopyWithImpl<$Res, $Val extends Subscription>
                 ? _value.status
                 : status // ignore: cast_nullable_to_non_nullable
                       as SubscriptionStatus,
+            autoRenew: null == autoRenew
+                ? _value.autoRenew
+                : autoRenew // ignore: cast_nullable_to_non_nullable
+                      as bool,
             reminderEnabled: null == reminderEnabled
                 ? _value.reminderEnabled
                 : reminderEnabled // ignore: cast_nullable_to_non_nullable
@@ -185,6 +195,10 @@ class _$SubscriptionCopyWithImpl<$Res, $Val extends Subscription>
             trialEndsAt: freezed == trialEndsAt
                 ? _value.trialEndsAt
                 : trialEndsAt // ignore: cast_nullable_to_non_nullable
+                      as DateTime?,
+            pausedAt: freezed == pausedAt
+                ? _value.pausedAt
+                : pausedAt // ignore: cast_nullable_to_non_nullable
                       as DateTime?,
             createdAt: freezed == createdAt
                 ? _value.createdAt
@@ -222,11 +236,13 @@ abstract class _$$SubscriptionImplCopyWith<$Res>
     String logoUrl,
     String emoji,
     SubscriptionStatus status,
+    bool autoRenew,
     bool reminderEnabled,
     int reminderDaysBefore,
     DateTime? startDate,
     DateTime? cancelledAt,
     DateTime? trialEndsAt,
+    DateTime? pausedAt,
     DateTime? createdAt,
     DateTime? updatedAt,
   });
@@ -258,11 +274,13 @@ class __$$SubscriptionImplCopyWithImpl<$Res>
     Object? logoUrl = null,
     Object? emoji = null,
     Object? status = null,
+    Object? autoRenew = null,
     Object? reminderEnabled = null,
     Object? reminderDaysBefore = null,
     Object? startDate = freezed,
     Object? cancelledAt = freezed,
     Object? trialEndsAt = freezed,
+    Object? pausedAt = freezed,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
   }) {
@@ -316,6 +334,10 @@ class __$$SubscriptionImplCopyWithImpl<$Res>
             ? _value.status
             : status // ignore: cast_nullable_to_non_nullable
                   as SubscriptionStatus,
+        autoRenew: null == autoRenew
+            ? _value.autoRenew
+            : autoRenew // ignore: cast_nullable_to_non_nullable
+                  as bool,
         reminderEnabled: null == reminderEnabled
             ? _value.reminderEnabled
             : reminderEnabled // ignore: cast_nullable_to_non_nullable
@@ -335,6 +357,10 @@ class __$$SubscriptionImplCopyWithImpl<$Res>
         trialEndsAt: freezed == trialEndsAt
             ? _value.trialEndsAt
             : trialEndsAt // ignore: cast_nullable_to_non_nullable
+                  as DateTime?,
+        pausedAt: freezed == pausedAt
+            ? _value.pausedAt
+            : pausedAt // ignore: cast_nullable_to_non_nullable
                   as DateTime?,
         createdAt: freezed == createdAt
             ? _value.createdAt
@@ -365,11 +391,13 @@ class _$SubscriptionImpl extends _Subscription {
     this.logoUrl = '',
     this.emoji = '💳',
     this.status = SubscriptionStatus.active,
+    this.autoRenew = true,
     this.reminderEnabled = true,
     this.reminderDaysBefore = 2,
     this.startDate,
     this.cancelledAt,
     this.trialEndsAt,
+    this.pausedAt,
     this.createdAt,
     this.updatedAt,
   }) : super._();
@@ -407,6 +435,9 @@ class _$SubscriptionImpl extends _Subscription {
   final SubscriptionStatus status;
   @override
   @JsonKey()
+  final bool autoRenew;
+  @override
+  @JsonKey()
   final bool reminderEnabled;
   @override
   @JsonKey()
@@ -418,13 +449,15 @@ class _$SubscriptionImpl extends _Subscription {
   @override
   final DateTime? trialEndsAt;
   @override
+  final DateTime? pausedAt;
+  @override
   final DateTime? createdAt;
   @override
   final DateTime? updatedAt;
 
   @override
   String toString() {
-    return 'Subscription(id: $id, userId: $userId, name: $name, amount: $amount, currency: $currency, frequency: $frequency, category: $category, nextBillingDate: $nextBillingDate, description: $description, logoUrl: $logoUrl, emoji: $emoji, status: $status, reminderEnabled: $reminderEnabled, reminderDaysBefore: $reminderDaysBefore, startDate: $startDate, cancelledAt: $cancelledAt, trialEndsAt: $trialEndsAt, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'Subscription(id: $id, userId: $userId, name: $name, amount: $amount, currency: $currency, frequency: $frequency, category: $category, nextBillingDate: $nextBillingDate, description: $description, logoUrl: $logoUrl, emoji: $emoji, status: $status, autoRenew: $autoRenew, reminderEnabled: $reminderEnabled, reminderDaysBefore: $reminderDaysBefore, startDate: $startDate, cancelledAt: $cancelledAt, trialEndsAt: $trialEndsAt, pausedAt: $pausedAt, createdAt: $createdAt, updatedAt: $updatedAt)';
   }
 
   @override
@@ -449,6 +482,8 @@ class _$SubscriptionImpl extends _Subscription {
             (identical(other.logoUrl, logoUrl) || other.logoUrl == logoUrl) &&
             (identical(other.emoji, emoji) || other.emoji == emoji) &&
             (identical(other.status, status) || other.status == status) &&
+            (identical(other.autoRenew, autoRenew) ||
+                other.autoRenew == autoRenew) &&
             (identical(other.reminderEnabled, reminderEnabled) ||
                 other.reminderEnabled == reminderEnabled) &&
             (identical(other.reminderDaysBefore, reminderDaysBefore) ||
@@ -459,6 +494,8 @@ class _$SubscriptionImpl extends _Subscription {
                 other.cancelledAt == cancelledAt) &&
             (identical(other.trialEndsAt, trialEndsAt) ||
                 other.trialEndsAt == trialEndsAt) &&
+            (identical(other.pausedAt, pausedAt) ||
+                other.pausedAt == pausedAt) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             (identical(other.updatedAt, updatedAt) ||
@@ -481,11 +518,13 @@ class _$SubscriptionImpl extends _Subscription {
     logoUrl,
     emoji,
     status,
+    autoRenew,
     reminderEnabled,
     reminderDaysBefore,
     startDate,
     cancelledAt,
     trialEndsAt,
+    pausedAt,
     createdAt,
     updatedAt,
   ]);
@@ -518,11 +557,13 @@ abstract class _Subscription extends Subscription {
     final String logoUrl,
     final String emoji,
     final SubscriptionStatus status,
+    final bool autoRenew,
     final bool reminderEnabled,
     final int reminderDaysBefore,
     final DateTime? startDate,
     final DateTime? cancelledAt,
     final DateTime? trialEndsAt,
+    final DateTime? pausedAt,
     final DateTime? createdAt,
     final DateTime? updatedAt,
   }) = _$SubscriptionImpl;
@@ -556,6 +597,8 @@ abstract class _Subscription extends Subscription {
   @override
   SubscriptionStatus get status;
   @override
+  bool get autoRenew;
+  @override
   bool get reminderEnabled;
   @override
   int get reminderDaysBefore;
@@ -565,6 +608,8 @@ abstract class _Subscription extends Subscription {
   DateTime? get cancelledAt;
   @override
   DateTime? get trialEndsAt;
+  @override
+  DateTime? get pausedAt;
   @override
   DateTime? get createdAt;
   @override

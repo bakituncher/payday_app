@@ -37,28 +37,37 @@ class FirebaseSubscriptionRepository implements SubscriptionRepository {
 
   @override
   Future<void> cancelSubscription(String subscriptionId, String userId) async {
-     // Update status to cancelled and set cancelledAt timestamp
-     await _getCollection(userId).doc(subscriptionId).update({
-       'status': 'cancelled',
-       'cancelledAt': FieldValue.serverTimestamp(),
-     });
+    // Soft cancel: disable auto-renew; processor will stop billing and mark cancelled at period end.
+    await _getCollection(userId).doc(subscriptionId).update({
+      'autoRenew': false,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
   }
 
   @override
   Future<void> pauseSubscription(String subscriptionId, String userId) async {
-      await _getCollection(userId).doc(subscriptionId).update({'status': 'paused'});
+    await _getCollection(userId).doc(subscriptionId).update({
+      'status': 'paused',
+      'pausedAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
   }
 
   @override
   Future<void> resumeSubscription(String subscriptionId, String userId) async {
-      await _getCollection(userId).doc(subscriptionId).update({'status': 'active'});
+    // No-op: smart resume handled in notifier to adjust nextBillingDate.
+    await _getCollection(userId).doc(subscriptionId).update({
+      'status': 'active',
+      'pausedAt': null,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
   }
 
   // Implementing other required methods with basic logic or throw unimplemented for now if complex
   @override
   Future<List<Subscription>> getActiveSubscriptions(String userId) async {
     final snapshot = await _getCollection(userId)
-        .where('status', isEqualTo: 'active')
+        .where('status', whereIn: ['active', 'trial'])
         .get();
     return snapshot.docs.map((d) => Subscription.fromJson(d.data())).toList();
   }
@@ -78,8 +87,17 @@ class FirebaseSubscriptionRepository implements SubscriptionRepository {
 
   @override
   Future<List<Subscription>> getSubscriptionsDueSoon(String userId, int days) async {
-     // Complex query, skipping for MVP/Infrastructure setup
-     return [];
+    final now = DateTime.now();
+    final futureDate = now.add(Duration(days: days));
+
+    final snapshot = await _getCollection(userId)
+        .where('status', whereIn: ['active', 'trial'])
+        .where('nextBillingDate', isGreaterThanOrEqualTo: now)
+        .where('nextBillingDate', isLessThanOrEqualTo: futureDate)
+        .orderBy('nextBillingDate')
+        .get();
+
+    return snapshot.docs.map((d) => Subscription.fromJson(d.data())).toList();
   }
 
   @override
@@ -96,8 +114,11 @@ class FirebaseSubscriptionRepository implements SubscriptionRepository {
 
   @override
   Future<List<Subscription>> getSubscriptionsByCategory(String userId, SubscriptionCategory category) async {
-      // Need to map Enum to string/int for query
-      return [];
+    final snapshot = await _getCollection(userId)
+        .where('category', isEqualTo: category.name)
+        .get();
+
+    return snapshot.docs.map((d) => Subscription.fromJson(d.data())).toList();
   }
 
   @override

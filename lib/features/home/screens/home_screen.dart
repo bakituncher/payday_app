@@ -19,8 +19,8 @@ import 'package:payday/shared/widgets/payday_button.dart';
 import 'package:payday/shared/widgets/payday_banner_ad.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:payday/features/home/providers/period_balance_providers.dart';
-// ✅ EKLENDİ: Premium provider importu
 import 'package:payday/features/premium/providers/premium_providers.dart';
+import 'package:payday/core/providers/repository_providers.dart';
 
 // ✅ DEĞİŞTİ: ConsumerWidget -> ConsumerStatefulWidget
 class HomeScreen extends ConsumerStatefulWidget {
@@ -38,12 +38,29 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     // ✅ EKLENDİ: Ekran çizildikten hemen sonra Premium durumunu kontrol et
     WidgetsBinding.instance.addPostFrameCallback((_) {
       refreshPremiumStatus(ref);
+      // Process subscriptions on app start
+      final subscriptionProcessor = ref.read(subscriptionProcessorServiceProvider);
+      subscriptionProcessor.checkAndProcessDueSubscriptions(
+        ref.read(currentUserIdProvider),
+        processHistorical: true,
+      );
     });
   }
 
   Future<void> _onRefresh() async {
     // ✅ EKLENDİ: Kullanıcı sayfayı yenilerse premium durumunu tekrar kontrol et
     await refreshPremiumStatus(ref);
+
+    // Process subscriptions and payday logic on pull-to-refresh
+    try {
+      final subscriptionProcessor = ref.read(subscriptionProcessorServiceProvider);
+      await subscriptionProcessor.checkAndProcessDueSubscriptions(
+        ref.read(currentUserIdProvider),
+        processHistorical: true,
+      );
+    } catch (e) {
+      print('❌ Error processing subscriptions on refresh: $e');
+    }
 
     // Refresh all data providers
     ref.invalidate(userSettingsProvider);

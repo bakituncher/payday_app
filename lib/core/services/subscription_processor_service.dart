@@ -65,18 +65,13 @@ class SubscriptionProcessorService {
       // ADIM 2: Her aboneliği kontrol et
       for (final sub in subscriptions) {
         try {
-          // Aktif ve trial olmayan abonelikleri işle
-          if (sub.status != SubscriptionStatus.active) {
-            continue;
-          }
-
-          // Vadesi gelen işlemleri hesapla
-          final result = await _processSubscription(
-            subscription: sub,
-            userId: userId,
-            today: today,
-            processHistorical: processHistorical,
-          );
+           // Vadesi gelen işlemleri hesapla
+           final result = await _processSubscription(
+             subscription: sub,
+             userId: userId,
+             today: today,
+             processHistorical: processHistorical,
+           );
 
           if (result.transactionsCreated.isNotEmpty) {
             transactions.addAll(result.transactionsCreated);
@@ -142,12 +137,54 @@ class SubscriptionProcessorService {
     double totalAmount = 0.0;
     DateTime currentBillingDate = subscription.nextBillingDate;
 
+    // Trial -> Active: if trial ended and past date, flip to active before processing
+    if (subscription.status == SubscriptionStatus.trial && subscription.trialEndsAt != null) {
+      if (!subscription.trialEndsAt!.isAfter(today)) {
+        subscription = subscription.copyWith(status: SubscriptionStatus.active);
+      } else {
+        // still in trial; skip billing
+        return _SubscriptionProcessDetails(
+          transactionsCreated: const [],
+          totalAmount: 0.0,
+          updatedSubscription: subscription,
+        );
+      }
+    }
+
+    // Grace period: if autoRenew is false, keep active until billing date, then cancel instead of charging
+    if (!subscription.autoRenew && currentBillingDate.isAfter(today)) {
+      return _SubscriptionProcessDetails(
+        transactionsCreated: const [],
+        totalAmount: 0.0,
+        updatedSubscription: subscription,
+      );
+    }
+
     // Eğer ödeme günü henüz gelmediyse, işlem yapma
     if (currentBillingDate.isAfter(today)) {
       return _SubscriptionProcessDetails(
         transactionsCreated: [],
         totalAmount: 0.0,
         updatedSubscription: subscription,
+      );
+    }
+
+    // If autoRenew is disabled and billing date is due/past: cancel without charging
+    if (!subscription.autoRenew) {
+      final nextDate = DateCycleService.calculateNextBillingDate(
+        currentBillingDate,
+        subscription.frequency,
+      );
+      final updatedSubscription = subscription.copyWith(
+        status: SubscriptionStatus.cancelled,
+        cancelledAt: DateTime.now(),
+        nextBillingDate: nextDate,
+        updatedAt: DateTime.now(),
+      );
+      return _SubscriptionProcessDetails(
+        transactionsCreated: const [],
+        totalAmount: 0.0,
+        updatedSubscription: updatedSubscription,
       );
     }
 
@@ -248,33 +285,28 @@ class SubscriptionProcessorService {
 
   /// Kategori enum'unu ID'ye çevir
   String _mapCategoryToId(SubscriptionCategory category) {
-    // Bu ID'ler gerçek kategori ID'leriyle eşleşmeli
-    // AppConstants'ta tanımlı kategori ID'lerini kullanın
+    // Map to AppConstants transaction category IDs to ensure reports/graphs align
     switch (category) {
       case SubscriptionCategory.streaming:
-        return 'subscription_streaming';
-      case SubscriptionCategory.productivity:
-        return 'subscription_productivity';
-      case SubscriptionCategory.cloudStorage:
-        return 'subscription_cloud';
-      case SubscriptionCategory.fitness:
-        return 'subscription_fitness';
       case SubscriptionCategory.gaming:
-        return 'subscription_gaming';
       case SubscriptionCategory.newsMedia:
-        return 'subscription_news';
+        return 'entertainment';
+      case SubscriptionCategory.productivity:
+      case SubscriptionCategory.cloudStorage:
+        return 'bills';
+      case SubscriptionCategory.fitness:
+        return 'health';
       case SubscriptionCategory.foodDelivery:
-        return 'subscription_food';
       case SubscriptionCategory.shopping:
-        return 'subscription_shopping';
+        return 'shopping';
       case SubscriptionCategory.finance:
-        return 'subscription_finance';
+        return 'bills';
       case SubscriptionCategory.education:
-        return 'subscription_education';
+        return 'other';
       case SubscriptionCategory.utilities:
-        return 'subscription_utilities';
+        return 'bills';
       case SubscriptionCategory.other:
-        return 'subscription_other';
+        return 'other';
     }
   }
 
@@ -313,4 +345,3 @@ class _SubscriptionProcessDetails {
     required this.updatedSubscription,
   });
 }
-

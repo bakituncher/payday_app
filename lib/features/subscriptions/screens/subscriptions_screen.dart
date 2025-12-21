@@ -134,7 +134,9 @@ class SubscriptionsScreen extends ConsumerWidget {
                           HapticFeedback.lightImpact();
                           Navigator.of(context).push(
                             MaterialPageRoute(
-                              builder: (_) => const AddSubscriptionScreen(),
+                              builder: (_) => AddSubscriptionScreen(
+                                existingSubscription: null,
+                              ),
                             ),
                           );
                         },
@@ -401,7 +403,9 @@ class SubscriptionsScreen extends ConsumerWidget {
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (_) => const AddSubscriptionScreen(),
+                  builder: (_) => AddSubscriptionScreen(
+                    existingSubscription: null,
+                  ),
                 ),
               );
             },
@@ -424,4 +428,3 @@ class SubscriptionsScreen extends ConsumerWidget {
     );
   }
 }
-

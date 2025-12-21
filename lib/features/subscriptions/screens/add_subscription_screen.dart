@@ -12,7 +12,11 @@ import 'package:payday/core/providers/currency_providers.dart';
 import 'package:uuid/uuid.dart';
 
 class AddSubscriptionScreen extends ConsumerStatefulWidget {
-  const AddSubscriptionScreen({super.key});
+  const AddSubscriptionScreen({super.key, this.existingSubscription});
+
+  final Subscription? existingSubscription;
+
+  bool get isEdit => existingSubscription != null;
 
   @override
   ConsumerState<AddSubscriptionScreen> createState() => _AddSubscriptionScreenState();
@@ -30,6 +34,7 @@ class _AddSubscriptionScreenState extends ConsumerState<AddSubscriptionScreen> {
   String _selectedEmoji = '💳';
   bool _reminderEnabled = true;
   int _reminderDaysBefore = 2;
+  bool _autoRenew = true;
 
   bool _isLoading = false;
   bool _showTemplates = true;
@@ -60,35 +65,47 @@ class _AddSubscriptionScreenState extends ConsumerState<AddSubscriptionScreen> {
 
     try {
       final userId = ref.read(currentUserIdProvider);
+      final base = widget.existingSubscription;
       final subscription = Subscription(
-        id: const Uuid().v4(),
+        id: base?.id ?? const Uuid().v4(),
         userId: userId,
         name: _nameController.text.trim(),
         amount: double.parse(_amountController.text),
-        currency: 'USD',
+        currency: base?.currency ?? 'USD',
         frequency: _selectedFrequency,
         category: _selectedCategory,
         nextBillingDate: _nextBillingDate,
         description: _descriptionController.text.trim(),
         emoji: _selectedEmoji,
-        status: SubscriptionStatus.active,
+        status: base?.status ?? SubscriptionStatus.active,
         reminderEnabled: _reminderEnabled,
         reminderDaysBefore: _reminderDaysBefore,
-        startDate: DateTime.now(),
-        createdAt: DateTime.now(),
+        autoRenew: _autoRenew,
+        startDate: base?.startDate ?? DateTime.now(),
+        createdAt: base?.createdAt ?? DateTime.now(),
+        updatedAt: DateTime.now(),
+        cancelledAt: base?.cancelledAt,
+        trialEndsAt: base?.trialEndsAt,
+        pausedAt: base?.pausedAt,
       );
 
-      await ref.read(subscriptionNotifierProvider.notifier).addSubscription(subscription);
+      final notifier = ref.read(subscriptionNotifierProvider.notifier);
+      if (base == null) {
+        await notifier.addSubscription(subscription);
+      } else {
+        await notifier.editSubscription(base, subscription);
+      }
 
       if (mounted) {
         HapticFeedback.mediumImpact();
+        final isEdit = base != null;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
               children: [
                 const Icon(Icons.check_circle, color: Colors.white),
                 const SizedBox(width: 8),
-                Text('${subscription.name} added successfully!'),
+                Text('${subscription.name} ${isEdit ? 'updated' : 'added'} successfully!'),
               ],
             ),
             backgroundColor: AppColors.success,
@@ -139,6 +156,25 @@ class _AddSubscriptionScreenState extends ConsumerState<AddSubscriptionScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    final existing = widget.existingSubscription;
+    if (existing != null) {
+      _nameController.text = existing.name;
+      _amountController.text = existing.amount.toStringAsFixed(2);
+      _descriptionController.text = existing.description;
+      _selectedCategory = existing.category;
+      _selectedFrequency = existing.frequency;
+      _nextBillingDate = existing.nextBillingDate;
+      _selectedEmoji = existing.emoji;
+      _reminderEnabled = existing.reminderEnabled;
+      _reminderDaysBefore = existing.reminderDaysBefore;
+      _autoRenew = existing.autoRenew;
+      _showTemplates = false; // editing: skip template view
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
@@ -153,14 +189,14 @@ class _AddSubscriptionScreenState extends ConsumerState<AddSubscriptionScreen> {
           color: AppColors.getTextPrimary(context),
         ),
         title: Text(
-          'Add Subscription',
+          widget.isEdit ? 'Edit Subscription' : 'Add Subscription',
           style: theme.textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.w700,
             color: AppColors.getTextPrimary(context),
           ),
         ),
         actions: [
-          if (!_showTemplates)
+          if (!_showTemplates && !widget.isEdit)
             TextButton(
               onPressed: () => setState(() => _showTemplates = true),
               child: Text(
@@ -519,6 +555,38 @@ class _AddSubscriptionScreenState extends ConsumerState<AddSubscriptionScreen> {
             ),
           ).animate().fadeIn(duration: 300.ms, delay: 350.ms),
 
+          const SizedBox(height: AppSpacing.lg),
+
+          // Auto Renew
+          _buildSectionTitle('Auto Renew'),
+          Container(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            decoration: BoxDecoration(
+              color: AppColors.getCardBackground(context),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+              border: Border.all(color: AppColors.getBorder(context)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Flexible(
+                  child: Text(
+                    'Automatically renew at next billing date',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: AppColors.getTextPrimary(context),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                Switch.adaptive(
+                  value: _autoRenew,
+                  onChanged: (v) => setState(() => _autoRenew = v),
+                  activeTrackColor: AppColors.primaryPink,
+                ),
+              ],
+            ),
+          ).animate().fadeIn(duration: 300.ms, delay: 375.ms),
+
           const SizedBox(height: AppSpacing.xl),
 
           // Save Button
@@ -544,9 +612,9 @@ class _AddSubscriptionScreenState extends ConsumerState<AddSubscriptionScreen> {
                         color: Colors.white,
                       ),
                     )
-                  : const Text(
-                      'Add Subscription',
-                      style: TextStyle(
+                  : Text(
+                      widget.isEdit ? 'Save Changes' : 'Add Subscription',
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
                       ),
@@ -753,4 +821,3 @@ class _AddSubscriptionScreenState extends ConsumerState<AddSubscriptionScreen> {
     }
   }
 }
-

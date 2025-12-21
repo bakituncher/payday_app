@@ -10,6 +10,8 @@ import 'package:payday/features/subscriptions/providers/subscription_providers.d
 import 'package:payday/core/providers/currency_providers.dart';
 import 'package:payday/core/utils/currency_formatter.dart';
 import 'package:intl/intl.dart';
+import 'package:payday/features/subscriptions/screens/add_subscription_screen.dart';
+import 'package:payday/shared/widgets/payday_button.dart';
 
 class SubscriptionDetailScreen extends ConsumerWidget {
   final Subscription subscription;
@@ -296,6 +298,13 @@ class SubscriptionDetailScreen extends ConsumerWidget {
                         _buildDetailRow('Category', subscription.category.name.toUpperCase(), subscription.categoryEmoji),
                         const Divider(height: 24),
                         _buildDetailRow('Currency', subscription.currency, '💵'),
+                        const Divider(height: 24),
+                        _buildDetailRow(
+                          'Auto-Renewal',
+                          subscription.autoRenew ? 'On' : 'Off',
+                          '♻️',
+                          valueColor: subscription.autoRenew ? AppColors.success : AppColors.error,
+                        ),
                         if (subscription.startDate != null) ...[
                           const Divider(height: 24),
                           _buildDetailRow('Started', dateFormat.format(subscription.startDate!), '📅'),
@@ -307,6 +316,25 @@ class SubscriptionDetailScreen extends ConsumerWidget {
                       ],
                     ),
                   ).animate().fadeIn(duration: 300.ms, delay: 300.ms),
+
+                  const SizedBox(height: AppSpacing.lg),
+
+                  // Auto-renew info near billing
+                  _buildActionInfoRow(
+                    context,
+                    icon: Icons.autorenew_rounded,
+                    label: 'Auto-Renewal',
+                    value: subscription.autoRenew ? 'On' : 'Off',
+                    valueColor: subscription.autoRenew ? AppColors.success : AppColors.error,
+                  ).animate().fadeIn(duration: 300.ms, delay: 320.ms),
+                  const SizedBox(height: AppSpacing.sm),
+                  _buildActionInfoRow(
+                    context,
+                    icon: Icons.calendar_today_rounded,
+                    label: 'Next Billing',
+                    value: '${DateFormat('MMM d, y').format(subscription.nextBillingDate)}${subscription.autoRenew ? '' : ' (Ends)'}',
+                    valueColor: AppColors.getTextPrimary(context),
+                  ).animate().fadeIn(duration: 300.ms, delay: 330.ms),
 
                   const SizedBox(height: AppSpacing.lg),
 
@@ -360,6 +388,36 @@ class SubscriptionDetailScreen extends ConsumerWidget {
                     ],
                   ).animate().fadeIn(duration: 300.ms, delay: 350.ms),
 
+                  const SizedBox(height: AppSpacing.lg),
+
+                  // AutoRenew toggle action
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+                    child: PaydayButton(
+                      text: subscription.autoRenew ? 'Cancel Subscription' : 'Resume Subscription',
+                      icon: subscription.autoRenew ? Icons.cancel_outlined : Icons.play_arrow_rounded,
+                      backgroundColor: subscription.autoRenew ? AppColors.error : AppColors.success,
+                      onPressed: () async {
+                        final updatedSub = subscription.copyWith(
+                          autoRenew: !subscription.autoRenew,
+                          updatedAt: DateTime.now(),
+                        );
+
+                        await ref.read(subscriptionNotifierProvider.notifier).updateSubscription(updatedSub);
+
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(updatedSub.autoRenew
+                                  ? 'Subscription resumed'
+                                  : 'Subscription will end after this period'),
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                  ).animate().fadeIn(duration: 300.ms, delay: 360.ms),
+
                   const SizedBox(height: 100),
                 ],
               ),
@@ -370,7 +428,7 @@ class SubscriptionDetailScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildDetailRow(String label, String value, String emoji) {
+  Widget _buildDetailRow(String label, String value, String emoji, {Color? valueColor}) {
     return Builder(
       builder: (context) => Row(
         children: [
@@ -387,8 +445,51 @@ class SubscriptionDetailScreen extends ConsumerWidget {
           Text(
             value,
             style: TextStyle(
-              color: AppColors.getTextPrimary(context),
+              color: valueColor ?? AppColors.getTextPrimary(context),
               fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionInfoRow(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required String value,
+    Color? valueColor,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+      decoration: BoxDecoration(
+        color: AppColors.getCardBackground(context),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        boxShadow: AppColors.getCardShadow(context),
+        border: Border.all(color: AppColors.getBorder(context)),
+      ),
+      child: Row(
+        children: [
+          const SizedBox(width: AppSpacing.md),
+          Icon(icon, color: AppColors.primaryPink),
+          const SizedBox(width: AppSpacing.sm),
+          Text(
+            label,
+            style: TextStyle(
+              color: AppColors.getTextSecondary(context),
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const Spacer(),
+          Padding(
+            padding: const EdgeInsets.only(right: AppSpacing.md),
+            child: Text(
+              value,
+              style: TextStyle(
+                color: valueColor ?? AppColors.getTextPrimary(context),
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
         ],
@@ -439,7 +540,13 @@ class SubscriptionDetailScreen extends ConsumerWidget {
 
     switch (action) {
       case 'edit':
-        // TODO: Navigate to edit screen
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => AddSubscriptionScreen(
+              existingSubscription: subscription,
+            ),
+          ),
+        );
         break;
 
       case 'pause':
@@ -536,4 +643,3 @@ class SubscriptionDetailScreen extends ConsumerWidget {
     );
   }
 }
-
