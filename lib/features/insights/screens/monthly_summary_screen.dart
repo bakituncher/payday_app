@@ -70,14 +70,13 @@ class MonthlySummaryScreen extends ConsumerWidget {
   }
 
   Widget _buildContent(
-    BuildContext context,
-    String payCycle,
-    String currency,
-    List<Transaction> transactions,
-    List<Subscription> subscriptions,
-  ) {
+      BuildContext context,
+      String payCycle,
+      String currency,
+      List<Transaction> transactions,
+      List<Subscription> subscriptions,
+      ) {
     final theme = Theme.of(context);
-    final currencyFormat = NumberFormat.currency(symbol: CurrencyFormatter.getSymbol(currency));
 
     // Filter only expenses
     final expenses = transactions.where((t) => t.isExpense).toList();
@@ -93,7 +92,7 @@ class MonthlySummaryScreen extends ConsumerWidget {
     // Calculate subscription costs in this period
     final subscriptionTotal = subscriptions.fold<double>(
       0,
-      (sum, sub) => sum + _getSubscriptionCostInPeriod(sub, payCycle),
+          (sum, sub) => sum + _getSubscriptionCostInPeriod(sub, payCycle),
     );
 
     return CustomScrollView(
@@ -144,7 +143,8 @@ class MonthlySummaryScreen extends ConsumerWidget {
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
-                        currencyFormat.format(totalExpenses),
+                        // GÜNCELLEME: Merkezi Formatter
+                        CurrencyFormatter.format(totalExpenses, currency),
                         style: theme.textTheme.titleSmall?.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.w700,
@@ -186,7 +186,8 @@ class MonthlySummaryScreen extends ConsumerWidget {
                         ),
                       ),
                       child: Text(
-                        currencyFormat.format(subscriptionTotal),
+                        // GÜNCELLEME: Merkezi Formatter
+                        CurrencyFormatter.format(subscriptionTotal, currency),
                         style: theme.textTheme.titleSmall?.copyWith(
                           color: AppColors.secondaryPurple,
                           fontWeight: FontWeight.w700,
@@ -267,18 +268,17 @@ class MonthlySummaryScreen extends ConsumerWidget {
   }
 
   Widget _buildSpendingChart(
-    BuildContext context,
-    Map<DateTime, double> expensesByDate,
-    String payCycle,
-    String currency,
-  ) {
+      BuildContext context,
+      Map<DateTime, double> expensesByDate,
+      String payCycle,
+      String currency,
+      ) {
     if (expensesByDate.isEmpty) {
       return _buildEmptyState(context, 'No spending data yet', Icons.insert_chart_outlined);
     }
 
     // Prepare chart data - sorted by date (most recent first)
     final sortedDates = expensesByDate.keys.toList()..sort((a, b) => b.compareTo(a));
-    final currencyFormat = NumberFormat.currency(symbol: CurrencyFormatter.getSymbol(currency));
     final theme = Theme.of(context);
 
     return Container(
@@ -357,7 +357,8 @@ class MonthlySummaryScreen extends ConsumerWidget {
                   ),
                 ),
                 Text(
-                  currencyFormat.format(amount),
+                  // GÜNCELLEME: Merkezi Formatter
+                  CurrencyFormatter.format(amount, currency),
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
                     color: AppColors.primaryPink,
@@ -373,7 +374,6 @@ class MonthlySummaryScreen extends ConsumerWidget {
 
   Widget _buildExpensesList(BuildContext context, List<Transaction> expenses, String currency) {
     final theme = Theme.of(context);
-    final currencyFormat = NumberFormat.currency(symbol: CurrencyFormatter.getSymbol(currency));
 
     // Group by category
     final byCategory = <String, List<Transaction>>{};
@@ -423,7 +423,8 @@ class MonthlySummaryScreen extends ConsumerWidget {
               ),
             ),
             trailing: Text(
-              currencyFormat.format(categoryTotal),
+              // GÜNCELLEME: Merkezi Formatter
+              CurrencyFormatter.format(categoryTotal, currency),
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w700,
                 color: AppColors.primaryPink,
@@ -436,13 +437,12 @@ class MonthlySummaryScreen extends ConsumerWidget {
   }
 
   Widget _buildSubscriptionsList(
-    BuildContext context,
-    List<Subscription> subscriptions,
-    String payCycle,
-    String currency,
-  ) {
+      BuildContext context,
+      List<Subscription> subscriptions,
+      String payCycle,
+      String currency,
+      ) {
     final theme = Theme.of(context);
-    final currencyFormat = NumberFormat.currency(symbol: CurrencyFormatter.getSymbol(currency));
 
     return Container(
       decoration: BoxDecoration(
@@ -487,7 +487,8 @@ class MonthlySummaryScreen extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  currencyFormat.format(costInPeriod),
+                  // GÜNCELLEME: Merkezi Formatter
+                  CurrencyFormatter.format(costInPeriod, currency),
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
                     color: AppColors.secondaryPurple,
@@ -657,4 +658,3 @@ class MonthlySummaryScreen extends ConsumerWidget {
     );
   }
 }
-

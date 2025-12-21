@@ -1060,7 +1060,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Widget _buildIncomeCard(ThemeData theme) {
+    // Merkezi formatter'dan sembol ve pozisyon bilgisi alınıyor
     final currencySymbol = CurrencyFormatter.getSymbol(_selectedCurrency);
+    final isSymbolOnRight = CurrencyFormatter.isSymbolOnRight(_selectedCurrency);
 
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
@@ -1087,8 +1089,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               color: AppColors.getTextPrimary(context),
             ),
             decoration: InputDecoration(
-              prefixText: currencySymbol,
+              // Sembol sağda ise suffix, solda ise prefix kullan
+              prefixText: isSymbolOnRight ? null : currencySymbol,
+              suffixText: isSymbolOnRight ? currencySymbol : null,
+
               prefixStyle: theme.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: AppColors.primaryPink,
+              ),
+              suffixStyle: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.w700,
                 color: AppColors.primaryPink,
               ),
@@ -1123,8 +1132,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               color: AppColors.getTextPrimary(context),
             ),
             decoration: InputDecoration(
-              prefixText: currencySymbol,
+              // Sembol sağda ise suffix, solda ise prefix kullan
+              prefixText: isSymbolOnRight ? null : currencySymbol,
+              suffixText: isSymbolOnRight ? currencySymbol : null,
+
               prefixStyle: theme.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: AppColors.secondaryPurple,
+              ),
+              suffixStyle: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.w700,
                 color: AppColors.secondaryPurple,
               ),
