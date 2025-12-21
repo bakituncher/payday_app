@@ -191,15 +191,18 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     _checkStatusAndNavigate();
   }
 
-  // ✅ BU FONKSİYON GÜNCELLENDİ
+  // ✅ BU FONKSİYON GÜNCELLENDİ: ARTIK AUTH PROVIDER'I BEKLİYOR
   Future<void> _checkStatusAndNavigate() async {
-    // 1. Önce biraz bekle (Animasyon için)
-    await Future.delayed(const Duration(milliseconds: 2000));
+    // 1. Animasyon süresi VE Auth durumunun yüklenmesini paralel bekle
+    // Bu sayede eğer auth işlemi 2 saniyeden uzun sürerse onu da beklemiş oluruz.
+    await Future.wait([
+      Future.delayed(const Duration(milliseconds: 2000)), // Min bekleme süresi
+      ref.read(currentUserProvider.future), // Auth state'in ilk değerini almasını bekle
+    ]);
 
     if (!mounted) return;
 
-    // 2. ✅ KRİTİK ADIM: PREMIUM DURUMUNU BURADA KONTROL ET
-    // Kullanıcı daha uygulamaya girmeden statüsünü çekiyoruz.
+    // 2. Premium durumunu kontrol et
     debugPrint("Splash: Checking Premium Status...");
     try {
       await refreshPremiumStatus(ref);
@@ -210,8 +213,11 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     }
 
     // 3. Onboarding durumunu kontrol et
+    // Auth artık yüklendiği için doğru repository (Firebase/Local) seçilecektir.
     final repository = ref.read(userSettingsRepositoryProvider);
     final hasCompletedOnboarding = await repository.hasCompletedOnboarding();
+
+    debugPrint("Splash: Has Completed Onboarding -> $hasCompletedOnboarding");
 
     if (!mounted) return;
 
