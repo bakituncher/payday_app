@@ -39,8 +39,7 @@ void main() async {
     // Android için: Debug moddaysa debug provider, değilse Play Integrity
     androidProvider: kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
     // iOS için: Debug moddaysa debug provider, değilse App Attest
-    appleProvider: kDebugMode ? AppleProvider.debug : AppleProvider.appAttest,
-  );
+    appleProvider: kDebugMode ? AppleProvider.debug : AppleProvider.appAttest,  );
 
   // RevenueCat'i başlat
   await RevenueCatService().init();
