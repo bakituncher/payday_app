@@ -16,6 +16,8 @@ class AddSubscriptionScreen extends ConsumerStatefulWidget {
 
   final Subscription? existingSubscription;
 
+  bool get isEdit => existingSubscription != null;
+
   @override
   ConsumerState<AddSubscriptionScreen> createState() => _AddSubscriptionScreenState();
 }
@@ -165,6 +167,7 @@ class _AddSubscriptionScreenState extends ConsumerState<AddSubscriptionScreen> {
       _selectedEmoji = existing.emoji;
       _reminderEnabled = existing.reminderEnabled;
       _reminderDaysBefore = existing.reminderDaysBefore;
+      _showTemplates = false; // editing: skip template view
     }
   }
 
@@ -183,14 +186,14 @@ class _AddSubscriptionScreenState extends ConsumerState<AddSubscriptionScreen> {
           color: AppColors.getTextPrimary(context),
         ),
         title: Text(
-          'Add Subscription',
+          widget.isEdit ? 'Edit Subscription' : 'Add Subscription',
           style: theme.textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.w700,
             color: AppColors.getTextPrimary(context),
           ),
         ),
         actions: [
-          if (!_showTemplates)
+          if (!_showTemplates && !widget.isEdit)
             TextButton(
               onPressed: () => setState(() => _showTemplates = true),
               child: Text(
@@ -575,9 +578,7 @@ class _AddSubscriptionScreenState extends ConsumerState<AddSubscriptionScreen> {
                       ),
                     )
                   : Text(
-                      widget.existingSubscription == null
-                          ? 'Add Subscription'
-                          : 'Save Changes',
+                      widget.isEdit ? 'Save Changes' : 'Add Subscription',
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,

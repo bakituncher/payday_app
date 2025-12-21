@@ -97,13 +97,14 @@ final selectedCategoryFilterProvider = StateProvider<SubscriptionCategory?>((ref
 /// Filtered subscriptions based on selected category
 final filteredSubscriptionsProvider = FutureProvider<List<Subscription>>((ref) async {
   final selectedCategory = ref.watch(selectedCategoryFilterProvider);
-  final allSubscriptions = await ref.watch(activeSubscriptionsProvider.future);
+  final allSubscriptions = await ref.watch(subscriptionsProvider.future);
+  final visible = allSubscriptions.where((s) => s.status != SubscriptionStatus.cancelled).toList();
 
   if (selectedCategory == null) {
-    return allSubscriptions;
+    return visible;
   }
 
-  return allSubscriptions.where((s) => s.category == selectedCategory).toList();
+  return visible.where((s) => s.category == selectedCategory).toList();
 });
 
 /// Selected subscription for detail view
