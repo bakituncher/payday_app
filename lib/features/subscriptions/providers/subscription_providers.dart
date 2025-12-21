@@ -5,7 +5,6 @@ import 'package:payday/core/models/subscription.dart';
 import 'package:payday/core/models/subscription_analysis.dart';
 import 'package:payday/core/models/bill_reminder.dart';
 import 'package:payday/core/providers/repository_providers.dart';
-import 'package:payday/core/services/date_cycle_service.dart';
 import 'package:payday/features/insights/providers/monthly_summary_providers.dart';
 
 /// All subscriptions for current user
@@ -15,37 +14,12 @@ final subscriptionsProvider = FutureProvider<List<Subscription>>((ref) async {
   return repository.getSubscriptions(userId);
 });
 
-/// Active subscriptions only - Auto-updates billing dates if passed
+/// Active subscriptions only
 final activeSubscriptionsProvider = FutureProvider<List<Subscription>>((ref) async {
   final userId = ref.watch(currentUserIdProvider);
   final repository = ref.watch(subscriptionRepositoryProvider);
-  final subscriptions = await repository.getActiveSubscriptions(userId);
-
-  final updatedSubscriptions = <Subscription>[];
-  for (final sub in subscriptions) {
-    final calculatedNextBilling = DateCycleService.calculateNextBillingDate(
-      sub.nextBillingDate,
-      sub.frequency,
-    );
-
-    if (calculatedNextBilling != sub.nextBillingDate) {
-      final updatedSub = sub.copyWith(nextBillingDate: calculatedNextBilling);
-      await repository.updateSubscription(updatedSub);
-      // reschedule notifications on auto-advance
-      try {
-        final notificationService = ref.read(notificationServiceProvider);
-        await notificationService.cancelNotification('sub_${updatedSub.id}');
-        await notificationService.scheduleSubscriptionDueNotification(updatedSub);
-      } catch (e) {
-        print('Warning: Failed to reschedule notification on auto-advance: $e');
-      }
-      updatedSubscriptions.add(updatedSub);
-    } else {
-      updatedSubscriptions.add(sub);
-    }
-  }
-
-  return updatedSubscriptions;
+  // Read-only: no auto-updates here to avoid race with processor
+  return repository.getActiveSubscriptions(userId);
 });
 
 /// Subscriptions due within 7 days
