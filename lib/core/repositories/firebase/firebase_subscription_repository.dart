@@ -67,7 +67,7 @@ class FirebaseSubscriptionRepository implements SubscriptionRepository {
   @override
   Future<List<Subscription>> getActiveSubscriptions(String userId) async {
     final snapshot = await _getCollection(userId)
-        .where('status', isEqualTo: 'active')
+        .where('status', whereIn: ['active', 'trial'])
         .get();
     return snapshot.docs.map((d) => Subscription.fromJson(d.data())).toList();
   }

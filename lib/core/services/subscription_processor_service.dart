@@ -65,18 +65,13 @@ class SubscriptionProcessorService {
       // ADIM 2: Her aboneliği kontrol et
       for (final sub in subscriptions) {
         try {
-          // Aktif ve trial olmayan abonelikleri işle
-          if (sub.status != SubscriptionStatus.active) {
-            continue;
-          }
-
-          // Vadesi gelen işlemleri hesapla
-          final result = await _processSubscription(
-            subscription: sub,
-            userId: userId,
-            today: today,
-            processHistorical: processHistorical,
-          );
+           // Vadesi gelen işlemleri hesapla
+           final result = await _processSubscription(
+             subscription: sub,
+             userId: userId,
+             today: today,
+             processHistorical: processHistorical,
+           );
 
           if (result.transactionsCreated.isNotEmpty) {
             transactions.addAll(result.transactionsCreated);
