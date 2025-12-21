@@ -660,90 +660,78 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         backgroundColor: AppColors.getBackground(context),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
           onPressed: () => Navigator.pop(context),
-          color: AppColors.getTextPrimary(context),
         ),
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                gradient: AppColors.premiumGradient,
-                borderRadius: BorderRadius.circular(AppRadius.md),
-              ),
-              child: const Icon(
-                Icons.settings_rounded,
-                color: Colors.white,
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: AppSpacing.sm),
-            Text(
-              'Settings',
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w700,
-                color: AppColors.getTextPrimary(context),
-              ),
-            ),
-          ],
+        title: Text(
+          'Settings',
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppSpacing.md),
+        padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildSectionTitle(theme, 'Account', Icons.person_rounded),
+            // Account Section
+            _buildSectionTitle('Account', Icons.person_rounded),
             const SizedBox(height: AppSpacing.sm),
             _buildAccountCard(theme, isFullyAuthenticated, currentUser),
 
-            const SizedBox(height: AppSpacing.lg),
+            const SizedBox(height: AppSpacing.xl),
 
-            _buildSectionTitle(theme, 'Premium', Icons.workspace_premium_rounded),
+            // Premium
+            _buildSectionTitle('Premium', Icons.workspace_premium_rounded),
             const SizedBox(height: AppSpacing.sm),
             _buildPremiumCard(theme),
 
-            const SizedBox(height: AppSpacing.lg),
+            const SizedBox(height: AppSpacing.xl),
 
-            _buildSectionTitle(theme, 'Income', Icons.attach_money_rounded),
+            // Income
+            _buildSectionTitle('Income', Icons.attach_money_rounded),
             const SizedBox(height: AppSpacing.sm),
             _buildIncomeCard(theme),
 
             const SizedBox(height: AppSpacing.lg),
 
-            _buildSectionTitle(theme, 'Pay Cycle', Icons.calendar_today_rounded),
+            // Pay Cycle
+            _buildSectionTitle('Pay Cycle', Icons.calendar_today_rounded),
             const SizedBox(height: AppSpacing.sm),
             _buildPayCycleCard(theme),
 
             const SizedBox(height: AppSpacing.lg),
 
-            _buildSectionTitle(theme, 'Next Payday', Icons.event_rounded),
+            // Next Payday
+            _buildSectionTitle('Next Payday', Icons.event_rounded),
             const SizedBox(height: AppSpacing.sm),
             _buildPaydayCard(theme),
 
             const SizedBox(height: AppSpacing.lg),
 
-            _buildSectionTitle(theme, 'Appearance', Icons.palette_rounded),
+            // Theme
+            _buildSectionTitle('Appearance', Icons.palette_rounded),
             const SizedBox(height: AppSpacing.sm),
             _buildThemeCard(theme),
 
             const SizedBox(height: AppSpacing.lg),
 
-            _buildSectionTitle(theme, 'Currency', Icons.currency_exchange_rounded),
+            // Currency
+            _buildSectionTitle('Currency', Icons.currency_exchange_rounded),
             const SizedBox(height: AppSpacing.sm),
             _buildCurrencyCard(theme),
 
             const SizedBox(height: AppSpacing.xxl),
 
+            // Save Button
             PaydayButton(
               text: 'Save Settings',
               icon: Icons.check_rounded,
               isLoading: _isLoading,
               width: double.infinity,
               onPressed: _saveSettings,
-            ).animate().fadeIn(duration: 300.ms).slideY(begin: 0.1, end: 0),
+            ),
 
             const SizedBox(height: AppSpacing.xl),
           ],
@@ -752,16 +740,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
-  Widget _buildSectionTitle(ThemeData theme, String title, IconData icon) {
+  Widget _buildSectionTitle(String title, IconData icon) {
     return Row(
       children: [
-        Icon(icon, size: 20, color: AppColors.primaryPink),
+        Icon(icon, size: 18, color: AppColors.primaryPink),
         const SizedBox(width: AppSpacing.xs),
         Text(
           title,
-          style: theme.textTheme.titleMedium?.copyWith(
+          style: TextStyle(
+            fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: AppColors.getTextPrimary(context),
+            color: AppColors.getTextSecondary(context),
+            letterSpacing: 0.5,
           ),
         ),
       ],
@@ -774,7 +764,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       decoration: BoxDecoration(
         color: AppColors.getCardBackground(context),
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        boxShadow: AppColors.getCardShadow(context),
+        border: Border.all(
+          color: AppColors.getBorder(context),
+          width: 1,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -783,8 +776,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             Row(
               children: [
                 Container(
-                  width: 56,
-                  height: 56,
+                  width: 48,
+                  height: 48,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: AppColors.pinkGradient,
@@ -796,17 +789,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) {
                         return const Icon(
-                          Icons.person,
+                          Icons.person_rounded,
                           color: Colors.white,
-                          size: 28,
+                          size: 24,
                         );
                       },
                     ),
                   )
                       : const Icon(
-                    Icons.person,
+                    Icons.person_rounded,
                     color: Colors.white,
-                    size: 28,
+                    size: 24,
                   ),
                 ),
                 const SizedBox(width: AppSpacing.md),
@@ -818,10 +811,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         currentUser?.displayName ?? 'User',
                         style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w600,
-                          color: AppColors.getTextPrimary(context),
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 2),
                       Text(
                         currentUser?.email ?? '',
                         style: theme.textTheme.bodySmall?.copyWith(
@@ -835,8 +827,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ],
             ),
             const SizedBox(height: AppSpacing.md),
-            const Divider(),
-            const SizedBox(height: AppSpacing.sm),
+            const Divider(height: 1),
+            const SizedBox(height: AppSpacing.md),
             PaydayButton(
               text: 'Sign Out',
               icon: Icons.logout_rounded,
@@ -848,7 +840,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             const SizedBox(height: AppSpacing.sm),
             PaydayButton(
               text: 'Delete Account',
-              icon: Icons.delete_forever_rounded,
+              icon: Icons.delete_outline_rounded,
               isLoading: _isSigningIn,
               width: double.infinity,
               onPressed: _showDeleteAccountDialog,
@@ -857,7 +849,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ),
           ] else ...[
             Text(
-              'Sign in to sync your data across devices',
+              'Sign in to sync your data',
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: AppColors.getTextSecondary(context),
               ),
@@ -870,7 +862,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ],
         ],
       ),
-    ).animate().fadeIn(duration: 300.ms).slideY(begin: 0.1, end: 0);
+    );
   }
 
   Widget _buildGoogleSignInButton() {
@@ -1060,7 +1052,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Widget _buildIncomeCard(ThemeData theme) {
-    // Merkezi formatter'dan sembol ve pozisyon bilgisi alınıyor
     final currencySymbol = CurrencyFormatter.getSymbol(_selectedCurrency);
     final isSymbolOnRight = CurrencyFormatter.isSymbolOnRight(_selectedCurrency);
 
@@ -1069,100 +1060,85 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       decoration: BoxDecoration(
         color: AppColors.getCardBackground(context),
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        boxShadow: AppColors.getCardShadow(context),
+        border: Border.all(
+          color: AppColors.getBorder(context),
+          width: 1,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'Monthly Income',
-            style: theme.textTheme.bodyMedium?.copyWith(
+            style: theme.textTheme.bodySmall?.copyWith(
               color: AppColors.getTextSecondary(context),
+              fontWeight: FontWeight.w500,
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
           TextField(
             controller: _incomeController,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.w700,
-              color: AppColors.getTextPrimary(context),
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w600,
             ),
             decoration: InputDecoration(
-              // Sembol sağda ise suffix, solda ise prefix kullan
               prefixText: isSymbolOnRight ? null : currencySymbol,
               suffixText: isSymbolOnRight ? currencySymbol : null,
-
-              prefixStyle: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w700,
+              prefixStyle: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w600,
                 color: AppColors.primaryPink,
               ),
-              suffixStyle: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w700,
+              suffixStyle: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w600,
                 color: AppColors.primaryPink,
               ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppRadius.md),
-                borderSide: BorderSide(color: AppColors.getBorder(context)),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppRadius.md),
                 borderSide: const BorderSide(color: AppColors.primaryPink, width: 2),
               ),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.md,
-                vertical: AppSpacing.sm,
-              ),
+              contentPadding: const EdgeInsets.all(AppSpacing.md),
             ),
-            onChanged: (_) {},
           ),
-          const SizedBox(height: AppSpacing.md),
+          const SizedBox(height: AppSpacing.lg),
           Text(
-            'Total Pool',
-            style: theme.textTheme.bodyMedium?.copyWith(
+            'Current Balance',
+            style: theme.textTheme.bodySmall?.copyWith(
               color: AppColors.getTextSecondary(context),
+              fontWeight: FontWeight.w500,
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
           TextField(
             controller: _currentBalanceController,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.w700,
-              color: AppColors.getTextPrimary(context),
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w600,
             ),
             decoration: InputDecoration(
-              // Sembol sağda ise suffix, solda ise prefix kullan
               prefixText: isSymbolOnRight ? null : currencySymbol,
               suffixText: isSymbolOnRight ? currencySymbol : null,
-
-              prefixStyle: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w700,
+              prefixStyle: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w600,
                 color: AppColors.secondaryPurple,
               ),
-              suffixStyle: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w700,
+              suffixStyle: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w600,
                 color: AppColors.secondaryPurple,
               ),
               hintText: '0.00',
-              hintStyle: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w700,
-                color: AppColors.getTextSecondary(context).withValues(alpha: 0.3),
-              ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppRadius.md),
-                borderSide: BorderSide(color: AppColors.getBorder(context)),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppRadius.md),
                 borderSide: const BorderSide(color: AppColors.secondaryPurple, width: 2),
               ),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.md,
-                vertical: AppSpacing.sm,
-              ),
+              contentPadding: const EdgeInsets.all(AppSpacing.md),
             ),
-            onChanged: (_) {},
           ),
         ],
       ),
@@ -1170,78 +1146,55 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Widget _buildPayCycleCard(ThemeData theme) {
-    // Kısa metinler kullan
-    final cycleLabels = {
-      'Monthly': 'Monthly',
-      'Bi-Weekly': 'Bi-Weekly',
-      'Semi-Monthly': 'Semi-Mo.',
-    };
-
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
         color: AppColors.getCardBackground(context),
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        boxShadow: AppColors.getCardShadow(context),
+        border: Border.all(
+          color: AppColors.getBorder(context),
+          width: 1,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'How often do you get paid?',
-            style: theme.textTheme.bodyMedium?.copyWith(
+            style: theme.textTheme.bodySmall?.copyWith(
               color: AppColors.getTextSecondary(context),
+              fontWeight: FontWeight.w500,
             ),
           ),
           const SizedBox(height: AppSpacing.md),
           Row(
-            children: AppConstants.payCycleOptions.asMap().entries.map((entry) {
-              final index = entry.key;
-              final cycle = entry.value;
+            children: AppConstants.payCycleOptions.map((cycle) {
               final isSelected = _selectedPayCycle == cycle;
-              final label = cycleLabels[cycle] ?? cycle;
-
               return Expanded(
                 child: Padding(
                   padding: EdgeInsets.only(
-                    right: index < AppConstants.payCycleOptions.length - 1
-                        ? AppSpacing.sm
-                        : 0,
+                    right: cycle != AppConstants.payCycleOptions.last ? AppSpacing.sm : 0,
                   ),
                   child: GestureDetector(
                     onTap: () {
                       HapticFeedback.lightImpact();
-                      setState(() {
-                        _selectedPayCycle = cycle;
-                      });
+                      setState(() => _selectedPayCycle = cycle);
                     },
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
-                      height: 48, // Sabit yükseklik
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.xs,
-                        vertical: AppSpacing.sm,
-                      ),
+                      padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
                       decoration: BoxDecoration(
                         gradient: isSelected ? AppColors.pinkGradient : null,
                         color: isSelected ? null : AppColors.getSubtle(context),
                         borderRadius: BorderRadius.circular(AppRadius.md),
-                        border: Border.all(
-                          color: isSelected ? AppColors.primaryPink : Colors.transparent,
-                          width: 2,
-                        ),
                       ),
-                      child: Center(
-                        child: Text(
-                          label,
-                          textAlign: TextAlign.center,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: isSelected ? Colors.white : AppColors.getTextPrimary(context),
-                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                            fontSize: 13,
-                          ),
+                      child: Text(
+                        cycle,
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: isSelected ? Colors.white : AppColors.getTextPrimary(context),
+                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                          fontSize: 12,
                         ),
                       ),
                     ),
@@ -1256,30 +1209,36 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Widget _buildPaydayCard(ThemeData theme) {
-    final dateFormat = DateFormat('EEEE, MMMM d, yyyy');
+    final dateFormat = DateFormat('MMM d, yyyy');
     final daysUntil = _nextPayday.difference(DateTime.now()).inDays;
 
     return GestureDetector(
-      onTap: _selectPayday,
+      onTap: () {
+        HapticFeedback.mediumImpact();
+        _selectPayday();
+      },
       child: Container(
         padding: const EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
           color: AppColors.getCardBackground(context),
           borderRadius: BorderRadius.circular(AppRadius.lg),
-          boxShadow: AppColors.getCardShadow(context),
+          border: Border.all(
+            color: AppColors.getBorder(context),
+            width: 1,
+          ),
         ),
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(AppSpacing.md),
+              padding: const EdgeInsets.all(AppSpacing.sm),
               decoration: BoxDecoration(
                 color: AppColors.primaryPink.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(AppRadius.md),
               ),
               child: const Icon(
-                Icons.calendar_month_rounded,
+                Icons.calendar_today_rounded,
                 color: AppColors.primaryPink,
-                size: 28,
+                size: 24,
               ),
             ),
             const SizedBox(width: AppSpacing.md),
@@ -1291,18 +1250,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     dateFormat.format(_nextPayday),
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w600,
-                      color: AppColors.getTextPrimary(context),
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   Text(
                     daysUntil > 0
                         ? '$daysUntil days away'
                         : daysUntil == 0
                         ? 'Today! 🎉'
-                        : 'Date has passed - tap to update',
+                        : 'Tap to update',
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: daysUntil < 0 ? AppColors.error : AppColors.getTextSecondary(context),
+                      color: daysUntil < 0
+                          ? AppColors.error
+                          : AppColors.getTextSecondary(context),
                     ),
                   ),
                 ],
@@ -1327,15 +1287,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       decoration: BoxDecoration(
         color: AppColors.getCardBackground(context),
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        boxShadow: AppColors.getCardShadow(context),
+        border: Border.all(
+          color: AppColors.getBorder(context),
+          width: 1,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Choose your theme',
-            style: theme.textTheme.bodyMedium?.copyWith(
+            'Choose theme',
+            style: theme.textTheme.bodySmall?.copyWith(
               color: AppColors.getTextSecondary(context),
+              fontWeight: FontWeight.w500,
             ),
           ),
           const SizedBox(height: AppSpacing.md),
@@ -1370,8 +1334,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               Expanded(
                 child: _buildThemeOption(
                   theme: theme,
-                  title: 'System',
-                  icon: Icons.settings_suggest_rounded,
+                  title: 'Auto',
+                  icon: Icons.brightness_auto_rounded,
                   isSelected: currentThemeMode == ThemeMode.system,
                   onTap: () {
                     HapticFeedback.lightImpact();
@@ -1383,7 +1347,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
         ],
       ),
-    ).animate().fadeIn(duration: 300.ms).slideY(begin: 0.1, end: 0);
+    );
   }
 
   Widget _buildThemeOption({
@@ -1397,18 +1361,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(
-          vertical: AppSpacing.md,
-          horizontal: AppSpacing.sm,
-        ),
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
         decoration: BoxDecoration(
           gradient: isSelected ? AppColors.pinkGradient : null,
           color: isSelected ? null : AppColors.getSubtle(context),
           borderRadius: BorderRadius.circular(AppRadius.md),
-          border: Border.all(
-            color: isSelected ? Colors.transparent : AppColors.getBorder(context),
-            width: 1,
-          ),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -1416,16 +1373,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             Icon(
               icon,
               color: isSelected ? Colors.white : AppColors.getTextSecondary(context),
-              size: 28,
+              size: 24,
             ),
-            const SizedBox(height: AppSpacing.xs),
+            const SizedBox(height: 6),
             Text(
               title,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: isSelected ? Colors.white : AppColors.getTextPrimary(context),
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                fontSize: 11,
               ),
-              textAlign: TextAlign.center,
             ),
           ],
         ),
@@ -1451,21 +1408,24 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         decoration: BoxDecoration(
           color: AppColors.getCardBackground(context),
           borderRadius: BorderRadius.circular(AppRadius.lg),
-          boxShadow: AppColors.getCardShadow(context),
+          border: Border.all(
+            color: AppColors.getBorder(context),
+            width: 1,
+          ),
         ),
         child: Row(
           children: [
             Container(
-              width: 56,
-              height: 56,
+              width: 44,
+              height: 44,
               decoration: BoxDecoration(
-                gradient: AppColors.pinkGradient,
+                color: AppColors.primaryPink.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(AppRadius.md),
               ),
               child: Center(
                 child: Text(
                   currencyPickerCurrency.flag ?? '🌍',
-                  style: const TextStyle(fontSize: 28),
+                  style: const TextStyle(fontSize: 24),
                 ),
               ),
             ),
@@ -1478,39 +1438,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     currencyPickerCurrency.name,
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w600,
-                      color: AppColors.getTextPrimary(context),
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Text(
-                        '$_selectedCurrency $currencySymbol',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: AppColors.getTextSecondary(context),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryPink.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
-                        ),
-                        child: Text(
-                          'Tap to change',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: AppColors.primaryPink,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
+                  const SizedBox(height: 2),
+                  Text(
+                    '$_selectedCurrency $currencySymbol',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: AppColors.getTextSecondary(context),
+                    ),
                   ),
                 ],
               ),
@@ -1521,7 +1456,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ),
           ],
         ),
-      ).animate().fadeIn(duration: 300.ms).slideY(begin: 0.1, end: 0),
+      ),
     );
   }
 }
