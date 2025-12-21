@@ -69,14 +69,13 @@ class MonthlySummaryCard extends ConsumerWidget {
   }
 
   Widget _buildContent(
-    BuildContext context,
-    String payCycle,
-    String currency,
-    List<Transaction> transactions,
-    List<Subscription> subscriptions,
-  ) {
+      BuildContext context,
+      String payCycle,
+      String currency,
+      List<Transaction> transactions,
+      List<Subscription> subscriptions,
+      ) {
     final theme = Theme.of(context);
-    final currencyFormat = NumberFormat.currency(symbol: CurrencyFormatter.getSymbol(currency));
 
     // Calculate expenses
     final expenses = transactions.where((t) => t.isExpense).toList();
@@ -85,7 +84,7 @@ class MonthlySummaryCard extends ConsumerWidget {
     // Calculate subscription costs in this period
     final subscriptionTotal = subscriptions.fold<double>(
       0,
-      (sum, sub) => sum + _getSubscriptionCostInPeriod(sub, payCycle),
+          (sum, sub) => sum + _getSubscriptionCostInPeriod(sub, payCycle),
     );
 
     final totalSpending = totalExpenses + subscriptionTotal;
@@ -159,8 +158,9 @@ class MonthlySummaryCard extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 4),
+              // GÜNCELLEME: Merkezi CurrencyFormatter kullanılıyor
               Text(
-                currencyFormat.format(totalSpending),
+                CurrencyFormatter.format(totalSpending, currency),
                 style: theme.textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.w800,
                   color: Colors.white,
@@ -180,7 +180,6 @@ class MonthlySummaryCard extends ConsumerWidget {
 
   Widget _buildMiniChart(BuildContext context, List<Transaction> transactions, String currency) {
     final theme = Theme.of(context);
-    final currencyFormat = NumberFormat.currency(symbol: CurrencyFormatter.getSymbol(currency));
 
     // Group expenses by date (last 7 days)
     final expenses = transactions.where((t) => t.isExpense).toList();
@@ -191,7 +190,7 @@ class MonthlySummaryCard extends ConsumerWidget {
     for (var expense in expenses) {
       final dateKey = DateTime(expense.date.year, expense.date.month, expense.date.day);
       if (last7Days.any((d) =>
-        d.year == dateKey.year && d.month == dateKey.month && d.day == dateKey.day)) {
+      d.year == dateKey.year && d.month == dateKey.month && d.day == dateKey.day)) {
         expensesByDate[dateKey] = (expensesByDate[dateKey] ?? 0) + expense.amount;
       }
     }
@@ -228,6 +227,15 @@ class MonthlySummaryCard extends ConsumerWidget {
               final heightFactor = maxAmount > 0 ? (amount / maxAmount) : 0.0;
               final isToday = DateTime.now().difference(date).inDays == 0;
 
+              // GÜNCELLEME: Grafik için temizlenmiş (decimalsız) metin
+              String labelText = '';
+              if (amount > 0) {
+                final formatted = CurrencyFormatter.format(amount, currency, showSymbol: false);
+                // Ondalık kısmı (.00 veya ,00) regex ile güvenli bir şekilde kaldırıyoruz
+                // Böylece '1,200.00' -> '1,200' olur. '1.200,00' -> '1.200' olur.
+                labelText = formatted.replaceAll(RegExp(r'[.,]\d+$'), '');
+              }
+
               return Expanded(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 2),
@@ -238,7 +246,7 @@ class MonthlySummaryCard extends ConsumerWidget {
                       SizedBox(
                         height: 16,
                         child: amount > 0 ? Text(
-                          currencyFormat.format(amount).replaceAll(RegExp(r'[^\d.,]'), '').split('.')[0],
+                          labelText,
                           style: theme.textTheme.bodySmall?.copyWith(
                             fontSize: 8,
                             color: AppColors.primaryPink,
@@ -469,4 +477,3 @@ class MonthlySummaryCard extends ConsumerWidget {
     }
   }
 }
-
