@@ -32,19 +32,19 @@ class RecentTransactionsCard extends ConsumerWidget {
         boxShadow: AppColors.getCardShadow(context),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
+        padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Header
+            // Header - Kompakt
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(6),
+                      padding: const EdgeInsets.all(5),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
@@ -54,20 +54,21 @@ class RecentTransactionsCard extends ConsumerWidget {
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
-                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                        borderRadius: BorderRadius.circular(6),
                       ),
                       child: Icon(
                         Icons.receipt_long_rounded,
                         color: AppColors.secondaryPurple,
-                        size: 16,
+                        size: 14,
                       ),
                     ),
-                    const SizedBox(width: AppSpacing.sm),
+                    const SizedBox(width: 8),
                     Text(
                       'Recent',
                       style: theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w700,
                         color: AppColors.getTextPrimary(context),
+                        fontSize: 13,
                       ),
                     ),
                   ],
@@ -87,13 +88,14 @@ class RecentTransactionsCard extends ConsumerWidget {
                     style: theme.textTheme.labelSmall?.copyWith(
                       color: AppColors.primaryPink,
                       fontWeight: FontWeight.w600,
+                      fontSize: 11,
                     ),
                   ),
                 ),
               ],
             ),
 
-            const SizedBox(height: AppSpacing.sm),
+            const SizedBox(height: 8),
 
             // Transactions List
             transactionsAsync.when(
@@ -131,20 +133,21 @@ class RecentTransactionsCard extends ConsumerWidget {
 
   Widget _buildEmptyState(BuildContext context, ThemeData theme) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
+      padding: const EdgeInsets.symmetric(vertical: 12),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
             Icons.receipt_long_rounded,
-            size: 20,
+            size: 16,
             color: AppColors.getTextSecondary(context),
           ),
-          const SizedBox(width: AppSpacing.sm),
+          const SizedBox(width: 6),
           Text(
             'No transactions yet',
             style: theme.textTheme.bodySmall?.copyWith(
               color: AppColors.getTextSecondary(context),
+              fontSize: 11,
             ),
           ),
         ],

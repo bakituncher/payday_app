@@ -26,7 +26,7 @@ class CountdownCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.xl),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primaryPink.withOpacity(0.35),
+            color: AppColors.primaryPink.withValues(alpha: 0.35),
             blurRadius: 20,
             offset: const Offset(0, 10),
             spreadRadius: -5,
@@ -44,7 +44,7 @@ class CountdownCard extends StatelessWidget {
               height: 80,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.1),
+                color: Colors.white.withValues(alpha: 0.1),
               ),
             ),
           ),
@@ -56,13 +56,13 @@ class CountdownCard extends StatelessWidget {
               height: 60,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.08),
+                color: Colors.white.withValues(alpha: 0.08),
               ),
             ),
           ),
-          // Main content
+          // Main content - Kompakt
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             child: Column(
               children: [
                 // Header
@@ -72,23 +72,24 @@ class CountdownCard extends StatelessWidget {
                     Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.all(5),
+                          padding: const EdgeInsets.all(4),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(6),
+                            color: Colors.white.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(5),
                           ),
                           child: const Icon(
                             Icons.access_time_rounded,
                             color: Colors.white,
-                            size: 14,
+                            size: 12,
                           ),
                         ),
-                        const SizedBox(width: AppSpacing.xs),
+                        const SizedBox(width: 6),
                         Text(
                           'Money Arrives In',
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: Colors.white.withOpacity(0.9),
+                            color: Colors.white.withValues(alpha: 0.9),
                             fontWeight: FontWeight.w500,
+                            fontSize: 12,
                           ),
                         ),
                       ],
@@ -100,22 +101,22 @@ class CountdownCard extends StatelessWidget {
                   ],
                 ),
 
-                const SizedBox(height: AppSpacing.md),
+                const SizedBox(height: 10),
 
-                // Countdown Timer
+                // Countdown Timer - Daha küçük
                 CountdownTimer(
                   targetDate: nextPayday,
                   showSeconds: true,
                   textStyle: theme.textTheme.headlineLarge?.copyWith(
                     fontWeight: FontWeight.w800,
                     color: Colors.white,
-                    fontSize: 36,
-                    letterSpacing: -1,
+                    fontSize: 30,
+                    letterSpacing: -0.8,
                   ),
                   accentColor: Colors.white,
                 ),
 
-                const SizedBox(height: AppSpacing.md),
+                const SizedBox(height: 10),
 
                 // Payday Date Badge
                 _PaydayDateBadge(date: nextPayday),
@@ -143,16 +144,16 @@ class _AmountBadge extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.sm,
-        vertical: AppSpacing.xs,
+        horizontal: 8,
+        vertical: 4,
       ),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(AppRadius.round),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 8,
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 6,
             offset: const Offset(0, 2),
           ),
         ],
@@ -161,19 +162,20 @@ class _AmountBadge extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 6,
-            height: 6,
+            width: 5,
+            height: 5,
             decoration: BoxDecoration(
               color: AppColors.success,
               shape: BoxShape.circle,
             ),
           ),
-          const SizedBox(width: AppSpacing.xs),
+          const SizedBox(width: 5),
           Text(
             CurrencyFormatter.format(amount, currency),
-            style: theme.textTheme.labelMedium?.copyWith(
+            style: theme.textTheme.labelSmall?.copyWith(
               color: AppColors.darkCharcoal,
               fontWeight: FontWeight.w700,
+              fontSize: 11,
             ),
           ),
         ],
@@ -193,14 +195,14 @@ class _PaydayDateBadge extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.sm,
+        horizontal: 10,
+        vertical: 6,
       ),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.15),
+        color: Colors.white.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(
-          color: Colors.white.withOpacity(0.2),
+          color: Colors.white.withValues(alpha: 0.2),
           width: 1,
         ),
       ),
@@ -209,14 +211,15 @@ class _PaydayDateBadge extends StatelessWidget {
         children: [
           Icon(
             Icons.calendar_today_rounded,
-            size: 14,
-            color: Colors.white.withOpacity(0.9),
+            size: 11,
+            color: Colors.white.withValues(alpha: 0.9),
           ),
-          const SizedBox(width: AppSpacing.sm),
+          const SizedBox(width: 6),
           Text(
             _formatPaydayDate(date),
             style: theme.textTheme.bodySmall?.copyWith(
               color: Colors.white,
+              fontSize: 11,
               fontWeight: FontWeight.w600,
             ),
           ),

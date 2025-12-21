@@ -30,7 +30,7 @@ class ActiveSubscriptionsCard extends ConsumerWidget {
         );
       },
       child: Container(
-        padding: const EdgeInsets.all(AppSpacing.md),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: AppColors.getCardBackground(context),
           borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -40,30 +40,31 @@ class ActiveSubscriptionsCard extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header
+            // Header - Kompakt
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(8),
+                      padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
                         gradient: AppColors.premiumGradient,
-                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                        borderRadius: BorderRadius.circular(6),
                       ),
                       child: const Icon(
                         Icons.subscriptions_rounded,
                         color: Colors.white,
-                        size: 18,
+                        size: 14,
                       ),
                     ),
-                    const SizedBox(width: AppSpacing.sm),
+                    const SizedBox(width: 8),
                     Text(
                       'Subscriptions',
-                      style: theme.textTheme.titleMedium?.copyWith(
+                      style: theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w700,
                         color: AppColors.getTextPrimary(context),
+                        fontSize: 13,
                       ),
                     ),
                   ],
@@ -71,19 +72,20 @@ class ActiveSubscriptionsCard extends ConsumerWidget {
                 Icon(
                   Icons.chevron_right_rounded,
                   color: AppColors.getTextSecondary(context),
+                  size: 18,
                 ),
               ],
             ),
 
-            const SizedBox(height: AppSpacing.md),
+            const SizedBox(height: 10),
 
-            // Stats Row
+            // Stats Row - Kompakt
             Row(
               children: [
                 // Monthly Total
                 Expanded(
                   child: Container(
-                    padding: const EdgeInsets.all(AppSpacing.sm),
+                    padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
                       color: isDark ? AppColors.darkSurfaceVariant : AppColors.subtleGray,
                       borderRadius: BorderRadius.circular(AppRadius.md),
@@ -95,32 +97,33 @@ class ActiveSubscriptionsCard extends ConsumerWidget {
                           'Monthly',
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: AppColors.getTextSecondary(context),
+                            fontSize: 10,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 3),
                         totalMonthlyCostAsync.when(
                           loading: () => Container(
                             width: 60,
-                            height: 20,
+                            height: 18,
                             decoration: BoxDecoration(
-                              color: isDark
-                                  ? AppColors.darkBorder
-                                  : AppColors.lightGray,
+                              color: isDark ? AppColors.darkBorder : AppColors.lightGray,
                               borderRadius: BorderRadius.circular(4),
                             ),
                           ),
                           error: (_, __) => Text(
                             '${currencySymbol}0.00',
-                            style: theme.textTheme.titleMedium?.copyWith(
+                            style: theme.textTheme.titleSmall?.copyWith(
                               fontWeight: FontWeight.w700,
                               color: AppColors.getTextPrimary(context),
+                              fontSize: 13,
                             ),
                           ),
                           data: (cost) => Text(
                             CurrencyFormatter.format(cost, currencyCode),
-                            style: theme.textTheme.titleMedium?.copyWith(
+                            style: theme.textTheme.titleSmall?.copyWith(
                               fontWeight: FontWeight.w700,
                               color: AppColors.getTextPrimary(context),
+                              fontSize: 13,
                             ),
                           ),
                         ),
@@ -129,12 +132,12 @@ class ActiveSubscriptionsCard extends ConsumerWidget {
                   ),
                 ),
 
-                const SizedBox(width: AppSpacing.sm),
+                const SizedBox(width: 8),
 
                 // Active Count
                 Expanded(
                   child: Container(
-                    padding: const EdgeInsets.all(AppSpacing.sm),
+                    padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
                       color: isDark ? AppColors.darkSurfaceVariant : AppColors.subtleGray,
                       borderRadius: BorderRadius.circular(AppRadius.md),
@@ -146,32 +149,33 @@ class ActiveSubscriptionsCard extends ConsumerWidget {
                           'Active',
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: AppColors.getTextSecondary(context),
+                            fontSize: 10,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 3),
                         subscriptionsAsync.when(
                           loading: () => Container(
                             width: 30,
-                            height: 20,
+                            height: 18,
                             decoration: BoxDecoration(
-                              color: isDark
-                                  ? AppColors.darkBorder
-                                  : AppColors.lightGray,
+                              color: isDark ? AppColors.darkBorder : AppColors.lightGray,
                               borderRadius: BorderRadius.circular(4),
                             ),
                           ),
                           error: (_, __) => Text(
                             '0',
-                            style: theme.textTheme.titleMedium?.copyWith(
+                            style: theme.textTheme.titleSmall?.copyWith(
                               fontWeight: FontWeight.w700,
                               color: AppColors.getTextPrimary(context),
+                              fontSize: 13,
                             ),
                           ),
                           data: (subs) => Text(
                             '${subs.length}',
-                            style: theme.textTheme.titleMedium?.copyWith(
+                            style: theme.textTheme.titleSmall?.copyWith(
                               fontWeight: FontWeight.w700,
                               color: AppColors.getTextPrimary(context),
+                              fontSize: 13,
                             ),
                           ),
                         ),
@@ -180,12 +184,12 @@ class ActiveSubscriptionsCard extends ConsumerWidget {
                   ),
                 ),
 
-                const SizedBox(width: AppSpacing.sm),
+                const SizedBox(width: 8),
 
                 // Due Soon
                 Expanded(
                   child: Container(
-                    padding: const EdgeInsets.all(AppSpacing.sm),
+                    padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
                       color: AppColors.warning.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(AppRadius.md),
@@ -197,13 +201,14 @@ class ActiveSubscriptionsCard extends ConsumerWidget {
                           'Due Soon',
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: AppColors.warning,
+                            fontSize: 10,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 3),
                         subscriptionsDueAsync.when(
                           loading: () => Container(
                             width: 30,
-                            height: 20,
+                            height: 18,
                             decoration: BoxDecoration(
                               color: AppColors.warning.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(4),
@@ -211,16 +216,18 @@ class ActiveSubscriptionsCard extends ConsumerWidget {
                           ),
                           error: (_, __) => Text(
                             '0',
-                            style: theme.textTheme.titleMedium?.copyWith(
+                            style: theme.textTheme.titleSmall?.copyWith(
                               fontWeight: FontWeight.w700,
                               color: AppColors.warning,
+                              fontSize: 13,
                             ),
                           ),
                           data: (subs) => Text(
                             '${subs.length}',
-                            style: theme.textTheme.titleMedium?.copyWith(
+                            style: theme.textTheme.titleSmall?.copyWith(
                               fontWeight: FontWeight.w700,
                               color: AppColors.warning,
+                              fontSize: 13,
                             ),
                           ),
                         ),
@@ -252,42 +259,44 @@ class ActiveSubscriptionsCard extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(height: AppSpacing.xs),
-                    ...dueSoon.take(2).map((sub) => Padding(
-                      padding: const EdgeInsets.only(top: AppSpacing.xs),
-                      child: Row(
-                        children: [
-                          Text(sub.emoji, style: const TextStyle(fontSize: 16)),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              sub.name,
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                fontWeight: FontWeight.w500,
+                    ...dueSoon.take(2).map(
+                          (sub) => Padding(
+                        padding: const EdgeInsets.only(top: AppSpacing.xs),
+                        child: Row(
+                          children: [
+                            Text(sub.emoji, style: const TextStyle(fontSize: 16)),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                sub.name,
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                             ),
-                          ),
-                          Text(
-                            '${sub.daysUntilBilling}d',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: sub.daysUntilBilling <= 2
-                                  ? AppColors.warning
-                                  : AppColors.getTextSecondary(context),
-                              fontWeight: FontWeight.w600,
+                            Text(
+                              '${sub.daysUntilBilling}d',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: sub.daysUntilBilling <= 2
+                                    ? AppColors.warning
+                                    : AppColors.getTextSecondary(context),
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            CurrencyFormatter.format(sub.amount, currencyCode),
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.getTextPrimary(context),
+                            const SizedBox(width: 8),
+                            Text(
+                              CurrencyFormatter.format(sub.amount, currencyCode),
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.getTextPrimary(context),
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    )),
+                    ),
                   ],
                 );
               },
@@ -298,4 +307,3 @@ class ActiveSubscriptionsCard extends ConsumerWidget {
     );
   }
 }
-

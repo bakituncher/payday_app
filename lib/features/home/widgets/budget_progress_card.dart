@@ -29,7 +29,7 @@ class BudgetProgressCard extends ConsumerWidget {
         boxShadow: AppColors.getCardShadow(context),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
+        padding: const EdgeInsets.all(12),
         child: totalExpensesAsync.when(
           loading: () => _buildShimmer(context),
           error: (error, stack) => _buildError(theme),
@@ -53,14 +53,14 @@ class BudgetProgressCard extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Header
+                // Header - Kompakt
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.all(6),
+                          padding: const EdgeInsets.all(5),
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               colors: [
@@ -70,20 +70,21 @@ class BudgetProgressCard extends ConsumerWidget {
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             ),
-                            borderRadius: BorderRadius.circular(AppRadius.sm),
+                            borderRadius: BorderRadius.circular(6),
                           ),
                           child: Icon(
                             Icons.pie_chart_rounded,
                             color: AppColors.primaryPink,
-                            size: 16,
+                            size: 14,
                           ),
                         ),
-                        const SizedBox(width: AppSpacing.sm),
+                        const SizedBox(width: 8),
                         Text(
                           'Budget',
                           style: theme.textTheme.titleSmall?.copyWith(
                             fontWeight: FontWeight.w700,
                             color: AppColors.getTextPrimary(context),
+                            fontSize: 13,
                           ),
                         ),
                       ],
@@ -92,7 +93,7 @@ class BudgetProgressCard extends ConsumerWidget {
                   ],
                 ),
 
-                const SizedBox(height: AppSpacing.md),
+                const SizedBox(height: 10),
 
                 // Progress Bar with Glow
                 _AnimatedProgressBar(
@@ -100,7 +101,7 @@ class BudgetProgressCard extends ConsumerWidget {
                   health: budgetHealth,
                 ),
 
-                const SizedBox(height: AppSpacing.xs),
+                const SizedBox(height: 6),
 
                 // Percentage indicator
                 Row(
@@ -111,6 +112,7 @@ class BudgetProgressCard extends ConsumerWidget {
                       style: theme.textTheme.labelSmall?.copyWith(
                         color: AppColors.getTextSecondary(context),
                         fontWeight: FontWeight.w500,
+                        fontSize: 10,
                       ),
                     ),
                     Text(
@@ -118,12 +120,13 @@ class BudgetProgressCard extends ConsumerWidget {
                       style: theme.textTheme.labelSmall?.copyWith(
                         color: _getProgressColor(budgetHealth),
                         fontWeight: FontWeight.w600,
+                        fontSize: 10,
                       ),
                     ),
                   ],
                 ),
 
-                const SizedBox(height: AppSpacing.sm),
+                const SizedBox(height: 8),
 
                 // Stats - Compact inline
                 Row(
@@ -136,7 +139,7 @@ class BudgetProgressCard extends ConsumerWidget {
                         AppColors.primaryPink,
                       ),
                     ),
-                    const SizedBox(width: AppSpacing.sm),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: _buildCompactStat(
                         context,
