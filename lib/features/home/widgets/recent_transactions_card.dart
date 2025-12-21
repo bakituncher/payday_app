@@ -282,21 +282,11 @@ class RecentTransactionsCard extends ConsumerWidget {
 
     if (confirmed == true) {
       try {
-        final repository = ref.read(transactionRepositoryProvider);
-        await repository.deleteTransaction(transaction.id, transaction.userId);
-
-        // Update current balance
-        final settingsRepo = ref.read(userSettingsRepositoryProvider);
-        final currentSettings = await ref.read(userSettingsProvider.future);
-
-        if (currentSettings != null) {
-          final balanceDelta = isExpense ? transaction.amount : -transaction.amount;
-          final updatedSettings = currentSettings.copyWith(
-            currentBalance: currentSettings.currentBalance + balanceDelta,
-            updatedAt: DateTime.now(),
-          );
-          await settingsRepo.saveUserSettings(updatedSettings);
-        }
+        final transactionManager = ref.read(transactionManagerServiceProvider);
+        await transactionManager.deleteTransaction(
+          userId: transaction.userId,
+          transaction: transaction,
+        );
 
         // Refresh data
         ref.invalidate(userSettingsProvider);

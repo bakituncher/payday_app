@@ -533,28 +533,12 @@ class _TransactionDetailScreenState extends ConsumerState<TransactionDetailScree
         note: _noteController.text.trim(),
       );
 
-      final repository = ref.read(transactionRepositoryProvider);
-      await repository.updateTransaction(updatedTransaction);
-
-      // Update current balance based on the difference
-      final settingsRepo = ref.read(userSettingsRepositoryProvider);
-      final currentSettings = await ref.read(userSettingsProvider.future);
-
-      if (currentSettings != null) {
-        final oldAmount = widget.transaction.amount;
-        final newAmount = updatedTransaction.amount;
-        final difference = newAmount - oldAmount;
-
-        // Expense amount ↑ => balance ↓  (subtract difference)
-        // Income amount ↑  => balance ↑  (add difference)
-        final signedDelta = isExpense ? -difference : difference;
-
-        final updatedSettings = currentSettings.copyWith(
-          currentBalance: currentSettings.currentBalance + signedDelta,
-          updatedAt: DateTime.now(),
-        );
-        await settingsRepo.saveUserSettings(updatedSettings);
-      }
+      final transactionManager = ref.read(transactionManagerServiceProvider);
+      await transactionManager.updateTransaction(
+        userId: widget.transaction.userId,
+        oldTransaction: widget.transaction,
+        updatedTransaction: updatedTransaction,
+      );
 
       // Invalidate providers
       ref.invalidate(userSettingsProvider);
@@ -658,24 +642,11 @@ class _TransactionDetailScreenState extends ConsumerState<TransactionDetailScree
 
   Future<void> _deleteTransaction() async {
     try {
-      final repository = ref.read(transactionRepositoryProvider);
-      await repository.deleteTransaction(widget.transaction.id, widget.transaction.userId);
-
-      // Update current balance
-      final settingsRepo = ref.read(userSettingsRepositoryProvider);
-      final currentSettings = await ref.read(userSettingsProvider.future);
-
-      if (currentSettings != null) {
-        final isExpense = widget.transaction.isExpense;
-        // Expense delete => +amount, Income delete => -amount
-        final balanceDelta = isExpense ? widget.transaction.amount : -widget.transaction.amount;
-
-        final updatedSettings = currentSettings.copyWith(
-          currentBalance: currentSettings.currentBalance + balanceDelta,
-          updatedAt: DateTime.now(),
-        );
-        await settingsRepo.saveUserSettings(updatedSettings);
-      }
+      final transactionManager = ref.read(transactionManagerServiceProvider);
+      await transactionManager.deleteTransaction(
+        userId: widget.transaction.userId,
+        transaction: widget.transaction,
+      );
 
       ref.invalidate(userSettingsProvider);
       ref.invalidate(currentCycleTransactionsProvider);
