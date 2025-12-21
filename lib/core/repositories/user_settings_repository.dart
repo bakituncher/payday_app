@@ -8,6 +8,12 @@ abstract class UserSettingsRepository {
   /// Save user settings
   Future<void> saveUserSettings(UserSettings settings);
 
+  /// Atomically increment balance by delta. Returns true if handled atomically.
+  Future<bool> incrementBalance(String userId, double delta) async {
+    // Default implementation falls back to read-modify-write in callers
+    return false;
+  }
+
   /// Update next payday
   Future<void> updateNextPayday(String userId, DateTime nextPayday);
 
@@ -20,4 +26,3 @@ abstract class UserSettingsRepository {
   /// Delete all user data
   Future<void> deleteAllUserData(String userId);
 }
-

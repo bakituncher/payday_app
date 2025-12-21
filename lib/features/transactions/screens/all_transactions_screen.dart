@@ -414,21 +414,11 @@ class _AllTransactionsScreenState extends ConsumerState<AllTransactionsScreen> {
 
   Future<void> _deleteTransaction(Transaction transaction) async {
     try {
-      final repository = ref.read(transactionRepositoryProvider);
-      await repository.deleteTransaction(transaction.id, transaction.userId);
-
-      // Bakiye güncelleme: expense silinince +, income silinince -
-      final settingsRepo = ref.read(userSettingsRepositoryProvider);
-      final currentSettings = await ref.read(userSettingsProvider.future);
-
-      if (currentSettings != null) {
-        final balanceDelta = transaction.isExpense ? transaction.amount : -transaction.amount;
-        final updatedSettings = currentSettings.copyWith(
-          currentBalance: currentSettings.currentBalance + balanceDelta,
-          updatedAt: DateTime.now(),
-        );
-        await settingsRepo.saveUserSettings(updatedSettings);
-      }
+      final manager = ref.read(transactionManagerServiceProvider);
+      await manager.deleteTransaction(
+        userId: transaction.userId,
+        transaction: transaction,
+      );
 
       ref.invalidate(userSettingsProvider);
       ref.invalidate(currentCycleTransactionsProvider);

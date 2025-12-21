@@ -103,5 +103,19 @@ class MockUserSettingsRepository implements UserSettingsRepository {
     _cachedSettings = null;
     _initialized = false;
   }
-}
 
+  @override
+  Future<bool> incrementBalance(String userId, double delta) async {
+    await Future.delayed(const Duration(milliseconds: 100));
+    await _loadFromPrefs();
+    if (_cachedSettings == null) return false;
+
+    final updated = _cachedSettings!.copyWith(
+      currentBalance: _cachedSettings!.currentBalance + delta,
+      updatedAt: DateTime.now(),
+    );
+
+    await saveUserSettings(updated);
+    return true;
+  }
+}

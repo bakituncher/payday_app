@@ -47,34 +47,28 @@ class TransactionManagerService {
 
       // ADIM 2: Bakiyeyi Güncelle (eğer istenmişse)
       if (updateBalance) {
-        final settings = await _settingsRepo.getUserSettings(userId);
+        // Firestore tarafı için atomik increment destekle
+        final delta = transaction.isExpense ? -transaction.amount : transaction.amount;
+        final handled = await _settingsRepo.incrementBalance(userId, delta);
 
-        if (settings == null) {
-          throw Exception('User settings not found for userId: $userId');
+        if (!handled) {
+          // Local/mock repo veya increment'i desteklemeyen implemantasyonlar için geri dönüş
+          final settings = await _settingsRepo.getUserSettings(userId);
+
+          if (settings == null) {
+            throw Exception('User settings not found for userId: $userId');
+          }
+
+          final newBalance = settings.currentBalance + delta;
+          if (newBalance < 0) {
+            print('⚠️ TransactionManager: Warning - Balance is negative: $newBalance');
+          }
+
+          await _settingsRepo.saveUserSettings(settings.copyWith(
+            currentBalance: newBalance,
+            updatedAt: DateTime.now(),
+          ));
         }
-
-        double currentBalance = settings.currentBalance;
-        double newBalance = currentBalance;
-
-        // ADIM 3: Bakiyeyi Hesapla
-        if (transaction.isExpense) {
-          newBalance = currentBalance - transaction.amount;
-          print('💼 TransactionManager: Expense - Balance: $currentBalance -> $newBalance');
-        } else {
-          newBalance = currentBalance + transaction.amount;
-          print('💼 TransactionManager: Income - Balance: $currentBalance -> $newBalance');
-        }
-
-        // Güvenlik Kontrolü: Negatif bakiye uyarısı (ama işlemi engelleme - kullanıcı ekside olabilir)
-        if (newBalance < 0) {
-          print('⚠️ TransactionManager: Warning - Balance is negative: $newBalance');
-        }
-
-        // ADIM 4: Yeni Bakiyeyi Kaydet
-        await _settingsRepo.saveUserSettings(settings.copyWith(
-          currentBalance: newBalance,
-          updatedAt: DateTime.now(),
-        ));
 
         print('💼 TransactionManager: Balance updated successfully');
       } else {
@@ -144,6 +138,52 @@ class TransactionManagerService {
     }
   }
 
+  // Merkezi silme akışı: kaydı sil ve bakiyeyi tersine çevir
+  Future<void> deleteTransaction({
+    required String userId,
+    required Transaction transaction,
+  }) async {
+    print('💼 TransactionManager: Deleting transaction ${transaction.id}');
+    try {
+      await _transactionRepo.deleteTransaction(transaction.id, userId);
+
+      // Expense silinirse bakiye artar, income silinirse bakiye azalır
+      final delta = transaction.isExpense ? transaction.amount : -transaction.amount;
+      await _applyBalanceDelta(userId, delta);
+
+      print('✅ TransactionManager: Transaction deleted and balance adjusted');
+    } catch (e) {
+      print('❌ TransactionManager: Error deleting transaction: $e');
+      rethrow;
+    }
+  }
+
+  // Güncelleme akışı: kaydı güncelle ve eski/yeni farkına göre bakiyeyi ayarla
+  Future<void> updateTransaction({
+    required String userId,
+    required Transaction oldTransaction,
+    required Transaction updatedTransaction,
+  }) async {
+    print('💼 TransactionManager: Updating transaction ${updatedTransaction.id}');
+    try {
+      await _transactionRepo.updateTransaction(updatedTransaction);
+
+      // Eski ve yeni etkiyi karşılaştırarak delta hesapla
+      final oldImpact = oldTransaction.isExpense ? -oldTransaction.amount : oldTransaction.amount;
+      final newImpact = updatedTransaction.isExpense ? -updatedTransaction.amount : updatedTransaction.amount;
+      final delta = newImpact - oldImpact;
+
+      if (delta != 0) {
+        await _applyBalanceDelta(userId, delta);
+      }
+
+      print('✅ TransactionManager: Transaction updated and balance adjusted');
+    } catch (e) {
+      print('❌ TransactionManager: Error updating transaction: $e');
+      rethrow;
+    }
+  }
+
   /// Manuel Bakiye Düzeltme (Balance Correction)
   ///
   /// UYARI: Bu metod dikkatli kullanılmalıdır!
@@ -187,5 +227,26 @@ class TransactionManagerService {
 
     print('✅ TransactionManager: Balance corrected successfully');
   }
-}
 
+  // Ortak bakiye güncelleme yolu: increment desteklemeyen repo'larda fallback uygular
+  Future<void> _applyBalanceDelta(String userId, double delta) async {
+    final handled = await _settingsRepo.incrementBalance(userId, delta);
+
+    if (handled) return;
+
+    final settings = await _settingsRepo.getUserSettings(userId);
+    if (settings == null) {
+      throw Exception('User settings not found for userId: $userId');
+    }
+
+    final newBalance = settings.currentBalance + delta;
+    if (newBalance < 0) {
+      print('⚠️ TransactionManager: Warning - Balance is negative: $newBalance');
+    }
+
+    await _settingsRepo.saveUserSettings(settings.copyWith(
+      currentBalance: newBalance,
+      updatedAt: DateTime.now(),
+    ));
+  }
+}

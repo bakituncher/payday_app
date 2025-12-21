@@ -171,7 +171,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                         color: AppColors.getTextPrimary(context),
                       ),
                       inputFormatters: [
-                        FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
+                        FilteringTextInputFormatter.allow(RegExp(r'^\d+([.,])?\d{0,2}')),
                       ],
                       decoration: InputDecoration(
                         hintText: '0.00',
@@ -421,7 +421,8 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
     });
 
     try {
-      final amount = double.parse(_amountController.text);
+      final amountText = _amountController.text.replaceAll(',', '.');
+      final amount = double.parse(amountText);
       final userId = ref.read(currentUserIdProvider);
       final category = AppConstants.transactionCategories
           .firstWhere((c) => c['id'] == _selectedCategoryId);
@@ -438,19 +439,12 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
         isExpense: true,
       );
 
-      final repository = ref.read(transactionRepositoryProvider);
-      await repository.addTransaction(transaction);
-
-      // Update current balance
-      final settingsRepo = ref.read(userSettingsRepositoryProvider);
-      final currentSettings = await ref.read(userSettingsProvider.future);
-      if (currentSettings != null) {
-        final updatedSettings = currentSettings.copyWith(
-          currentBalance: currentSettings.currentBalance - amount,
-          updatedAt: DateTime.now(),
-        );
-        await settingsRepo.saveUserSettings(updatedSettings);
-      }
+      // Process atomically via TransactionManagerService (transaction + balance)
+      final transactionManager = ref.read(transactionManagerServiceProvider);
+      await transactionManager.processTransaction(
+        userId: userId,
+        transaction: transaction,
+      );
 
       // Refresh data
       ref.invalidate(userSettingsProvider);
@@ -487,4 +481,3 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
     }
   }
 }
-
