@@ -438,19 +438,12 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
         isExpense: true,
       );
 
-      final repository = ref.read(transactionRepositoryProvider);
-      await repository.addTransaction(transaction);
-
-      // Update current balance
-      final settingsRepo = ref.read(userSettingsRepositoryProvider);
-      final currentSettings = await ref.read(userSettingsProvider.future);
-      if (currentSettings != null) {
-        final updatedSettings = currentSettings.copyWith(
-          currentBalance: currentSettings.currentBalance - amount,
-          updatedAt: DateTime.now(),
-        );
-        await settingsRepo.saveUserSettings(updatedSettings);
-      }
+      // Process atomically via TransactionManagerService (transaction + balance)
+      final transactionManager = ref.read(transactionManagerServiceProvider);
+      await transactionManager.processTransaction(
+        userId: userId,
+        transaction: transaction,
+      );
 
       // Refresh data
       ref.invalidate(userSettingsProvider);
@@ -487,4 +480,3 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
     }
   }
 }
-
