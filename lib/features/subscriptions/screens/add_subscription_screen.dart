@@ -34,6 +34,7 @@ class _AddSubscriptionScreenState extends ConsumerState<AddSubscriptionScreen> {
   String _selectedEmoji = '💳';
   bool _reminderEnabled = true;
   int _reminderDaysBefore = 2;
+  bool _autoRenew = true;
 
   bool _isLoading = false;
   bool _showTemplates = true;
@@ -79,6 +80,7 @@ class _AddSubscriptionScreenState extends ConsumerState<AddSubscriptionScreen> {
         status: base?.status ?? SubscriptionStatus.active,
         reminderEnabled: _reminderEnabled,
         reminderDaysBefore: _reminderDaysBefore,
+        autoRenew: _autoRenew,
         startDate: base?.startDate ?? DateTime.now(),
         createdAt: base?.createdAt ?? DateTime.now(),
         updatedAt: DateTime.now(),
@@ -167,6 +169,7 @@ class _AddSubscriptionScreenState extends ConsumerState<AddSubscriptionScreen> {
       _selectedEmoji = existing.emoji;
       _reminderEnabled = existing.reminderEnabled;
       _reminderDaysBefore = existing.reminderDaysBefore;
+      _autoRenew = existing.autoRenew;
       _showTemplates = false; // editing: skip template view
     }
   }
@@ -552,6 +555,38 @@ class _AddSubscriptionScreenState extends ConsumerState<AddSubscriptionScreen> {
             ),
           ).animate().fadeIn(duration: 300.ms, delay: 350.ms),
 
+          const SizedBox(height: AppSpacing.lg),
+
+          // Auto Renew
+          _buildSectionTitle('Auto Renew'),
+          Container(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            decoration: BoxDecoration(
+              color: AppColors.getCardBackground(context),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+              border: Border.all(color: AppColors.getBorder(context)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Flexible(
+                  child: Text(
+                    'Automatically renew at next billing date',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: AppColors.getTextPrimary(context),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                Switch.adaptive(
+                  value: _autoRenew,
+                  onChanged: (v) => setState(() => _autoRenew = v),
+                  activeTrackColor: AppColors.primaryPink,
+                ),
+              ],
+            ),
+          ).animate().fadeIn(duration: 300.ms, delay: 375.ms),
+
           const SizedBox(height: AppSpacing.xl),
 
           // Save Button
@@ -786,4 +821,3 @@ class _AddSubscriptionScreenState extends ConsumerState<AddSubscriptionScreen> {
     }
   }
 }
-

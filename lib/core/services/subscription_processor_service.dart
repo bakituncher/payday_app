@@ -276,33 +276,28 @@ class SubscriptionProcessorService {
 
   /// Kategori enum'unu ID'ye çevir
   String _mapCategoryToId(SubscriptionCategory category) {
-    // Bu ID'ler gerçek kategori ID'leriyle eşleşmeli
-    // AppConstants'ta tanımlı kategori ID'lerini kullanın
+    // Map to AppConstants transaction category IDs to ensure reports/graphs align
     switch (category) {
       case SubscriptionCategory.streaming:
-        return 'subscription_streaming';
-      case SubscriptionCategory.productivity:
-        return 'subscription_productivity';
-      case SubscriptionCategory.cloudStorage:
-        return 'subscription_cloud';
-      case SubscriptionCategory.fitness:
-        return 'subscription_fitness';
       case SubscriptionCategory.gaming:
-        return 'subscription_gaming';
       case SubscriptionCategory.newsMedia:
-        return 'subscription_news';
+        return 'entertainment';
+      case SubscriptionCategory.productivity:
+      case SubscriptionCategory.cloudStorage:
+        return 'bills';
+      case SubscriptionCategory.fitness:
+        return 'health';
       case SubscriptionCategory.foodDelivery:
-        return 'subscription_food';
       case SubscriptionCategory.shopping:
-        return 'subscription_shopping';
+        return 'shopping';
       case SubscriptionCategory.finance:
-        return 'subscription_finance';
+        return 'bills';
       case SubscriptionCategory.education:
-        return 'subscription_education';
+        return 'other';
       case SubscriptionCategory.utilities:
-        return 'subscription_utilities';
+        return 'bills';
       case SubscriptionCategory.other:
-        return 'subscription_other';
+        return 'other';
     }
   }
 
