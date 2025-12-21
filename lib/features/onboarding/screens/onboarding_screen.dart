@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:payday/core/theme/app_theme.dart';
 import 'package:payday/core/constants/app_constants.dart';
 import 'package:payday/core/models/user_settings.dart';
+import 'package:payday/core/providers/auth_providers.dart';
 import 'package:payday/core/providers/repository_providers.dart';
 import 'package:payday/core/utils/currency_formatter.dart';
 import 'package:payday/shared/widgets/payday_button.dart';
@@ -32,6 +33,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   @override
   void initState() {
     super.initState();
+    // Otomatik seçim aktif, kullanıcı değiştiremez (kodu koruyoruz)
     _selectedCurrency = CurrencyFormatter.getLocalCurrencyCode();
   }
 
@@ -43,7 +45,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     super.dispose();
   }
 
-  // --- Logic Helpers (Aynen korundu) ---
+  // --- Logic Helpers ---
+
   Future<void> _selectDate(BuildContext context) async {
     final picked = await showDatePicker(
       context: context,
@@ -53,7 +56,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
+            colorScheme: const ColorScheme.light(
               primary: AppColors.primaryPink,
               onPrimary: Colors.white,
               surface: Colors.white,
@@ -85,7 +88,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       }
       _pageController.nextPage(duration: 400.ms, curve: Curves.easeInOutCubic);
     } else if (_currentPage == 2) {
-      // Save settings on final page (initial balance is optional, defaults to 0)
+      // Save settings on final page
       await _saveSettings();
     } else {
       _pageController.nextPage(duration: 400.ms, curve: Curves.easeInOutCubic);
@@ -95,11 +98,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   Future<void> _saveSettings() async {
     setState(() { _isLoading = true; });
     try {
-      // Anonymous otomatik giriş KALDIRILDI.
-      // Onboarding yerel çalışır; buluta yedekleme istenirse ayarlardan giriş yapılır.
       final userId = ref.read(currentUserIdProvider);
 
-      // Parse initial pool balance (default to 0 if empty)
       final initialBalance = double.tryParse(_initialBalanceController.text) ?? 0.0;
 
       final settings = UserSettings(
@@ -108,7 +108,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         payCycle: _selectedPayCycle,
         nextPayday: _nextPayday,
         incomeAmount: double.parse(_incomeController.text),
-        currentBalance: initialBalance, // Initial Pool Balance
+        currentBalance: initialBalance,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
@@ -132,143 +132,131 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FC), // Çok açık gri/beyaz premium zemin
-      resizeToAvoidBottomInset: true,
-      body: Stack(
-        children: [
-          // 1. Modern Background Blobs with Blur
-          Positioned(
-            top: -100,
-            right: -50,
-            child: Container(
-              width: 300,
-              height: 300,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  colors: [
-                    AppColors.primaryPink.withOpacity(0.2),
-                    AppColors.secondaryPurple.withOpacity(0.1),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+    // PopScope ile Android geri tuşu kontrolü (Onboarding'den çıkmayı engelle/yönet)
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        if (_currentPage > 0) {
+          _previousPage();
+        } else {
+          // İlk sayfadaysak uygulamadan çıkışa izin ver (minimize)
+          SystemNavigator.pop();
+        }
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF8F9FC),
+        resizeToAvoidBottomInset: true,
+        body: Stack(
+          children: [
+            // 1. Background
+            Positioned(
+              top: -100, right: -50,
+              child: Container(
+                width: 300, height: 300,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    colors: [AppColors.primaryPink.withOpacity(0.2), AppColors.secondaryPurple.withOpacity(0.1)],
+                    begin: Alignment.topLeft, end: Alignment.bottomRight,
+                  ),
                 ),
               ),
             ),
-          ),
-          Positioned(
-            bottom: -50,
-            left: -50,
-            child: Container(
-              width: 250,
-              height: 250,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.blueAccent.withOpacity(0.1),
-                    AppColors.secondaryPurple.withOpacity(0.1),
-                  ],
+            Positioned(
+              bottom: -50, left: -50,
+              child: Container(
+                width: 250, height: 250,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    colors: [Colors.blueAccent.withOpacity(0.1), AppColors.secondaryPurple.withOpacity(0.1)],
+                  ),
                 ),
               ),
             ),
-          ),
-          // Glassmorphism Blur Effect over blobs
-          BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
-            child: Container(color: Colors.white.withOpacity(0.3)),
-          ),
+            BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+              child: Container(color: Colors.white.withOpacity(0.3)),
+            ),
 
-          // 2. Main Content
-          SafeArea(
-            child: Column(
-              children: [
-                // Top Navigation Bar
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                  child: Row(
-                    children: [
-                      if (_currentPage > 0)
-                        IconButton(
-                          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
-                          color: AppColors.darkCharcoal,
-                          style: IconButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            elevation: 0,
-                            padding: const EdgeInsets.all(12),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            // 2. Main Content
+            SafeArea(
+              child: Column(
+                children: [
+                  // Top Nav
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                    child: Row(
+                      children: [
+                        if (_currentPage > 0)
+                          IconButton(
+                            icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+                            color: AppColors.darkCharcoal,
+                            style: IconButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              elevation: 0,
+                              padding: const EdgeInsets.all(12),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            onPressed: _previousPage,
+                          ).animate().scale(),
+                        const Spacer(),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.6),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: Colors.white),
                           ),
-                          onPressed: _previousPage,
-                        ).animate().scale(),
-                      const Spacer(),
-                      // Şık Progress Indicator
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.6),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: Colors.white),
+                          child: Row(
+                            children: [
+                              Text("Step ${_currentPage + 1}", style: theme.textTheme.labelMedium?.copyWith(fontWeight: FontWeight.bold, color: AppColors.darkCharcoal)),
+                              Text(" / 3", style: theme.textTheme.labelMedium?.copyWith(color: AppColors.mediumGray)),
+                            ],
+                          ),
                         ),
-                        child: Row(
-                          children: [
-                            Text(
-                              "Step ${_currentPage + 1}",
-                              style: theme.textTheme.labelMedium?.copyWith(fontWeight: FontWeight.bold, color: AppColors.darkCharcoal),
-                            ),
-                            Text(
-                              " / 3",
-                              style: theme.textTheme.labelMedium?.copyWith(color: AppColors.mediumGray),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Page View
-                Expanded(
-                  child: PageView(
-                    controller: _pageController,
-                    physics: const NeverScrollableScrollPhysics(),
-                    onPageChanged: (page) {
-                      setState(() => _currentPage = page);
-                    },
-                    children: [
-                      _buildSetupPage(theme),
-                      _buildIncomePage(theme),
-                      _buildInitialBalancePage(theme),
-                    ],
-                  ),
-                ),
-
-                // Bottom Action Button (Floating & Glassy)
-                Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        const Color(0xFFF8F9FC).withOpacity(0),
-                        const Color(0xFFF8F9FC),
                       ],
                     ),
                   ),
-                  child: PaydayButton(
-                    text: _currentPage == 2 ? 'Start Budgeting' : 'Continue',
-                    onPressed: _isLoading ? null : _nextPage,
-                    isLoading: _isLoading,
-                    width: double.infinity,
-                    size: PaydayButtonSize.large,
-                    icon: _currentPage == 2 ? Icons.rocket_launch_rounded : null,
-                  ).animate().slideY(begin: 0.5, end: 0, duration: 400.ms),
-                ),
-              ],
+
+                  // Page View
+                  Expanded(
+                    child: PageView(
+                      controller: _pageController,
+                      physics: const NeverScrollableScrollPhysics(),
+                      onPageChanged: (page) => setState(() => _currentPage = page),
+                      children: [
+                        _buildSetupPage(theme),
+                        _buildIncomePage(theme),
+                        _buildInitialBalancePage(theme),
+                      ],
+                    ),
+                  ),
+
+                  // Bottom Button
+                  Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter, end: Alignment.bottomCenter,
+                        colors: [const Color(0xFFF8F9FC).withOpacity(0), const Color(0xFFF8F9FC)],
+                      ),
+                    ),
+                    child: PaydayButton(
+                      text: _currentPage == 2 ? 'Start Budgeting' : 'Continue',
+                      onPressed: _isLoading ? null : _nextPage,
+                      isLoading: _isLoading,
+                      width: double.infinity,
+                      size: PaydayButtonSize.large,
+                      icon: _currentPage == 2 ? Icons.rocket_launch_rounded : null,
+                    ).animate().slideY(begin: 0.5, end: 0, duration: 400.ms),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -298,7 +286,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
           const SizedBox(height: 32),
 
-          // Section 1: Frequency
+          // CURRENCY Seçimi Kaldırıldı (Otomatik kalacak)
+
           Text("HOW OFTEN?", style: theme.textTheme.labelSmall?.copyWith(fontWeight: FontWeight.bold, letterSpacing: 1.2, color: AppColors.mediumGray)),
           const SizedBox(height: 12),
 
@@ -314,7 +303,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
           const SizedBox(height: 32),
 
-          // Section 2: Date Picker (Hero Card)
           Text("NEXT PAYDAY", style: theme.textTheme.labelSmall?.copyWith(fontWeight: FontWeight.bold, letterSpacing: 1.2, color: AppColors.mediumGray)),
           const SizedBox(height: 12),
 
@@ -340,30 +328,22 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     children: [
                       Text(
                         _formatDate(_nextPayday),
-                        style: theme.textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.darkCharcoal,
-                        ),
+                        style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700, color: AppColors.darkCharcoal),
                       ),
                       const SizedBox(height: 4),
-                      Text(
-                        "Tap to change date",
-                        style: theme.textTheme.bodySmall?.copyWith(color: AppColors.primaryPink),
-                      ),
+                      Text("Tap to change date", style: theme.textTheme.bodySmall?.copyWith(color: AppColors.primaryPink)),
                     ],
                   ),
                   Container(
                     padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryPink.withOpacity(0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(Icons.calendar_today_rounded, color: AppColors.primaryPink, size: 24),
+                    decoration: BoxDecoration(color: AppColors.primaryPink.withOpacity(0.1), shape: BoxShape.circle),
+                    child: const Icon(Icons.calendar_today_rounded, color: AppColors.primaryPink, size: 24),
                   ),
                 ],
               ),
             ),
           ).animate().fadeIn(delay: 300.ms).scale(curve: Curves.elasticOut, duration: 600.ms),
+          const SizedBox(height: 100),
         ],
       ),
     );
@@ -382,10 +362,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         decoration: BoxDecoration(
           color: isSelected ? AppColors.darkCharcoal : Colors.white,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isSelected ? Colors.transparent : Colors.grey.withOpacity(0.2),
-            width: 1.5,
-          ),
+          border: Border.all(color: isSelected ? Colors.transparent : Colors.grey.withOpacity(0.2), width: 1.5),
           boxShadow: isSelected
               ? [BoxShadow(color: AppColors.darkCharcoal.withOpacity(0.3), blurRadius: 12, offset: const Offset(0, 8))]
               : [],
@@ -395,26 +372,17 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           children: [
             Text(
               badge,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: isSelected ? Colors.white.withOpacity(0.6) : AppColors.primaryPink,
-              ),
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: isSelected ? Colors.white.withOpacity(0.6) : AppColors.primaryPink),
             ),
             const SizedBox(height: 4),
             Text(
               title,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-                fontSize: 14,
-                color: isSelected ? Colors.white : AppColors.darkCharcoal,
-              ),
+              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600, fontSize: 14, color: isSelected ? Colors.white : AppColors.darkCharcoal),
             ),
             if (isSelected)
               Padding(
                 padding: const EdgeInsets.only(top: 8),
-                child: const Icon(Icons.check_circle, size: 16, color: AppColors.primaryPink)
-                    .animate().scale(),
+                child: const Icon(Icons.check_circle, size: 16, color: AppColors.primaryPink).animate().scale(),
               ),
           ],
         ),
@@ -423,18 +391,18 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   Widget _buildIncomePage(ThemeData theme) {
+    // Sembolün sağda mı solda mı olacağını kontrol et (Otomatik seçimden gelen değer)
+    final isSymbolRight = CurrencyFormatter.isSymbolOnRight(_selectedCurrency);
+    final symbol = CurrencyFormatter.getSymbol(_selectedCurrency);
+
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
         children: [
           const SizedBox(height: 20),
-          // Icon Animation
           Container(
             padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: AppColors.primaryPink.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
+            decoration: BoxDecoration(color: AppColors.primaryPink.withOpacity(0.1), shape: BoxShape.circle),
             child: const Text('💵', style: TextStyle(fontSize: 40)),
           ).animate().scale(duration: 500.ms, curve: Curves.elasticOut),
 
@@ -442,10 +410,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
           Text(
             "What's your income?",
-            style: theme.textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.w800,
-              color: AppColors.darkCharcoal,
-            ),
+            style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800, color: AppColors.darkCharcoal),
           ).animate().fadeIn(),
 
           const SizedBox(height: 8),
@@ -456,23 +421,21 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
           const SizedBox(height: 48),
 
-          // Huge Input Field
-          Column(
+          // Row yapısı ve sağ/sol sembol desteği
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
             children: [
-              Text(
-                  CurrencyFormatter.getSymbol(_selectedCurrency),
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.mediumGray.withOpacity(0.5))
-              ),
+              if (!isSymbolRight)
+                Text(symbol, style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: AppColors.mediumGray)),
+
               IntrinsicWidth(
                 child: TextField(
                   controller: _incomeController,
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}'))],
-                  style: theme.textTheme.displayMedium?.copyWith(
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.darkCharcoal,
-                    fontSize: 48, // Massive font size
-                  ),
+                  style: theme.textTheme.displayMedium?.copyWith(fontWeight: FontWeight.w900, color: AppColors.darkCharcoal, fontSize: 48),
                   textAlign: TextAlign.center,
                   cursorColor: AppColors.primaryPink,
                   cursorWidth: 3,
@@ -482,42 +445,32 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     hintStyle: TextStyle(color: AppColors.lightGray.withOpacity(0.5)),
                     border: InputBorder.none,
                     isDense: true,
-                    contentPadding: EdgeInsets.zero,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 4),
                   ),
                 ),
               ),
-              Container(
-                height: 2,
-                width: 100,
-                margin: const EdgeInsets.only(top: 8),
-                decoration: BoxDecoration(
-                  color: AppColors.primaryPink.withOpacity(0.5),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
+
+              if (isSymbolRight)
+                Text(symbol, style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: AppColors.mediumGray)),
             ],
           ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.2, end: 0),
 
+          Container(
+            height: 2, width: 150,
+            margin: const EdgeInsets.only(top: 8),
+            decoration: BoxDecoration(color: AppColors.primaryPink.withOpacity(0.5), borderRadius: BorderRadius.circular(2)),
+          ),
+
           const SizedBox(height: 48),
 
-          // Info Box
           Container(
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.lightGray.withOpacity(0.5)),
-            ),
+            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.lightGray.withOpacity(0.5))),
             child: Row(
               children: [
-                Icon(Icons.info_outline_rounded, size: 18, color: AppColors.mediumGray),
+                const Icon(Icons.info_outline_rounded, size: 18, color: AppColors.mediumGray),
                 const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    "This amount will be automatically added to your pool on each payday.",
-                    style: theme.textTheme.bodySmall?.copyWith(color: AppColors.mediumGray, height: 1.4),
-                  ),
-                ),
+                Expanded(child: Text("This amount will be automatically added to your pool on each payday.", style: theme.textTheme.bodySmall?.copyWith(color: AppColors.mediumGray, height: 1.4))),
               ],
             ),
           ).animate().fadeIn(delay: 400.ms),
@@ -527,18 +480,17 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   Widget _buildInitialBalancePage(ThemeData theme) {
+    final isSymbolRight = CurrencyFormatter.isSymbolOnRight(_selectedCurrency);
+    final symbol = CurrencyFormatter.getSymbol(_selectedCurrency);
+
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
         children: [
           const SizedBox(height: 20),
-          // Icon Animation
           Container(
             padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: AppColors.secondaryPurple.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
+            decoration: BoxDecoration(color: AppColors.secondaryPurple.withOpacity(0.1), shape: BoxShape.circle),
             child: const Text('🏦', style: TextStyle(fontSize: 40)),
           ).animate().scale(duration: 500.ms, curve: Curves.elasticOut),
 
@@ -546,10 +498,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
           Text(
             "Set your Pool",
-            style: theme.textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.w800,
-              color: AppColors.darkCharcoal,
-            ),
+            style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800, color: AppColors.darkCharcoal),
           ).animate().fadeIn(),
 
           const SizedBox(height: 8),
@@ -561,23 +510,21 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
           const SizedBox(height: 48),
 
-          // Huge Input Field
-          Column(
+          // Row yapısı ve sağ/sol sembol desteği
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
             children: [
-              Text(
-                  CurrencyFormatter.getSymbol(_selectedCurrency),
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.secondaryPurple.withOpacity(0.5))
-              ),
+              if (!isSymbolRight)
+                Text(symbol, style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: AppColors.secondaryPurple)),
+
               IntrinsicWidth(
                 child: TextField(
                   controller: _initialBalanceController,
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}'))],
-                  style: theme.textTheme.displayMedium?.copyWith(
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.darkCharcoal,
-                    fontSize: 48,
-                  ),
+                  style: theme.textTheme.displayMedium?.copyWith(fontWeight: FontWeight.w900, color: AppColors.darkCharcoal, fontSize: 48),
                   textAlign: TextAlign.center,
                   cursorColor: AppColors.secondaryPurple,
                   cursorWidth: 3,
@@ -587,66 +534,46 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     hintStyle: TextStyle(color: AppColors.lightGray.withOpacity(0.5)),
                     border: InputBorder.none,
                     isDense: true,
-                    contentPadding: EdgeInsets.zero,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 4),
                   ),
                 ),
               ),
-              Container(
-                height: 2,
-                width: 100,
-                margin: const EdgeInsets.only(top: 8),
-                decoration: BoxDecoration(
-                  color: AppColors.secondaryPurple.withOpacity(0.5),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
+
+              if (isSymbolRight)
+                Text(symbol, style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: AppColors.secondaryPurple)),
             ],
           ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.2, end: 0),
 
+          Container(
+            height: 2, width: 150,
+            margin: const EdgeInsets.only(top: 8),
+            decoration: BoxDecoration(color: AppColors.secondaryPurple.withOpacity(0.5), borderRadius: BorderRadius.circular(2)),
+          ),
+
           const SizedBox(height: 48),
 
-          // Info Box
           Container(
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.lightGray.withOpacity(0.5)),
-            ),
+            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.lightGray.withOpacity(0.5))),
             child: Row(
               children: [
-                Icon(Icons.savings_outlined, size: 18, color: AppColors.secondaryPurple),
+                const Icon(Icons.savings_outlined, size: 18, color: AppColors.secondaryPurple),
                 const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    "This is your starting pool. All income and expenses will be tracked from here. Leave at 0 to start fresh.",
-                    style: theme.textTheme.bodySmall?.copyWith(color: AppColors.mediumGray, height: 1.4),
-                  ),
-                ),
+                Expanded(child: Text("This is your starting pool. All income and expenses will be tracked from here. Leave at 0 to start fresh.", style: theme.textTheme.bodySmall?.copyWith(color: AppColors.mediumGray, height: 1.4))),
               ],
             ),
           ).animate().fadeIn(delay: 400.ms),
 
           const SizedBox(height: 16),
 
-          // Security Info Box
           Container(
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.lightGray.withOpacity(0.5)),
-            ),
+            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.lightGray.withOpacity(0.5))),
             child: Row(
               children: [
-                Icon(Icons.lock_outline_rounded, size: 18, color: AppColors.mediumGray),
+                const Icon(Icons.lock_outline_rounded, size: 18, color: AppColors.mediumGray),
                 const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    "Your financial data is stored locally and never shared.",
-                    style: theme.textTheme.bodySmall?.copyWith(color: AppColors.mediumGray, height: 1.4),
-                  ),
-                ),
+                Expanded(child: Text("Your financial data is stored locally and never shared.", style: theme.textTheme.bodySmall?.copyWith(color: AppColors.mediumGray, height: 1.4))),
               ],
             ),
           ).animate().fadeIn(delay: 500.ms),

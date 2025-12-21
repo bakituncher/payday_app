@@ -1,4 +1,4 @@
-/// Daily Allowable Spend Card - Premium Compact Design
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:payday/core/theme/app_theme.dart';
@@ -16,112 +16,103 @@ class DailySpendCard extends ConsumerWidget {
     final userSettings = ref.watch(userSettingsProvider);
 
     return Container(
-      padding: const EdgeInsets.all(AppSpacing.lg),
+      // Padding dengeli tutuldu
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 14),
       decoration: BoxDecoration(
         color: AppColors.getCardBackground(context),
-        borderRadius: BorderRadius.circular(AppRadius.xl),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: AppColors.getCardShadow(context),
+        border: Border.all(
+          color: AppColors.getBorder(context).withValues(alpha: 0.5),
+          width: 1,
+        ),
       ),
-      child: dailySpendAsync.when(
-        loading: () => _buildShimmer(context),
-        error: (error, stack) => _buildError(context, theme),
-        data: (dailySpend) {
-          final currency = userSettings.value?.currency ?? 'USD';
-          final isPositive = dailySpend > 0;
-          final statusColor = isPositive ? AppColors.success : AppColors.error;
-          final statusBgColor = isPositive ? AppColors.successLight : AppColors.errorLight;
+      child: AnimatedSize(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+        child: dailySpendAsync.when(
+          loading: () => _buildShimmer(context),
+          error: (error, stack) => _buildError(context, theme),
+          data: (dailySpend) {
+            final currency = userSettings.value?.currency ?? 'USD';
+            final isPositive = dailySpend >= 0;
 
-          return Row(
-            children: [
-              // Icon
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: isPositive
-                        ? [AppColors.success.withValues(alpha: 0.2), AppColors.success.withValues(alpha: 0.05)]
-                        : [AppColors.error.withValues(alpha: 0.2), AppColors.error.withValues(alpha: 0.05)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+            final statusColor = isPositive ? AppColors.success : AppColors.error;
+            // İkonu değiştirdik, artık para sağda olduğu için solda generic bir cüzdan ikonu daha şık durur
+            final iconData = Icons.account_balance_wallet_outlined;
+
+            return Row(
+              children: [
+                // SOL TARA: İkon
+                _buildCompactIcon(statusColor, iconData),
+
+                const SizedBox(width: 12),
+
+                // ORTA: Başlık (Sola Yaslı)
+                Text(
+                  'Daily Budget',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: AppColors.getTextSecondary(context),
+                    fontWeight: FontWeight.w600,
                   ),
-                  borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
-                child: Icon(
-                  isPositive ? Icons.account_balance_wallet_rounded : Icons.warning_rounded,
-                  color: statusColor,
-                  size: 22,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.md),
-              // Content
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+
+                // SPACER: Kalan boşluğu iterek sağ tarafı doldurur
+                const Spacer(),
+
+                // SAĞ TARAF: Tutar ve Durum (Sağa Yaslı)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end, // Sağa yaslama kilit nokta
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      'Daily Budget',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: AppColors.getTextSecondary(context),
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
+                    _buildAmountText(theme, dailySpend, currency),
                     const SizedBox(height: 2),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.baseline,
-                      textBaseline: TextBaseline.alphabetic,
-                      children: [
-                        Text(
-                          CurrencyFormatter.format(dailySpend.abs(), currency),
-                          style: theme.textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.w800,
-                            color: statusColor,
-                            height: 1.1,
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          isPositive ? 'available' : 'over',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: AppColors.getTextSecondary(context),
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              // Badge
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 4),
-                decoration: BoxDecoration(
-                  color: statusBgColor,
-                  borderRadius: BorderRadius.circular(AppRadius.round),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      isPositive ? Icons.trending_up_rounded : Icons.trending_down_rounded,
-                      size: 12,
-                      color: statusColor,
-                    ),
-                    const SizedBox(width: 3),
                     Text(
-                      isPositive ? 'On Track' : 'Over',
+                      isPositive ? 'remaining' : 'over limit',
                       style: theme.textTheme.labelSmall?.copyWith(
-                        color: statusColor,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 10,
+                        color: isPositive
+                            ? AppColors.getTextSecondary(context).withValues(alpha: 0.8)
+                            : AppColors.error,
+                        fontWeight: FontWeight.w500,
+                        fontSize: 11,
                       ),
                     ),
                   ],
                 ),
-              ),
-            ],
-          );
-        },
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCompactIcon(Color color, IconData icon) {
+    return Container(
+      width: 38,
+      height: 38,
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1), // Hafif tint
+        borderRadius: BorderRadius.circular(10),
+        // Border kaldırıldı, daha temiz bir görünüm için
+      ),
+      child: Icon(
+        icon,
+        color: color,
+        size: 20,
+      ),
+    );
+  }
+
+  Widget _buildAmountText(ThemeData theme, double amount, String currency) {
+    return Text(
+      CurrencyFormatter.format(amount.abs(), currency),
+      style: theme.textTheme.titleLarge?.copyWith(
+        fontWeight: FontWeight.w800,
+        color: theme.textTheme.bodyLarge?.color,
+        height: 1.0,
+        letterSpacing: -0.5, // Rakamları biraz sıkılaştırır, daha tok durur
+        fontFeatures: const [FontFeature.tabularFigures()],
       ),
     );
   }
@@ -130,68 +121,56 @@ class DailySpendCard extends ConsumerWidget {
     return Row(
       children: [
         Container(
-          width: 42,
-          height: 42,
+          width: 38,
+          height: 38,
           decoration: BoxDecoration(
             color: AppColors.getSubtle(context),
-            borderRadius: BorderRadius.circular(AppRadius.md),
+            borderRadius: BorderRadius.circular(10),
           ),
         ),
-        const SizedBox(width: AppSpacing.md),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                height: 12,
-                width: 70,
-                decoration: BoxDecoration(
-                  color: AppColors.getSubtle(context),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-              ),
-              const SizedBox(height: 6),
-              Container(
-                height: 20,
-                width: 100,
-                decoration: BoxDecoration(
-                  color: AppColors.getSubtle(context),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-              ),
-            ],
+        const SizedBox(width: 12),
+        Container(
+          height: 14,
+          width: 80,
+          decoration: BoxDecoration(
+            color: AppColors.getSubtle(context),
+            borderRadius: BorderRadius.circular(4),
           ),
         ),
+        const Spacer(), // Shimmer'da da sağa itiyoruz
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Container(
+              height: 20,
+              width: 90,
+              decoration: BoxDecoration(
+                color: AppColors.getSubtle(context),
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Container(
+              height: 10,
+              width: 50,
+              decoration: BoxDecoration(
+                color: AppColors.getSubtle(context),
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+          ],
+        )
       ],
     ).animate(onPlay: (controller) => controller.repeat())
         .shimmer(duration: 1200.ms, color: AppColors.getBorder(context));
   }
 
   Widget _buildError(BuildContext context, ThemeData theme) {
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: AppColors.errorLight,
-            borderRadius: BorderRadius.circular(AppRadius.md),
-          ),
-          child: Icon(
-            Icons.error_outline_rounded,
-            color: AppColors.error,
-            size: 22,
-          ),
-        ),
-        const SizedBox(width: AppSpacing.md),
-        Text(
-          'Unable to load',
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: AppColors.error,
-          ),
-        ),
-      ],
+    return Center(
+      child: Text(
+        'Unavailable',
+        style: theme.textTheme.labelMedium?.copyWith(color: AppColors.error),
+      ),
     );
   }
 }
-
