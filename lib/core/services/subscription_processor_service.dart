@@ -142,6 +142,20 @@ class SubscriptionProcessorService {
     double totalAmount = 0.0;
     DateTime currentBillingDate = subscription.nextBillingDate;
 
+    // Trial -> Active: if trial ended and past date, flip to active before processing
+    if (subscription.status == SubscriptionStatus.trial && subscription.trialEndsAt != null) {
+      if (!subscription.trialEndsAt!.isAfter(today)) {
+        subscription = subscription.copyWith(status: SubscriptionStatus.active);
+      } else {
+        // still in trial; skip billing
+        return _SubscriptionProcessDetails(
+          transactionsCreated: const [],
+          totalAmount: 0.0,
+          updatedSubscription: subscription,
+        );
+      }
+    }
+
     // Grace period: if autoRenew is false, keep active until billing date, then cancel instead of charging
     if (!subscription.autoRenew && currentBillingDate.isAfter(today)) {
       return _SubscriptionProcessDetails(

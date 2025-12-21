@@ -221,8 +221,11 @@ class SubscriptionCard extends ConsumerWidget {
   }
 
   String _getBadgeLabel(Subscription sub) {
-    if (sub.status == SubscriptionStatus.cancelled || !sub.autoRenew) {
+    if (sub.status == SubscriptionStatus.cancelled) {
       return 'CANCELLED';
+    }
+    if (!sub.autoRenew && sub.status == SubscriptionStatus.active) {
+      return 'ENDS SOON';
     }
     if (sub.status == SubscriptionStatus.paused) {
       return 'PAUSED';
@@ -234,7 +237,10 @@ class SubscriptionCard extends ConsumerWidget {
   }
 
   Color _getBadgeColor(Subscription sub) {
-    if (sub.status == SubscriptionStatus.cancelled || !sub.autoRenew) {
+    if (sub.status == SubscriptionStatus.cancelled) {
+      return AppColors.error;
+    }
+    if (!sub.autoRenew && sub.status == SubscriptionStatus.active) {
       return AppColors.error;
     }
     return _getStatusColor(sub.status);
