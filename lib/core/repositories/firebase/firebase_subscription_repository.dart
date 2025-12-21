@@ -37,11 +37,11 @@ class FirebaseSubscriptionRepository implements SubscriptionRepository {
 
   @override
   Future<void> cancelSubscription(String subscriptionId, String userId) async {
-     // Update status to cancelled and set cancelledAt timestamp
-     await _getCollection(userId).doc(subscriptionId).update({
-       'status': 'cancelled',
-       'cancelledAt': FieldValue.serverTimestamp(),
-     });
+    // Soft cancel: disable auto-renew; processor will stop billing and mark cancelled at period end.
+    await _getCollection(userId).doc(subscriptionId).update({
+      'autoRenew': false,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
   }
 
   @override
