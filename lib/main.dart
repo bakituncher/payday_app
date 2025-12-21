@@ -2,8 +2,9 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart'; // ✅ EKLENDİ: RevenueCat keyleri için
-import 'package:payday/core/services/revenue_cat_service.dart'; // ✅ EKLENDİ: RevenueCat servisi
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:payday/core/services/revenue_cat_service.dart';
 import 'firebase_options.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -17,35 +18,31 @@ import 'package:payday/core/providers/repository_providers.dart';
 import 'package:payday/core/providers/theme_providers.dart';
 import 'package:payday/core/providers/auth_providers.dart';
 
+// ✅ EKLENDİ: Premium provider'a erişmemiz lazım
+import 'package:payday/features/premium/providers/premium_providers.dart';
+
 void main() async {
-  // Ensure Flutter bindings are initialized
   WidgetsFlutterBinding.ensureInitialized();
 
-  // ✅ EKLENDİ: .env dosyasını yükle (RevenueCat API keyleri buradan okunuyor)
-  // Eğer bu yapılmazsa RevenueCatService null key hatası verir.
   await dotenv.load(fileName: ".env");
+  MobileAds.instance.initialize();
 
-  // Firebase'i başlat
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // ✅ EKLENDİ: RevenueCat Başlatma
-  // Firebase ve Env yüklendikten sonra çalışmalı
+  // RevenueCat'i başlat
   await RevenueCatService().init();
 
-  // --- CRASHLYTICS ENTEGRASYONU ---
-  // Flutter framework hatalarını otomatik olarak Crashlytics'e bildir
-  FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+  // Debug Logu: Başlangıçta RevenueCat hazır mı?
+  debugPrint("RevenueCat Initialized");
 
-  // Asenkron (async) hataları yakala ve Crashlytics'e bildir
+  FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
   PlatformDispatcher.instance.onError = (error, stack) {
     FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
     return true;
   };
-  // --------------------------------
 
-  // Set system UI overlay style
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -55,13 +52,11 @@ void main() async {
     ),
   );
 
-  // Set preferred orientations (portrait only for optimal UX)
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
 
-  // Run the app with Riverpod
   runApp(
     const ProviderScope(
       child: PaydayApp(),
@@ -69,7 +64,6 @@ void main() async {
   );
 }
 
-/// Main Application Widget
 class PaydayApp extends ConsumerStatefulWidget {
   const PaydayApp({super.key});
 
@@ -78,12 +72,9 @@ class PaydayApp extends ConsumerStatefulWidget {
 }
 
 class _PaydayAppState extends ConsumerState<PaydayApp> {
-
   @override
   void initState() {
     super.initState();
-    // UI build işlemi bitmeden state okumak bazen hata verebilir.
-    // Arkadaşının eklediği microtask yöntemi bunu güvenli hale getirir.
     Future.microtask(() => _initializeAuth());
   }
 
@@ -97,7 +88,6 @@ class _PaydayAppState extends ConsumerState<PaydayApp> {
       }
     } catch (e, stack) {
       debugPrint('Error signing in anonymously: $e');
-      // Auth hatalarını Crashlytics'e bildir
       FirebaseCrashlytics.instance.recordError(e, stack, reason: 'Anonymous Auth Failed');
     }
   }
@@ -107,21 +97,14 @@ class _PaydayAppState extends ConsumerState<PaydayApp> {
     final themeMode = ref.watch(themeModeProvider);
 
     return MaterialApp(
-      // App Info
       title: 'Payday',
       debugShowCheckedModeBanner: false,
-
-      // Theme
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: themeMode,
-
-      // Analytics Observer
       navigatorObservers: [
         FirebaseAnalyticsObserver(analytics: FirebaseAnalytics.instance),
       ],
-
-      // Routes
       initialRoute: '/',
       routes: {
         '/': (context) => const SplashScreen(),
@@ -134,7 +117,6 @@ class _PaydayAppState extends ConsumerState<PaydayApp> {
   }
 }
 
-/// Splash Screen - Determines navigation flow - Premium Industry-Grade Design
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
@@ -155,13 +137,11 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   void initState() {
     super.initState();
 
-    // Main animation controller
     _controller = AnimationController(
       duration: const Duration(milliseconds: 1200),
       vsync: this,
     );
 
-    // Pulse animation controller
     _pulseController = AnimationController(
       duration: const Duration(milliseconds: 1500),
       vsync: this,
@@ -198,19 +178,34 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     _controller.forward();
 
     // Navigate after delay
-    _checkOnboardingStatus();
+    _checkStatusAndNavigate();
   }
 
-  Future<void> _checkOnboardingStatus() async {
-    await Future.delayed(const Duration(milliseconds: 2500));
+  // ✅ BU FONKSİYON GÜNCELLENDİ
+  Future<void> _checkStatusAndNavigate() async {
+    // 1. Önce biraz bekle (Animasyon için)
+    await Future.delayed(const Duration(milliseconds: 2000));
 
     if (!mounted) return;
 
+    // 2. ✅ KRİTİK ADIM: PREMIUM DURUMUNU BURADA KONTROL ET
+    // Kullanıcı daha uygulamaya girmeden statüsünü çekiyoruz.
+    debugPrint("Splash: Checking Premium Status...");
+    try {
+      await refreshPremiumStatus(ref);
+      final isPremium = ref.read(isPremiumProvider);
+      debugPrint("Splash: Premium Status Checked -> $isPremium");
+    } catch (e) {
+      debugPrint("Splash: Premium Check Failed -> $e");
+    }
+
+    // 3. Onboarding durumunu kontrol et
     final repository = ref.read(userSettingsRepositoryProvider);
     final hasCompletedOnboarding = await repository.hasCompletedOnboarding();
 
     if (!mounted) return;
 
+    // 4. Yönlendirme yap
     if (hasCompletedOnboarding) {
       Navigator.of(context).pushReplacementNamed('/home');
     } else {
@@ -227,6 +222,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
+    // ... UI kodları aynen kalacak (kısaltmak için burayı yazmıyorum, yukarıdaki UI kodunun aynısı)
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
