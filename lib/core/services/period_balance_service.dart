@@ -65,5 +65,58 @@ class PeriodBalanceService {
       closingBalance: closingBalance,
     );
   }
-}
 
+  /// Otomatik açılış bakiyesi hesaplayan sürüm: tüm geçmiş işlemlerden devreden tutarı bulur.
+  Future<PeriodBalance> computeAuto({
+    required String userId,
+    required PayPeriod period,
+  }) async {
+    // 1) Kullanıcının tüm işlemlerini al
+    final allTransactions = await _transactionRepository.getTransactions(userId);
+
+    // 2) Bu dönemin başlangıcından önceki net bakiye = devreden açılış bakiyesi
+    final openingBalance = allTransactions
+        .where((t) => t.date.isBefore(period.start))
+        .fold<double>(0.0, (sum, t) {
+          if (t.isExpense) return sum - t.amount;
+          return sum + t.amount;
+        });
+
+    // 3) Bu dönemdeki işlemler
+    final periodTx = allTransactions
+        .where((t) =>
+            (t.date.isAtSameMomentAs(period.start) || t.date.isAfter(period.start)) &&
+            t.date.isBefore(period.end))
+        .toList();
+
+    final expensesGross = periodTx
+        .where((t) => t.isExpense)
+        .fold<double>(0.0, (sum, t) => sum + t.amount);
+
+    final savingsWithdrawals = periodTx
+        .where((t) => !t.isExpense && t.relatedGoalId != null)
+        .fold<double>(0.0, (sum, t) => sum + t.amount);
+
+    final income = periodTx
+        .where((t) => !t.isExpense && t.relatedGoalId == null)
+        .fold<double>(0.0, (sum, t) => sum + t.amount);
+
+    final expensesNet = (expensesGross - savingsWithdrawals) < 0
+        ? 0.0
+        : (expensesGross - savingsWithdrawals);
+
+    // 4) Kapanış bakiyesi
+    final closingBalance = openingBalance + income - expensesGross + savingsWithdrawals;
+
+    return PeriodBalance(
+      periodStart: period.start,
+      periodEnd: period.end,
+      openingBalance: openingBalance,
+      income: income,
+      expensesGross: expensesGross,
+      savingsWithdrawals: savingsWithdrawals,
+      expensesNet: expensesNet,
+      closingBalance: closingBalance,
+    );
+  }
+}
