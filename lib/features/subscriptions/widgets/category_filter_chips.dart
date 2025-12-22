@@ -13,6 +13,7 @@ class CategoryFilterChips extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedCategory = ref.watch(selectedCategoryFilterProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final categories = [
       null, // All
@@ -29,38 +30,52 @@ class CategoryFilterChips extends ConsumerWidget {
     ];
 
     return SizedBox(
-      height: 40,
-      child: ListView.builder(
+      height: 36,
+      child: ListView.separated(
         scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        padding: EdgeInsets.zero,
         itemCount: categories.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
         itemBuilder: (context, index) {
           final category = categories[index];
           final isSelected = selectedCategory == category;
 
-          return Padding(
-            padding: EdgeInsets.only(
-              right: AppSpacing.xs,
-              left: index == 0 ? 0 : 0,
-            ),
-            child: GestureDetector(
+          return Material(
+            color: Colors.transparent,
+            child: InkWell(
               onTap: () {
                 HapticFeedback.lightImpact();
                 ref.read(selectedCategoryFilterProvider.notifier).state = category;
               },
+              borderRadius: BorderRadius.circular(20),
               child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeInOut,
                 padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.md,
-                  vertical: AppSpacing.xs,
+                  horizontal: 16,
+                  vertical: 8,
                 ),
                 decoration: BoxDecoration(
                   gradient: isSelected ? AppColors.pinkGradient : null,
-                  color: isSelected ? null : AppColors.subtleGray,
-                  borderRadius: BorderRadius.circular(AppRadius.round),
+                  color: isSelected
+                      ? null
+                      : (isDark
+                          ? AppColors.darkSurfaceVariant.withValues(alpha: 0.5)
+                          : AppColors.subtleGray.withValues(alpha: 0.6)),
+                  borderRadius: BorderRadius.circular(20),
+                  border: isSelected
+                      ? null
+                      : Border.all(
+                          color: isDark
+                              ? AppColors.darkBorder.withValues(alpha: 0.3)
+                              : Colors.black.withValues(alpha: 0.05),
+                          width: 1,
+                        ),
                   boxShadow: isSelected
                       ? [
                           BoxShadow(
-                            color: AppColors.primaryPink.withOpacity(0.3),
+                            color: AppColors.primaryPink.withValues(alpha: 0.25),
                             blurRadius: 8,
                             offset: const Offset(0, 2),
                           ),
@@ -73,16 +88,26 @@ class CategoryFilterChips extends ConsumerWidget {
                     if (category != null) ...[
                       Text(
                         _getCategoryEmoji(category),
-                        style: const TextStyle(fontSize: 14),
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                      const SizedBox(width: 6),
+                    ] else ...[
+                      Icon(
+                        Icons.apps_rounded,
+                        size: 16,
+                        color: isSelected ? Colors.white : AppColors.getTextSecondary(context),
                       ),
                       const SizedBox(width: 6),
                     ],
                     Text(
                       category == null ? 'All' : _getCategoryName(category),
                       style: TextStyle(
-                        color: isSelected ? Colors.white : AppColors.darkCharcoal,
-                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                        fontSize: 13,
+                        color: isSelected
+                            ? Colors.white
+                            : AppColors.getTextPrimary(context),
+                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                        fontSize: 14,
+                        letterSpacing: isSelected ? 0.2 : 0,
                       ),
                     ),
                   ],

@@ -9,6 +9,8 @@ import 'package:payday/core/providers/repository_providers.dart';
 import 'package:payday/core/utils/currency_formatter.dart';
 import 'package:payday/shared/widgets/payday_button.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+// ✅ EKLENDİ: Home Provider'larını yenilemek için gerekli import
+import 'package:payday/features/home/providers/home_providers.dart';
 
 class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({super.key});
@@ -32,7 +34,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   @override
   void initState() {
     super.initState();
-    // Otomatik seçim aktif, kullanıcı değiştiremez (kodu koruyoruz)
     _selectedCurrency = CurrencyFormatter.getLocalCurrencyCode();
   }
 
@@ -43,8 +44,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     _initialBalanceController.dispose();
     super.dispose();
   }
-
-  // --- Logic Helpers ---
 
   Future<void> _selectDate(BuildContext context) async {
     final picked = await showDatePicker(
@@ -78,7 +77,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   Future<void> _nextPage() async {
     if (_currentPage == 1) {
-      // Validate income on page 1
       if (_incomeController.text.isEmpty || double.tryParse(_incomeController.text) == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Please enter a valid income amount'), backgroundColor: AppColors.error),
@@ -87,7 +85,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       }
       _pageController.nextPage(duration: 400.ms, curve: Curves.easeInOutCubic);
     } else if (_currentPage == 2) {
-      // Save settings on final page
       await _saveSettings();
     } else {
       _pageController.nextPage(duration: 400.ms, curve: Curves.easeInOutCubic);
@@ -98,7 +95,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     setState(() { _isLoading = true; });
     try {
       final userId = ref.read(currentUserIdProvider);
-
       final initialBalance = double.tryParse(_initialBalanceController.text) ?? 0.0;
 
       final settings = UserSettings(
@@ -112,9 +108,15 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         updatedAt: DateTime.now(),
       );
 
+      // 1. Ayarları kaydet
       await ref.read(userSettingsRepositoryProvider).saveUserSettings(settings);
 
+      // 2. ✅ KRİTİK: Home ekranı providers'larını sıfırla (yeniden çekmesini sağla)
+      // Bunu yapmazsak Home ekranı hala eski (null) değeri hatırlar.
+      ref.invalidate(userSettingsProvider);
+
       if (mounted) {
+        // 3. Home'a git ve geri gelmeyi engelle
         Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
       }
     } catch (e) {
@@ -131,7 +133,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    // PopScope ile Android geri tuşu kontrolü (Onboarding'den çıkmayı engelle/yönet)
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
@@ -139,7 +140,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         if (_currentPage > 0) {
           _previousPage();
         } else {
-          // İlk sayfadaysak uygulamadan çıkışa izin ver (minimize)
           SystemNavigator.pop();
         }
       },
@@ -148,7 +148,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         resizeToAvoidBottomInset: true,
         body: Stack(
           children: [
-            // 1. Background
             Positioned(
               top: -100, right: -50,
               child: Container(
@@ -179,11 +178,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               child: Container(color: Colors.white.withOpacity(0.3)),
             ),
 
-            // 2. Main Content
             SafeArea(
               child: Column(
                 children: [
-                  // Top Nav
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                     child: Row(
@@ -219,7 +216,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     ),
                   ),
 
-                  // Page View
                   Expanded(
                     child: PageView(
                       controller: _pageController,
@@ -233,7 +229,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     ),
                   ),
 
-                  // Bottom Button
                   Container(
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
@@ -284,8 +279,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           ).animate().fadeIn(delay: 100.ms),
 
           const SizedBox(height: 32),
-
-          // CURRENCY Seçimi Kaldırıldı (Otomatik kalacak)
 
           Text("HOW OFTEN?", style: theme.textTheme.labelSmall?.copyWith(fontWeight: FontWeight.bold, letterSpacing: 1.2, color: AppColors.mediumGray)),
           const SizedBox(height: 12),
@@ -390,7 +383,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   Widget _buildIncomePage(ThemeData theme) {
-    // Sembolün sağda mı solda mı olacağını kontrol et (Otomatik seçimden gelen değer)
     final isSymbolRight = CurrencyFormatter.isSymbolOnRight(_selectedCurrency);
     final symbol = CurrencyFormatter.getSymbol(_selectedCurrency);
 
@@ -420,7 +412,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
           const SizedBox(height: 48),
 
-          // Row yapısı ve sağ/sol sembol desteği
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.baseline,
@@ -509,7 +500,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
           const SizedBox(height: 48),
 
-          // Row yapısı ve sağ/sol sembol desteği
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.baseline,

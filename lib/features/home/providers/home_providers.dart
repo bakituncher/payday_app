@@ -6,6 +6,11 @@ import 'package:payday/core/models/pay_period.dart';
 import 'package:payday/core/providers/repository_providers.dart';
 import 'package:payday/core/services/date_cycle_service.dart';
 
+// ✅ EKLENEN IMPORTLAR: Migration ve Local kontrolü için gerekli
+import 'package:payday/core/providers/auth_providers.dart';
+import 'package:payday/core/repositories/local/local_user_settings_repository.dart';
+import 'package:payday/core/services/data_migration_service.dart';
+
 /// User Settings Provider - Auto-deposits salary on payday using Pool system
 ///
 /// This provider uses AutoDepositService to:
@@ -17,7 +22,47 @@ import 'package:payday/core/services/date_cycle_service.dart';
 final userSettingsProvider = FutureProvider<UserSettings?>((ref) async {
   final repository = ref.watch(userSettingsRepositoryProvider);
   final userId = ref.watch(currentUserIdProvider);
+
+  // 1. Önce mevcut depodan (Firebase veya Local) veriyi çekmeyi dene
   var settings = await repository.getUserSettings(userId);
+
+  // 🔴 KRİTİK DÜZELTME BAŞLANGICI 🔴
+  // Eğer kullanıcı giriş yapmışsa (Firebase kullanıyorsa) ama verisi NULL geliyorsa (yani Firebase boşsa),
+  // Cihazda (Local) daha önceden kalmış veri var mı diye kontrol et.
+  if (settings == null) {
+    final user = ref.read(currentUserProvider).asData?.value;
+
+    // Kullanıcı Anonymous DEĞİLSE (yani Google/Apple ile girmişse)
+    if (user != null && !user.isAnonymous) {
+      try {
+        // Local repoyu manuel olarak çağır
+        final localRepo = LocalUserSettingsRepository();
+        // ID önemsizdir, LocalRepo zaten tek bir 'user_currency' anahtarına bakar
+        final localSettings = await localRepo.getUserSettings('check_local');
+
+        if (localSettings != null) {
+          print('📥 Authentication sonrası Local veri bulundu. Firebase\'e taşınıyor... (Migration)');
+
+          // Migration servisini bul ve çalıştır
+          final migrationService = ref.read(dataMigrationServiceProvider);
+
+          // Local'deki veriyi (localSettings.userId) -> Firebase'deki yeni ID'ye (userId) taşı
+          await migrationService.migrateLocalToFirebase(userId, localSettings.userId);
+
+          // Taşıma bitti, şimdi Firebase'den tekrar çek (Artık veri gelmeli)
+          settings = await repository.getUserSettings(userId);
+
+          if (settings != null) {
+            print('✅ Migration başarılı! Veriler kurtarıldı. Bakiye: ${settings.currentBalance}');
+          }
+        }
+      } catch (e) {
+        print('❌ Otomatik migration sırasında hata: $e');
+        // Hata olsa bile app çökmesin, null dönerse onboarding açılır.
+      }
+    }
+  }
+  // 🔴 KRİTİK DÜZELTME BİTİŞİ 🔴
 
   if (settings != null) {
     // Process automatic payday deposit using AutoDepositService
@@ -60,11 +105,12 @@ final userSettingsProvider = FutureProvider<UserSettings?>((ref) async {
       }
 
       // Refresh settings after payday operations (auto transfers/subscriptions may change balance)
-      print('🔄 Refreshing settings after payday operations...');
+      // Sadece değişiklik olduysa logla, gereksiz çağrıdan kaçınmak için
+      // (Burada repository zaten cacheliyor olabilir ama Firestore ise maliyet olabilir)
+      // Ancak Balance değiştiği için mecburuz.
       final freshSettings = await repository.getUserSettings(userId);
       if (freshSettings != null) {
         settings = freshSettings;
-        print('✅ Settings refreshed - Total Pool Balance: ${settings.currentBalance}');
       }
     }
   }

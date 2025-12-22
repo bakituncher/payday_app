@@ -1,5 +1,6 @@
-/// Subscriptions Screen - Main subscription tracking view
-/// Industry-grade premium UI design
+/// Subscriptions Screen - Industry-grade compact UI/UX
+/// Modern, minimal and highly optimized design
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -24,195 +25,140 @@ class SubscriptionsScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: AppColors.getBackground(context),
-      body: SafeArea(
-        child: Stack(
-          children: [
-            // Background decorations
-            Positioned(
-              top: -100,
-              right: -50,
-              child: Container(
-                width: 200,
-                height: 200,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      AppColors.primaryPink.withValues(alpha: isDark ? 0.05 : 0.1),
-                      AppColors.primaryPink.withValues(alpha: 0.0),
-                    ],
-                  ),
+      extendBody: true,
+      body: Stack(
+        children: [
+          // Subtle background gradient
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppColors.primaryPink.withValues(alpha: isDark ? 0.02 : 0.03),
+                    AppColors.secondaryPurple.withValues(alpha: isDark ? 0.02 : 0.03),
+                  ],
                 ),
               ),
             ),
-            Positioned(
-              bottom: 100,
-              left: -80,
-              child: Container(
-                width: 160,
-                height: 160,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      AppColors.secondaryPurple.withValues(alpha: isDark ? 0.04 : 0.08),
-                      AppColors.secondaryPurple.withValues(alpha: 0.0),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            // Main content
-            CustomScrollView(
+          ),
+          // Main content
+          SafeArea(
+            child: CustomScrollView(
               physics: const BouncingScrollPhysics(),
               slivers: [
-                // App Bar
+                // Compact Modern App Bar
                 SliverAppBar(
                   expandedHeight: 0,
                   floating: true,
-                  pinned: false,
-                  backgroundColor: AppColors.getBackground(context),
+                  pinned: true,
+                  backgroundColor: AppColors.getBackground(context).withValues(alpha: 0.8),
                   elevation: 0,
                   surfaceTintColor: Colors.transparent,
-                  leadingWidth: 56,
-                  leading: IconButton(
-                    icon: const Icon(Icons.arrow_back_ios_new_rounded),
-                    onPressed: () => Navigator.of(context).pop(),
-                    color: AppColors.getTextPrimary(context),
+                  flexibleSpace: ClipRect(
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                      child: Container(color: Colors.transparent),
+                    ),
                   ),
-                  titleSpacing: 0,
+                  leadingWidth: 48,
+                  leading: Padding(
+                    padding: const EdgeInsets.only(left: 4),
+                    child: IconButton(
+                      icon: Icon(
+                        Icons.arrow_back_ios_new_rounded,
+                        size: 20,
+                        color: AppColors.getTextPrimary(context),
+                      ),
+                      onPressed: () {
+                        HapticFeedback.lightImpact();
+                        Navigator.of(context).pop();
+                      },
+                    ),
+                  ),
+                  titleSpacing: 8,
                   title: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(8),
+                        padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
                           gradient: AppColors.premiumGradient,
-                          borderRadius: BorderRadius.circular(AppRadius.md),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.primaryPink.withValues(alpha: 0.3),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
+                          borderRadius: BorderRadius.circular(8),
                         ),
                         child: const Icon(
                           Icons.subscriptions_rounded,
                           color: Colors.white,
-                          size: 20,
+                          size: 16,
                         ),
                       ),
-                      const SizedBox(width: AppSpacing.sm),
+                      const SizedBox(width: 10),
                       Text(
                         'Subscriptions',
-                        style: theme.textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.w800,
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w700,
                           color: AppColors.getTextPrimary(context),
-                          letterSpacing: -0.5,
+                          letterSpacing: -0.3,
                         ),
                       ),
                     ],
                   ),
                   actions: [
-                    Container(
-                      margin: const EdgeInsets.only(right: AppSpacing.md),
-                      decoration: BoxDecoration(
-                        gradient: AppColors.pinkGradient,
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.primaryPink.withValues(alpha: 0.3),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
+                    IconButton(
+                      icon: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryPink.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(
+                          Icons.analytics_outlined,
+                          size: 18,
+                        ),
+                      ),
+                      onPressed: () {
+                        HapticFeedback.lightImpact();
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const SubscriptionAnalysisScreen(),
                           ),
-                        ],
-                      ),
-                      child: IconButton(
-                        icon: const Icon(Icons.add_rounded),
-                        onPressed: () {
-                          HapticFeedback.lightImpact();
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => AddSubscriptionScreen(
-                                existingSubscription: null,
-                              ),
-                            ),
-                          );
-                        },
-                        color: Colors.white,
-                        tooltip: 'Add Subscription',
-                      ),
+                        );
+                      },
+                      color: AppColors.primaryPink,
+                      tooltip: 'Analysis',
                     ),
+                    const SizedBox(width: 8),
                   ],
                 ),
 
-                // Content
+                // Compact Content
                 SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
                   sliver: SliverList(
                     delegate: SliverChildListDelegate([
-                      // Summary Card
+                      // Summary Card - More compact
                       const SubscriptionSummaryCard()
                           .animate()
-                          .fadeIn(duration: 400.ms)
-                          .slideY(begin: 0.2, end: 0),
+                          .fadeIn(duration: 300.ms)
+                          .slideY(begin: 0.1, end: 0),
 
-                      const SizedBox(height: AppSpacing.md),
+                      const SizedBox(height: 12),
 
-                      // Upcoming Bills
+                      // Upcoming Bills - More compact
                       const UpcomingBillsCard()
                           .animate()
-                          .fadeIn(duration: 400.ms, delay: 100.ms)
-                          .slideY(begin: 0.2, end: 0),
+                          .fadeIn(duration: 300.ms, delay: 50.ms)
+                          .slideY(begin: 0.1, end: 0),
 
-                      const SizedBox(height: AppSpacing.lg),
+                      const SizedBox(height: 16),
 
-                      // Section Header
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Your Subscriptions',
-                            style: theme.textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.getTextPrimary(context),
-                            ),
-                          ),
-                          TextButton.icon(
-                            onPressed: () {
-                              HapticFeedback.lightImpact();
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => const SubscriptionAnalysisScreen(),
-                                ),
-                              );
-                            },
-                            icon: const Icon(
-                              Icons.analytics_outlined,
-                              size: 18,
-                            ),
-                            label: const Text(
-                              'Analysis',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            style: TextButton.styleFrom(
-                              foregroundColor: AppColors.primaryPink,
-                            ),
-                          ),
-                        ],
-                      ).animate().fadeIn(duration: 400.ms, delay: 200.ms),
-
-                      const SizedBox(height: AppSpacing.sm),
-
-                      // Category Filter
+                      // Category Filter - Cleaner
                       const CategoryFilterChips()
                           .animate()
-                          .fadeIn(duration: 400.ms, delay: 250.ms),
+                          .fadeIn(duration: 300.ms, delay: 100.ms),
 
-                      const SizedBox(height: AppSpacing.md),
+                      const SizedBox(height: 12),
                     ]),
                   ),
                 ),
@@ -220,10 +166,10 @@ class SubscriptionsScreen extends ConsumerWidget {
                 // Subscriptions List
                 subscriptionsAsync.when(
                   loading: () => SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
                     sliver: SliverList(
                       delegate: SliverChildBuilderDelegate(
-                        (context, index) => _buildLoadingCard(context),
+                        (context, index) => _buildShimmerCard(context),
                         childCount: 3,
                       ),
                     ),
@@ -239,7 +185,7 @@ class SubscriptionsScreen extends ConsumerWidget {
                     }
 
                     return SliverPadding(
-                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
                       sliver: SliverList(
                         delegate: SliverChildBuilderDelegate(
                           (context, index) {
@@ -247,9 +193,9 @@ class SubscriptionsScreen extends ConsumerWidget {
                             return SubscriptionCard(
                               subscription: subscription,
                             ).animate().fadeIn(
-                              duration: 300.ms,
-                              delay: (300 + (index * 50)).ms,
-                            ).slideX(begin: 0.1, end: 0);
+                              duration: 250.ms,
+                              delay: (150 + (index * 30)).ms,
+                            ).slideX(begin: 0.05, end: 0);
                           },
                           childCount: subscriptions.length,
                         ),
@@ -258,64 +204,131 @@ class SubscriptionsScreen extends ConsumerWidget {
                   },
                 ),
 
-                // Bottom padding
+                // Bottom padding for FAB
                 const SliverToBoxAdapter(
                   child: SizedBox(height: 100),
                 ),
               ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
+      // Modern FAB
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          HapticFeedback.mediumImpact();
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => AddSubscriptionScreen(
+                existingSubscription: null,
+              ),
+            ),
+          );
+        },
+        icon: const Icon(Icons.add_rounded),
+        label: const Text(
+          'Add',
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.5,
+          ),
+        ),
+        elevation: 4,
+        backgroundColor: AppColors.primaryPink,
+        foregroundColor: Colors.white,
+      ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.3, end: 0),
     );
   }
 
-  Widget _buildLoadingCard(BuildContext context) {
+  Widget _buildShimmerCard(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-      padding: const EdgeInsets.all(AppSpacing.md),
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppColors.getCardBackground(context),
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        boxShadow: isDark ? null : AppColors.cardShadow,
-        border: isDark ? Border.all(color: AppColors.darkBorder, width: 1) : null,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: isDark ? null : [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+        border: isDark ? Border.all(
+          color: AppColors.darkBorder.withValues(alpha: 0.5),
+          width: 1,
+        ) : null,
       ),
       child: Row(
         children: [
+          // Icon shimmer
           Container(
-            width: 48,
-            height: 48,
+            width: 44,
+            height: 44,
             decoration: BoxDecoration(
-              color: isDark ? AppColors.darkSurfaceVariant : AppColors.subtleGray,
-              borderRadius: BorderRadius.circular(AppRadius.md),
+              borderRadius: BorderRadius.circular(12),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  (isDark ? AppColors.darkSurfaceVariant : AppColors.subtleGray)
+                      .withValues(alpha: 0.5),
+                  (isDark ? AppColors.darkSurfaceVariant : AppColors.subtleGray)
+                      .withValues(alpha: 0.2),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(width: AppSpacing.md),
+          )
+          .animate(onPlay: (controller) => controller.repeat())
+          .shimmer(duration: 1500.ms, color: Colors.white.withValues(alpha: 0.3)),
+
+          const SizedBox(width: 12),
+
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Title shimmer
                 Container(
-                  width: 120,
-                  height: 16,
+                  width: 140,
+                  height: 14,
                   decoration: BoxDecoration(
                     color: isDark ? AppColors.darkSurfaceVariant : AppColors.subtleGray,
                     borderRadius: BorderRadius.circular(4),
                   ),
-                ),
+                )
+                .animate(onPlay: (controller) => controller.repeat())
+                .shimmer(duration: 1500.ms, color: Colors.white.withValues(alpha: 0.3)),
+
                 const SizedBox(height: 8),
+
+                // Subtitle shimmer
                 Container(
-                  width: 80,
+                  width: 90,
                   height: 12,
                   decoration: BoxDecoration(
                     color: isDark ? AppColors.darkSurfaceVariant : AppColors.subtleGray,
                     borderRadius: BorderRadius.circular(4),
                   ),
-                ),
+                )
+                .animate(onPlay: (controller) => controller.repeat())
+                .shimmer(duration: 1500.ms, delay: 100.ms, color: Colors.white.withValues(alpha: 0.3)),
               ],
             ),
           ),
+
+          // Price shimmer
+          Container(
+            width: 60,
+            height: 18,
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.darkSurfaceVariant : AppColors.subtleGray,
+              borderRadius: BorderRadius.circular(6),
+            ),
+          )
+          .animate(onPlay: (controller) => controller.repeat())
+          .shimmer(duration: 1500.ms, delay: 200.ms, color: Colors.white.withValues(alpha: 0.3)),
         ],
       ),
     );
@@ -324,83 +337,119 @@ class SubscriptionsScreen extends ConsumerWidget {
   Widget _buildErrorState(BuildContext context, Object error) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      margin: const EdgeInsets.all(AppSpacing.md),
-      padding: const EdgeInsets.all(AppSpacing.lg),
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: isDark
-            ? AppColors.error.withValues(alpha: 0.1)
-            : AppColors.errorLight,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: isDark ? Border.all(color: AppColors.error.withValues(alpha: 0.3), width: 1) : null,
+            ? AppColors.error.withValues(alpha: 0.08)
+            : AppColors.errorLight.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppColors.error.withValues(alpha: isDark ? 0.2 : 0.3),
+          width: 1,
+        ),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.error_outline, color: AppColors.error, size: 48),
-          const SizedBox(height: AppSpacing.sm),
-          Text(
-            'Oops! Something went wrong',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.error.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.error_outline_rounded,
               color: AppColors.error,
-              fontWeight: FontWeight.w600,
+              size: 32,
             ),
           ),
-          const SizedBox(height: AppSpacing.xs),
+          const SizedBox(height: 12),
+          Text(
+            'Something went wrong',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: AppColors.error,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 6),
           Text(
             error.toString(),
             textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: AppColors.getTextSecondary(context),
             ),
           ),
         ],
       ),
-    );
+    ).animate().fadeIn(duration: 300.ms).scale(begin: const Offset(0.95, 0.95), end: const Offset(1, 1));
   }
 
   Widget _buildEmptyState(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      margin: const EdgeInsets.all(AppSpacing.md),
-      padding: const EdgeInsets.all(AppSpacing.xl),
+      margin: const EdgeInsets.fromLTRB(16, 40, 16, 16),
+      padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
         color: AppColors.getCardBackground(context),
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        boxShadow: isDark ? null : AppColors.cardShadow,
-        border: isDark ? Border.all(color: AppColors.darkBorder, width: 1) : null,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: isDark ? null : [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
+        border: isDark ? Border.all(
+          color: AppColors.darkBorder.withValues(alpha: 0.5),
+          width: 1,
+        ) : null,
       ),
       child: Column(
         children: [
           Container(
-            padding: const EdgeInsets.all(AppSpacing.lg),
-            decoration: const BoxDecoration(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
               gradient: AppColors.pinkGradient,
               shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primaryPink.withValues(alpha: 0.3),
+                  blurRadius: 20,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
             child: const Icon(
               Icons.subscriptions_outlined,
               color: Colors.white,
-              size: 48,
+              size: 40,
             ),
           ),
-          const SizedBox(height: AppSpacing.lg),
+          const SizedBox(height: 20),
           Text(
             'No subscriptions yet',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w800,
               color: AppColors.getTextPrimary(context),
+              letterSpacing: -0.5,
             ),
           ),
-          const SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: 8),
           Text(
-            'Add your Netflix, Spotify, Gym and other subscriptions to track your recurring expenses.',
+            'Track your Netflix, Spotify, Gym\nand other recurring expenses',
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: AppColors.getTextSecondary(context),
+              height: 1.4,
             ),
           ),
-          const SizedBox(height: AppSpacing.lg),
+          const SizedBox(height: 24),
           ElevatedButton.icon(
             onPressed: () {
+              HapticFeedback.mediumImpact();
               Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (_) => AddSubscriptionScreen(
@@ -409,22 +458,33 @@ class SubscriptionsScreen extends ConsumerWidget {
                 ),
               );
             },
-            icon: const Icon(Icons.add_rounded),
-            label: const Text('Add Subscription'),
+            icon: const Icon(Icons.add_rounded, size: 20),
+            label: const Text(
+              'Add First Subscription',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.3,
+              ),
+            ),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primaryPink,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.lg,
-                vertical: AppSpacing.md,
+                horizontal: 24,
+                vertical: 14,
               ),
+              elevation: 0,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppRadius.lg),
+                borderRadius: BorderRadius.circular(12),
               ),
             ),
           ),
         ],
       ),
+    ).animate().fadeIn(duration: 400.ms).scale(
+      begin: const Offset(0.95, 0.95),
+      end: const Offset(1, 1),
+      duration: 400.ms,
     );
   }
 }

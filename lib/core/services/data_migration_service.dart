@@ -18,20 +18,43 @@ class DataMigrationService {
   DataMigrationService(this.ref);
 
   /// Local (sourceUserId) verilerini Firestore'a (targetUserId) taşır.
-  /// NOT: Bu işlem mümkün olduğunca "idempotent" olmalı (aynı migration iki kez koşsa bile veri bozulmamalı).
+  /// GÜVENLİK GÜNCELLEMESİ: Hedef hesapta veri varsa KESİNLİKLE yazmaz.
   Future<void> migrateLocalToFirebase(String targetUserId, String sourceUserId) async {
-    print('Starting migration from $sourceUserId to $targetUserId');
+    print('Starting migration check from $sourceUserId to $targetUserId');
+
+    final firebaseSettingsRepo = FirebaseUserSettingsRepository();
+
+    // 🔴 1. ADIM: HEDEF HESAP KONTROLÜ (Check Remote Existence)
+    // Eğer hedef hesapta (targetUserId) zaten UserSettings varsa, bu eski bir kullanıcıdır.
+    // ONUN VERİSİNİ EZMEMELİYİZ. Migration'ı iptal et.
+    try {
+      final existingRemoteSettings = await firebaseSettingsRepo.getUserSettings(targetUserId);
+      if (existingRemoteSettings != null) {
+        print('⚠️ CRITICAL: Target user already has data (Balance: ${existingRemoteSettings.currentBalance}).');
+        print('🛑 Migration ABORTED to prevent data loss. Keeping existing account data.');
+        return; // Fonksiyondan çık, yazma yapma!
+      }
+    } catch (e) {
+      print('⚠️ Error checking remote data: $e');
+      // Bağlantı hatası varsa risk almamak için yine durabiliriz veya devam edebiliriz.
+      // Güvenli olan durmaktır.
+      print('🛑 Migration ABORTED due to connection error (Safety First).');
+      return;
+    }
+
+    // Buraya geldiysek hedef hesap BOŞ demektir. Güvenle taşıyabiliriz.
+    print('✅ Target account is empty. Proceeding with migration...');
 
     final errors = <Object>[];
 
-    // 1. Migrate User Settings
+    // 2. Migrate User Settings
     try {
       final localSettingsRepo = LocalUserSettingsRepository();
       final settings = await localSettingsRepo.getUserSettings(sourceUserId);
 
       if (settings != null) {
         final newSettings = settings.copyWith(userId: targetUserId);
-        final firebaseSettingsRepo = FirebaseUserSettingsRepository();
+        // Repo zaten yukarıda tanımlı
         await firebaseSettingsRepo.saveUserSettings(newSettings);
         print('Migrated User Settings');
       }
@@ -40,7 +63,7 @@ class DataMigrationService {
       errors.add(e);
     }
 
-    // 2. Migrate Transactions
+    // 3. Migrate Transactions
     try {
       final localTxRepo = LocalTransactionRepository();
       final transactions = await localTxRepo.getTransactions(sourceUserId);
@@ -49,8 +72,6 @@ class DataMigrationService {
         final firebaseTxRepo = FirebaseTransactionRepository();
         for (final tx in transactions) {
           final newTx = tx.copyWith(userId: targetUserId);
-          // Firebase repo'nun id stratejisi tx.id'yi koruyorsa bu upsert gibi davranır.
-          // Korunmuyorsa bile en azından doğru userId ile yazılmış olur.
           await firebaseTxRepo.addTransaction(newTx);
         }
         print('Migrated ${transactions.length} transactions');
@@ -60,7 +81,7 @@ class DataMigrationService {
       errors.add(e);
     }
 
-    // 3. Migrate Savings Goals
+    // 4. Migrate Savings Goals
     try {
       final localSavingsRepo = LocalSavingsGoalRepository();
       final goals = await localSavingsRepo.getSavingsGoals(sourceUserId);
@@ -78,7 +99,7 @@ class DataMigrationService {
       errors.add(e);
     }
 
-    // 4. Migrate Subscriptions
+    // 5. Migrate Subscriptions
     try {
       final localSubRepo = LocalSubscriptionRepository();
       final subscriptions = await localSubRepo.getSubscriptions(sourceUserId);
@@ -96,7 +117,7 @@ class DataMigrationService {
       errors.add(e);
     }
 
-    // 5. Migrate Monthly Summaries
+    // 6. Migrate Monthly Summaries
     try {
       final localSummaryRepo = LocalMonthlySummaryRepository();
       final now = DateTime.now();
@@ -119,15 +140,13 @@ class DataMigrationService {
     }
 
     if (errors.isNotEmpty) {
-      throw Exception('Migration completed with ${errors.length} error(s): $errors');
+      // Hata varsa bile kısmi veri taşındı
+      print('Migration completed with ${errors.length} error(s): $errors');
+    } else {
+      print('Migration completed successfully.');
     }
 
-    // Migration başarılıysa, local kaynak veriyi temizleyip yeniden kopyalama/çakışma riskini azalt.
-    // Şu an LocalUserSettingsRepository için toplu temizlik API'si var.
-    // Diğer local repository'lerde toplu silme metodu yok; bunu ileride ekleyebiliriz.
-    try {
-      await LocalUserSettingsRepository().deleteAllUserData(sourceUserId);
-    } catch (_) {}
+    // ❌ DELETE REMOVED: Yerel veriyi silmiyoruz.
   }
 }
 
