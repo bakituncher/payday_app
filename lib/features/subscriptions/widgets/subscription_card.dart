@@ -23,6 +23,7 @@ class SubscriptionCard extends ConsumerWidget {
     final theme = Theme.of(context);
     final currencyCode = ref.watch(currencyCodeProvider);
     final daysUntil = subscription.daysUntilBilling;
+    final isDark = theme.brightness == Brightness.dark;
 
     return GestureDetector(
       onTap: () {
@@ -34,135 +35,177 @@ class SubscriptionCard extends ConsumerWidget {
         );
       },
       child: Container(
-        margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-        padding: const EdgeInsets.all(AppSpacing.md),
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: AppColors.getCardBackground(context),
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          boxShadow: AppColors.getCardShadow(context),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: isDark ? null : [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
           border: subscription.isDueSoon(3)
-              ? Border.all(color: AppColors.warning.withValues(alpha: 0.5), width: 1.5)
-              : null,
+              ? Border.all(
+                  color: AppColors.warning.withValues(alpha: isDark ? 0.4 : 0.5),
+                  width: 1.5,
+                )
+              : (isDark
+                  ? Border.all(
+                      color: AppColors.darkBorder.withValues(alpha: 0.5),
+                      width: 1,
+                    )
+                  : null),
         ),
         child: Row(
           children: [
             // Subscription Icon
             Container(
-              width: 52,
-              height: 52,
+              width: 48,
+              height: 48,
               decoration: BoxDecoration(
-                color: _getCategoryColor(subscription.category).withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(AppRadius.md),
+                color: _getCategoryColor(subscription.category).withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: _getCategoryColor(subscription.category).withValues(alpha: 0.2),
+                  width: 1,
+                ),
               ),
               child: Center(
                 child: Text(
                   subscription.emoji,
-                  style: const TextStyle(fontSize: 24),
+                  style: const TextStyle(fontSize: 22),
                 ),
               ),
             ),
 
-            const SizedBox(width: AppSpacing.md),
+            const SizedBox(width: 12),
 
-            // Subscription Info
+            // Subscription Info - Flexible to prevent overflow
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
+                  // Name and Badge Row
                   Row(
                     children: [
                       Expanded(
                         child: Text(
                           subscription.name,
                           style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
+                            fontWeight: FontWeight.w700,
                             color: AppColors.getTextPrimary(context),
+                            fontSize: 15,
+                            letterSpacing: -0.2,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      if (subscription.status != SubscriptionStatus.active || !subscription.autoRenew)
+                      if (subscription.status != SubscriptionStatus.active || !subscription.autoRenew) ...[
+                        const SizedBox(width: 6),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
+                            horizontal: 6,
                             vertical: 2,
                           ),
                           decoration: BoxDecoration(
-                            color: _getBadgeColor(subscription).withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(AppRadius.sm),
+                            color: _getBadgeColor(subscription).withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(
+                              color: _getBadgeColor(subscription).withValues(alpha: 0.3),
+                              width: 1,
+                            ),
                           ),
                           child: Text(
                             _getBadgeLabel(subscription),
                             style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
+                              fontSize: 9,
+                              fontWeight: FontWeight.w700,
                               color: _getBadgeColor(subscription),
+                              letterSpacing: 0.3,
                             ),
                           ),
                         ),
+                      ],
                     ],
                   ),
+
                   const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Text(
-                        subscription.frequencyText,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: AppColors.getTextSecondary(context),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Container(
-                        width: 4,
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: AppColors.getBorder(context),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        _getDueDateText(daysUntil),
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: daysUntil <= 3 ? AppColors.warning : AppColors.getTextSecondary(context),
-                          fontWeight: daysUntil <= 3 ? FontWeight.w600 : FontWeight.normal,
-                        ),
-                      ),
-                    ],
+
+                  // Frequency
+                  Text(
+                    subscription.frequencyText,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: AppColors.getTextSecondary(context),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+
+                  const SizedBox(height: 2),
+
+                  // Due Date
+                  Text(
+                    _getDueDateText(daysUntil),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: daysUntil <= 3
+                          ? AppColors.warning
+                          : AppColors.getTextSecondary(context),
+                      fontWeight: daysUntil <= 3 ? FontWeight.w700 : FontWeight.w500,
+                      fontSize: 11,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
             ),
 
-            const SizedBox(width: AppSpacing.sm),
+            const SizedBox(width: 12),
 
-            // Amount
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
+            // Amount and Arrow Column
+            Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  CurrencyFormatter.format(subscription.amount, currencyCode),
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.getTextPrimary(context),
-                  ),
-                ),
-                if (subscription.frequency != RecurrenceFrequency.monthly)
-                  Text(
-                    '${CurrencyFormatter.format(subscription.monthlyCost, currencyCode)}/mo',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: AppColors.getTextSecondary(context),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      CurrencyFormatter.format(subscription.amount, currencyCode),
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.getTextPrimary(context),
+                        fontSize: 15,
+                        letterSpacing: -0.3,
+                      ),
                     ),
-                  ),
+                    if (subscription.frequency != RecurrenceFrequency.monthly) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        '${CurrencyFormatter.format(subscription.monthlyCost, currencyCode)}/mo',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: AppColors.getTextSecondary(context),
+                          fontSize: 10,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(width: 6),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: AppColors.getTextSecondary(context).withValues(alpha: 0.4),
+                  size: 20,
+                ),
               ],
-            ),
-
-            const SizedBox(width: AppSpacing.xs),
-
-            Icon(
-              Icons.chevron_right_rounded,
-              color: AppColors.lightGray,
             ),
           ],
         ),
