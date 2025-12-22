@@ -217,6 +217,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           }
         }
 
+        // Firebase'den verileri yükle
+        ref.invalidate(userSettingsProvider);
+        ref.invalidate(currentCycleTransactionsProvider);
+        ref.invalidate(totalExpensesProvider);
+        ref.invalidate(dailyAllowableSpendProvider);
+        ref.invalidate(budgetHealthProvider);
+        ref.invalidate(currentMonthlySummaryProvider);
+
+        // Sayfa ayarlarını yeniden yükle
+        await _loadCurrentSettings();
+
         if (mounted) {
           HapticFeedback.mediumImpact();
           ScaffoldMessenger.of(context).showSnackBar(
@@ -280,6 +291,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             }
           }
         }
+
+        // Firebase'den verileri yükle
+        ref.invalidate(userSettingsProvider);
+        ref.invalidate(currentCycleTransactionsProvider);
+        ref.invalidate(totalExpensesProvider);
+        ref.invalidate(dailyAllowableSpendProvider);
+        ref.invalidate(budgetHealthProvider);
+        ref.invalidate(currentMonthlySummaryProvider);
+
+        // Sayfa ayarlarını yeniden yükle
+        await _loadCurrentSettings();
 
         if (mounted) {
           HapticFeedback.mediumImpact();
