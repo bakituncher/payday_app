@@ -23,29 +23,36 @@ _$TransactionImpl _$$TransactionImplFromJson(Map<String, dynamic> json) =>
         json['frequency'],
       ),
       subscriptionId: json['subscriptionId'] as String?,
-      nextRecurrenceDate: json['nextRecurrenceDate'] == null
-          ? null
-          : DateTime.parse(json['nextRecurrenceDate'] as String),
+      nextRecurrenceDate: const TimestampDateTimeConverter().fromJson(
+        json['nextRecurrenceDate'],
+      ),
       relatedGoalId: json['relatedGoalId'] as String?,
+      createdAt: const TimestampDateTimeConverter().fromJson(json['createdAt']),
+      updatedAt: const TimestampDateTimeConverter().fromJson(json['updatedAt']),
     );
 
-Map<String, dynamic> _$$TransactionImplToJson(_$TransactionImpl instance) =>
-    <String, dynamic>{
-      'id': instance.id,
-      'userId': instance.userId,
-      'amount': instance.amount,
-      'categoryId': instance.categoryId,
-      'categoryName': instance.categoryName,
-      'categoryEmoji': instance.categoryEmoji,
-      'date': instance.date.toIso8601String(),
-      'note': instance.note,
-      'isExpense': instance.isExpense,
-      'isRecurring': instance.isRecurring,
-      'frequency': _$TransactionFrequencyEnumMap[instance.frequency],
-      'subscriptionId': instance.subscriptionId,
-      'nextRecurrenceDate': instance.nextRecurrenceDate?.toIso8601String(),
-      'relatedGoalId': instance.relatedGoalId,
-    };
+Map<String, dynamic> _$$TransactionImplToJson(
+  _$TransactionImpl instance,
+) => <String, dynamic>{
+  'id': instance.id,
+  'userId': instance.userId,
+  'amount': instance.amount,
+  'categoryId': instance.categoryId,
+  'categoryName': instance.categoryName,
+  'categoryEmoji': instance.categoryEmoji,
+  'date': instance.date.toIso8601String(),
+  'note': instance.note,
+  'isExpense': instance.isExpense,
+  'isRecurring': instance.isRecurring,
+  'frequency': _$TransactionFrequencyEnumMap[instance.frequency],
+  'subscriptionId': instance.subscriptionId,
+  'nextRecurrenceDate': const TimestampDateTimeConverter().toJson(
+    instance.nextRecurrenceDate,
+  ),
+  'relatedGoalId': instance.relatedGoalId,
+  'createdAt': const TimestampDateTimeConverter().toJson(instance.createdAt),
+  'updatedAt': const TimestampDateTimeConverter().toJson(instance.updatedAt),
+};
 
 const _$TransactionFrequencyEnumMap = {
   TransactionFrequency.daily: 'daily',

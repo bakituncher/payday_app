@@ -24,6 +24,7 @@ mixin _$UserSettings {
   String get userId => throw _privateConstructorUsedError;
   String get currency => throw _privateConstructorUsedError;
   String get payCycle => throw _privateConstructorUsedError;
+  @TimestampDateTimeConverter()
   DateTime get nextPayday => throw _privateConstructorUsedError;
   double get incomeAmount => throw _privateConstructorUsedError;
   double get currentBalance =>
@@ -41,9 +42,11 @@ mixin _$UserSettings {
   int get unusedThresholdDays =>
       throw _privateConstructorUsedError; // Days before marking as unused
   // Auto-deposit tracking for Piggy Bank system
-  DateTime? get lastAutoDepositDate =>
-      throw _privateConstructorUsedError; // Tracks last automatic salary deposit to prevent duplicates
+  @TimestampDateTimeConverter()
+  DateTime? get lastAutoDepositDate => throw _privateConstructorUsedError; // Tracks last automatic salary deposit to prevent duplicates
+  @TimestampDateTimeConverter()
   DateTime? get createdAt => throw _privateConstructorUsedError;
+  @TimestampDateTimeConverter()
   DateTime? get updatedAt => throw _privateConstructorUsedError;
 
   /// Serializes this UserSettings to a JSON map.
@@ -67,7 +70,7 @@ abstract class $UserSettingsCopyWith<$Res> {
     String userId,
     String currency,
     String payCycle,
-    DateTime nextPayday,
+    @TimestampDateTimeConverter() DateTime nextPayday,
     double incomeAmount,
     double currentBalance,
     String market,
@@ -79,9 +82,9 @@ abstract class $UserSettingsCopyWith<$Res> {
     bool weeklySubscriptionSummary,
     bool unusedSubscriptionAlerts,
     int unusedThresholdDays,
-    DateTime? lastAutoDepositDate,
-    DateTime? createdAt,
-    DateTime? updatedAt,
+    @TimestampDateTimeConverter() DateTime? lastAutoDepositDate,
+    @TimestampDateTimeConverter() DateTime? createdAt,
+    @TimestampDateTimeConverter() DateTime? updatedAt,
   });
 }
 
@@ -212,7 +215,7 @@ abstract class _$$UserSettingsImplCopyWith<$Res>
     String userId,
     String currency,
     String payCycle,
-    DateTime nextPayday,
+    @TimestampDateTimeConverter() DateTime nextPayday,
     double incomeAmount,
     double currentBalance,
     String market,
@@ -224,9 +227,9 @@ abstract class _$$UserSettingsImplCopyWith<$Res>
     bool weeklySubscriptionSummary,
     bool unusedSubscriptionAlerts,
     int unusedThresholdDays,
-    DateTime? lastAutoDepositDate,
-    DateTime? createdAt,
-    DateTime? updatedAt,
+    @TimestampDateTimeConverter() DateTime? lastAutoDepositDate,
+    @TimestampDateTimeConverter() DateTime? createdAt,
+    @TimestampDateTimeConverter() DateTime? updatedAt,
   });
 }
 
@@ -349,7 +352,7 @@ class _$UserSettingsImpl implements _UserSettings {
     required this.userId,
     required this.currency,
     required this.payCycle,
-    required this.nextPayday,
+    @TimestampDateTimeConverter() required this.nextPayday,
     required this.incomeAmount,
     this.currentBalance = 0.0,
     this.market = 'US',
@@ -361,9 +364,9 @@ class _$UserSettingsImpl implements _UserSettings {
     this.weeklySubscriptionSummary = true,
     this.unusedSubscriptionAlerts = true,
     this.unusedThresholdDays = 30,
-    this.lastAutoDepositDate,
-    this.createdAt,
-    this.updatedAt,
+    @TimestampDateTimeConverter() this.lastAutoDepositDate,
+    @TimestampDateTimeConverter() this.createdAt,
+    @TimestampDateTimeConverter() this.updatedAt,
   });
 
   factory _$UserSettingsImpl.fromJson(Map<String, dynamic> json) =>
@@ -376,6 +379,7 @@ class _$UserSettingsImpl implements _UserSettings {
   @override
   final String payCycle;
   @override
+  @TimestampDateTimeConverter()
   final DateTime nextPayday;
   @override
   final double incomeAmount;
@@ -415,11 +419,14 @@ class _$UserSettingsImpl implements _UserSettings {
   // Days before marking as unused
   // Auto-deposit tracking for Piggy Bank system
   @override
+  @TimestampDateTimeConverter()
   final DateTime? lastAutoDepositDate;
   // Tracks last automatic salary deposit to prevent duplicates
   @override
+  @TimestampDateTimeConverter()
   final DateTime? createdAt;
   @override
+  @TimestampDateTimeConverter()
   final DateTime? updatedAt;
 
   @override
@@ -517,7 +524,7 @@ abstract class _UserSettings implements UserSettings {
     required final String userId,
     required final String currency,
     required final String payCycle,
-    required final DateTime nextPayday,
+    @TimestampDateTimeConverter() required final DateTime nextPayday,
     required final double incomeAmount,
     final double currentBalance,
     final String market,
@@ -529,9 +536,9 @@ abstract class _UserSettings implements UserSettings {
     final bool weeklySubscriptionSummary,
     final bool unusedSubscriptionAlerts,
     final int unusedThresholdDays,
-    final DateTime? lastAutoDepositDate,
-    final DateTime? createdAt,
-    final DateTime? updatedAt,
+    @TimestampDateTimeConverter() final DateTime? lastAutoDepositDate,
+    @TimestampDateTimeConverter() final DateTime? createdAt,
+    @TimestampDateTimeConverter() final DateTime? updatedAt,
   }) = _$UserSettingsImpl;
 
   factory _UserSettings.fromJson(Map<String, dynamic> json) =
@@ -544,6 +551,7 @@ abstract class _UserSettings implements UserSettings {
   @override
   String get payCycle;
   @override
+  @TimestampDateTimeConverter()
   DateTime get nextPayday;
   @override
   double get incomeAmount;
@@ -569,10 +577,13 @@ abstract class _UserSettings implements UserSettings {
   int get unusedThresholdDays; // Days before marking as unused
   // Auto-deposit tracking for Piggy Bank system
   @override
+  @TimestampDateTimeConverter()
   DateTime? get lastAutoDepositDate; // Tracks last automatic salary deposit to prevent duplicates
   @override
+  @TimestampDateTimeConverter()
   DateTime? get createdAt;
   @override
+  @TimestampDateTimeConverter()
   DateTime? get updatedAt;
 
   /// Create a copy of UserSettings

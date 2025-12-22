@@ -1,5 +1,6 @@
 /// Transaction model with recurring payment support
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:payday/core/models/converters/timestamp_converter.dart';
 
 part 'transaction.freezed.dart';
 part 'transaction.g.dart';
@@ -31,16 +32,18 @@ class Transaction with _$Transaction {
     required String categoryId,
     required String categoryName,
     required String categoryEmoji,
-    required DateTime date,
+    @TimestampDateTimeConverter() required DateTime date,
     @Default('') String note,
     @Default(true) bool isExpense,
     // Recurring payment fields
     @Default(false) bool isRecurring,
     TransactionFrequency? frequency,
     String? subscriptionId, // Link to subscription if applicable
-    DateTime? nextRecurrenceDate,
+    @TimestampDateTimeConverter() DateTime? nextRecurrenceDate,
     // Savings goal link
     String? relatedGoalId, // Link to savings goal if this is a savings transaction
+    @TimestampDateTimeConverter() DateTime? createdAt,
+    @TimestampDateTimeConverter() DateTime? updatedAt,
   }) = _Transaction;
 
   factory Transaction.fromJson(Map<String, dynamic> json) =>
@@ -84,4 +87,3 @@ class Transaction with _$Transaction {
     }
   }
 }
-

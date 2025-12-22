@@ -25,35 +25,34 @@ _$UserSettingsImpl _$$UserSettingsImplFromJson(
   weeklySubscriptionSummary: json['weeklySubscriptionSummary'] as bool? ?? true,
   unusedSubscriptionAlerts: json['unusedSubscriptionAlerts'] as bool? ?? true,
   unusedThresholdDays: (json['unusedThresholdDays'] as num?)?.toInt() ?? 30,
-  lastAutoDepositDate: json['lastAutoDepositDate'] == null
-      ? null
-      : DateTime.parse(json['lastAutoDepositDate'] as String),
-  createdAt: json['createdAt'] == null
-      ? null
-      : DateTime.parse(json['createdAt'] as String),
-  updatedAt: json['updatedAt'] == null
-      ? null
-      : DateTime.parse(json['updatedAt'] as String),
+  lastAutoDepositDate: const TimestampDateTimeConverter().fromJson(
+    json['lastAutoDepositDate'],
+  ),
+  createdAt: const TimestampDateTimeConverter().fromJson(json['createdAt']),
+  updatedAt: const TimestampDateTimeConverter().fromJson(json['updatedAt']),
 );
 
-Map<String, dynamic> _$$UserSettingsImplToJson(_$UserSettingsImpl instance) =>
-    <String, dynamic>{
-      'userId': instance.userId,
-      'currency': instance.currency,
-      'payCycle': instance.payCycle,
-      'nextPayday': instance.nextPayday.toIso8601String(),
-      'incomeAmount': instance.incomeAmount,
-      'currentBalance': instance.currentBalance,
-      'market': instance.market,
-      'notificationsEnabled': instance.notificationsEnabled,
-      'paydayReminders': instance.paydayReminders,
-      'billReminders': instance.billReminders,
-      'billReminderDaysBefore': instance.billReminderDaysBefore,
-      'subscriptionAlerts': instance.subscriptionAlerts,
-      'weeklySubscriptionSummary': instance.weeklySubscriptionSummary,
-      'unusedSubscriptionAlerts': instance.unusedSubscriptionAlerts,
-      'unusedThresholdDays': instance.unusedThresholdDays,
-      'lastAutoDepositDate': instance.lastAutoDepositDate?.toIso8601String(),
-      'createdAt': instance.createdAt?.toIso8601String(),
-      'updatedAt': instance.updatedAt?.toIso8601String(),
-    };
+Map<String, dynamic> _$$UserSettingsImplToJson(
+  _$UserSettingsImpl instance,
+) => <String, dynamic>{
+  'userId': instance.userId,
+  'currency': instance.currency,
+  'payCycle': instance.payCycle,
+  'nextPayday': instance.nextPayday.toIso8601String(),
+  'incomeAmount': instance.incomeAmount,
+  'currentBalance': instance.currentBalance,
+  'market': instance.market,
+  'notificationsEnabled': instance.notificationsEnabled,
+  'paydayReminders': instance.paydayReminders,
+  'billReminders': instance.billReminders,
+  'billReminderDaysBefore': instance.billReminderDaysBefore,
+  'subscriptionAlerts': instance.subscriptionAlerts,
+  'weeklySubscriptionSummary': instance.weeklySubscriptionSummary,
+  'unusedSubscriptionAlerts': instance.unusedSubscriptionAlerts,
+  'unusedThresholdDays': instance.unusedThresholdDays,
+  'lastAutoDepositDate': const TimestampDateTimeConverter().toJson(
+    instance.lastAutoDepositDate,
+  ),
+  'createdAt': const TimestampDateTimeConverter().toJson(instance.createdAt),
+  'updatedAt': const TimestampDateTimeConverter().toJson(instance.updatedAt),
+};

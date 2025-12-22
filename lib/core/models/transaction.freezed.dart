@@ -27,6 +27,7 @@ mixin _$Transaction {
   String get categoryId => throw _privateConstructorUsedError;
   String get categoryName => throw _privateConstructorUsedError;
   String get categoryEmoji => throw _privateConstructorUsedError;
+  @TimestampDateTimeConverter()
   DateTime get date => throw _privateConstructorUsedError;
   String get note => throw _privateConstructorUsedError;
   bool get isExpense =>
@@ -35,9 +36,14 @@ mixin _$Transaction {
   TransactionFrequency? get frequency => throw _privateConstructorUsedError;
   String? get subscriptionId =>
       throw _privateConstructorUsedError; // Link to subscription if applicable
-  DateTime? get nextRecurrenceDate =>
-      throw _privateConstructorUsedError; // Savings goal link
-  String? get relatedGoalId => throw _privateConstructorUsedError;
+  @TimestampDateTimeConverter()
+  DateTime? get nextRecurrenceDate => throw _privateConstructorUsedError; // Savings goal link
+  String? get relatedGoalId =>
+      throw _privateConstructorUsedError; // Link to savings goal if this is a savings transaction
+  @TimestampDateTimeConverter()
+  DateTime? get createdAt => throw _privateConstructorUsedError;
+  @TimestampDateTimeConverter()
+  DateTime? get updatedAt => throw _privateConstructorUsedError;
 
   /// Serializes this Transaction to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -63,14 +69,16 @@ abstract class $TransactionCopyWith<$Res> {
     String categoryId,
     String categoryName,
     String categoryEmoji,
-    DateTime date,
+    @TimestampDateTimeConverter() DateTime date,
     String note,
     bool isExpense,
     bool isRecurring,
     TransactionFrequency? frequency,
     String? subscriptionId,
-    DateTime? nextRecurrenceDate,
+    @TimestampDateTimeConverter() DateTime? nextRecurrenceDate,
     String? relatedGoalId,
+    @TimestampDateTimeConverter() DateTime? createdAt,
+    @TimestampDateTimeConverter() DateTime? updatedAt,
   });
 }
 
@@ -103,6 +111,8 @@ class _$TransactionCopyWithImpl<$Res, $Val extends Transaction>
     Object? subscriptionId = freezed,
     Object? nextRecurrenceDate = freezed,
     Object? relatedGoalId = freezed,
+    Object? createdAt = freezed,
+    Object? updatedAt = freezed,
   }) {
     return _then(
       _value.copyWith(
@@ -162,6 +172,14 @@ class _$TransactionCopyWithImpl<$Res, $Val extends Transaction>
                 ? _value.relatedGoalId
                 : relatedGoalId // ignore: cast_nullable_to_non_nullable
                       as String?,
+            createdAt: freezed == createdAt
+                ? _value.createdAt
+                : createdAt // ignore: cast_nullable_to_non_nullable
+                      as DateTime?,
+            updatedAt: freezed == updatedAt
+                ? _value.updatedAt
+                : updatedAt // ignore: cast_nullable_to_non_nullable
+                      as DateTime?,
           )
           as $Val,
     );
@@ -184,14 +202,16 @@ abstract class _$$TransactionImplCopyWith<$Res>
     String categoryId,
     String categoryName,
     String categoryEmoji,
-    DateTime date,
+    @TimestampDateTimeConverter() DateTime date,
     String note,
     bool isExpense,
     bool isRecurring,
     TransactionFrequency? frequency,
     String? subscriptionId,
-    DateTime? nextRecurrenceDate,
+    @TimestampDateTimeConverter() DateTime? nextRecurrenceDate,
     String? relatedGoalId,
+    @TimestampDateTimeConverter() DateTime? createdAt,
+    @TimestampDateTimeConverter() DateTime? updatedAt,
   });
 }
 
@@ -223,6 +243,8 @@ class __$$TransactionImplCopyWithImpl<$Res>
     Object? subscriptionId = freezed,
     Object? nextRecurrenceDate = freezed,
     Object? relatedGoalId = freezed,
+    Object? createdAt = freezed,
+    Object? updatedAt = freezed,
   }) {
     return _then(
       _$TransactionImpl(
@@ -282,6 +304,14 @@ class __$$TransactionImplCopyWithImpl<$Res>
             ? _value.relatedGoalId
             : relatedGoalId // ignore: cast_nullable_to_non_nullable
                   as String?,
+        createdAt: freezed == createdAt
+            ? _value.createdAt
+            : createdAt // ignore: cast_nullable_to_non_nullable
+                  as DateTime?,
+        updatedAt: freezed == updatedAt
+            ? _value.updatedAt
+            : updatedAt // ignore: cast_nullable_to_non_nullable
+                  as DateTime?,
       ),
     );
   }
@@ -297,14 +327,16 @@ class _$TransactionImpl extends _Transaction {
     required this.categoryId,
     required this.categoryName,
     required this.categoryEmoji,
-    required this.date,
+    @TimestampDateTimeConverter() required this.date,
     this.note = '',
     this.isExpense = true,
     this.isRecurring = false,
     this.frequency,
     this.subscriptionId,
-    this.nextRecurrenceDate,
+    @TimestampDateTimeConverter() this.nextRecurrenceDate,
     this.relatedGoalId,
+    @TimestampDateTimeConverter() this.createdAt,
+    @TimestampDateTimeConverter() this.updatedAt,
   }) : super._();
 
   factory _$TransactionImpl.fromJson(Map<String, dynamic> json) =>
@@ -323,6 +355,7 @@ class _$TransactionImpl extends _Transaction {
   @override
   final String categoryEmoji;
   @override
+  @TimestampDateTimeConverter()
   final DateTime date;
   @override
   @JsonKey()
@@ -340,14 +373,22 @@ class _$TransactionImpl extends _Transaction {
   final String? subscriptionId;
   // Link to subscription if applicable
   @override
+  @TimestampDateTimeConverter()
   final DateTime? nextRecurrenceDate;
   // Savings goal link
   @override
   final String? relatedGoalId;
+  // Link to savings goal if this is a savings transaction
+  @override
+  @TimestampDateTimeConverter()
+  final DateTime? createdAt;
+  @override
+  @TimestampDateTimeConverter()
+  final DateTime? updatedAt;
 
   @override
   String toString() {
-    return 'Transaction(id: $id, userId: $userId, amount: $amount, categoryId: $categoryId, categoryName: $categoryName, categoryEmoji: $categoryEmoji, date: $date, note: $note, isExpense: $isExpense, isRecurring: $isRecurring, frequency: $frequency, subscriptionId: $subscriptionId, nextRecurrenceDate: $nextRecurrenceDate, relatedGoalId: $relatedGoalId)';
+    return 'Transaction(id: $id, userId: $userId, amount: $amount, categoryId: $categoryId, categoryName: $categoryName, categoryEmoji: $categoryEmoji, date: $date, note: $note, isExpense: $isExpense, isRecurring: $isRecurring, frequency: $frequency, subscriptionId: $subscriptionId, nextRecurrenceDate: $nextRecurrenceDate, relatedGoalId: $relatedGoalId, createdAt: $createdAt, updatedAt: $updatedAt)';
   }
 
   @override
@@ -377,7 +418,11 @@ class _$TransactionImpl extends _Transaction {
             (identical(other.nextRecurrenceDate, nextRecurrenceDate) ||
                 other.nextRecurrenceDate == nextRecurrenceDate) &&
             (identical(other.relatedGoalId, relatedGoalId) ||
-                other.relatedGoalId == relatedGoalId));
+                other.relatedGoalId == relatedGoalId) &&
+            (identical(other.createdAt, createdAt) ||
+                other.createdAt == createdAt) &&
+            (identical(other.updatedAt, updatedAt) ||
+                other.updatedAt == updatedAt));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -398,6 +443,8 @@ class _$TransactionImpl extends _Transaction {
     subscriptionId,
     nextRecurrenceDate,
     relatedGoalId,
+    createdAt,
+    updatedAt,
   );
 
   /// Create a copy of Transaction
@@ -422,14 +469,16 @@ abstract class _Transaction extends Transaction {
     required final String categoryId,
     required final String categoryName,
     required final String categoryEmoji,
-    required final DateTime date,
+    @TimestampDateTimeConverter() required final DateTime date,
     final String note,
     final bool isExpense,
     final bool isRecurring,
     final TransactionFrequency? frequency,
     final String? subscriptionId,
-    final DateTime? nextRecurrenceDate,
+    @TimestampDateTimeConverter() final DateTime? nextRecurrenceDate,
     final String? relatedGoalId,
+    @TimestampDateTimeConverter() final DateTime? createdAt,
+    @TimestampDateTimeConverter() final DateTime? updatedAt,
   }) = _$TransactionImpl;
   const _Transaction._() : super._();
 
@@ -449,6 +498,7 @@ abstract class _Transaction extends Transaction {
   @override
   String get categoryEmoji;
   @override
+  @TimestampDateTimeConverter()
   DateTime get date;
   @override
   String get note;
@@ -461,9 +511,16 @@ abstract class _Transaction extends Transaction {
   @override
   String? get subscriptionId; // Link to subscription if applicable
   @override
+  @TimestampDateTimeConverter()
   DateTime? get nextRecurrenceDate; // Savings goal link
   @override
-  String? get relatedGoalId;
+  String? get relatedGoalId; // Link to savings goal if this is a savings transaction
+  @override
+  @TimestampDateTimeConverter()
+  DateTime? get createdAt;
+  @override
+  @TimestampDateTimeConverter()
+  DateTime? get updatedAt;
 
   /// Create a copy of Transaction
   /// with the given fields replaced by the non-null parameter values.
