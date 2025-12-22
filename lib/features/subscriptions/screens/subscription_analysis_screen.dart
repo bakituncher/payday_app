@@ -1,5 +1,6 @@
-/// Subscription Analysis Screen
-/// Shows potential savings and cancellation recommendations
+/// Subscription Analysis Screen - Industry-grade compact UI/UX
+/// Advanced analytics with modern, minimal design
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -19,12 +20,32 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: AppColors.getBackground(context),
-      body: SafeArea(
-        child: analysisAsync.when(
-          loading: () => _buildLoadingState(),
-          error: (error, _) => _buildErrorState(context, error),
-          data: (summary) => _buildAnalysisContent(context, ref, summary),
-        ),
+      extendBody: true,
+      body: Stack(
+        children: [
+          // Subtle background gradient
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppColors.success.withValues(alpha: 0.02),
+                    AppColors.primaryPink.withValues(alpha: 0.02),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          SafeArea(
+            child: analysisAsync.when(
+              loading: () => _buildLoadingState(),
+              error: (error, _) => _buildErrorState(context, error),
+              data: (summary) => _buildAnalysisContent(context, ref, summary),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -41,43 +62,58 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
     return CustomScrollView(
       physics: const BouncingScrollPhysics(),
       slivers: [
-        // App Bar
+        // Compact Modern App Bar
         SliverAppBar(
           expandedHeight: 0,
           floating: true,
-          pinned: false,
-          backgroundColor: AppColors.getBackground(context),
+          pinned: true,
+          backgroundColor: AppColors.getBackground(context).withValues(alpha: 0.8),
           elevation: 0,
           surfaceTintColor: Colors.transparent,
-          leadingWidth: 56,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded),
-            onPressed: () => Navigator.of(context).pop(),
-            color: AppColors.getTextPrimary(context),
+          flexibleSpace: ClipRect(
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              child: Container(color: Colors.transparent),
+            ),
           ),
-          titleSpacing: 0,
+          leadingWidth: 48,
+          leading: Padding(
+            padding: const EdgeInsets.only(left: 4),
+            child: IconButton(
+              icon: Icon(
+                Icons.arrow_back_ios_new_rounded,
+                size: 20,
+                color: AppColors.getTextPrimary(context),
+              ),
+              onPressed: () {
+                HapticFeedback.lightImpact();
+                Navigator.of(context).pop();
+              },
+            ),
+          ),
+          titleSpacing: 8,
           title: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
                   color: AppColors.success.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(
                   Icons.analytics_rounded,
                   color: AppColors.success,
-                  size: 20,
+                  size: 16,
                 ),
               ),
-              const SizedBox(width: AppSpacing.sm),
+              const SizedBox(width: 10),
               Text(
                 'Savings Analysis',
-                style: theme.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w800,
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w700,
                   color: AppColors.getTextPrimary(context),
-                  letterSpacing: -0.5,
+                  letterSpacing: -0.3,
                 ),
               ),
             ],
@@ -86,22 +122,22 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
 
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.md),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Savings Potential Card
+                // Savings Potential Card - More compact
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.all(AppSpacing.lg),
+                  padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
                     gradient: AppColors.premiumGradient,
-                    borderRadius: BorderRadius.circular(AppRadius.xl),
+                    borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.primaryPink.withValues(alpha: 0.3),
-                        blurRadius: 20,
-                        offset: const Offset(0, 8),
+                        color: AppColors.primaryPink.withValues(alpha: 0.25),
+                        blurRadius: 16,
+                        offset: const Offset(0, 6),
                       ),
                     ],
                   ),
@@ -113,49 +149,56 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
                           Icon(
                             Icons.savings_rounded,
                             color: Colors.white.withValues(alpha: 0.9),
-                            size: 28,
+                            size: 24,
                           ),
-                          const SizedBox(width: AppSpacing.sm),
+                          const SizedBox(width: 10),
                           Text(
                             'Potential Savings',
                             style: theme.textTheme.titleMedium?.copyWith(
                               color: Colors.white.withValues(alpha: 0.9),
-                              fontWeight: FontWeight.w500,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 15,
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: AppSpacing.lg),
+                      const SizedBox(height: 16),
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          Text(
-                            CurrencyFormatter.format(summary.potentialMonthlySavings, currencyCode),
-                            style: theme.textTheme.displaySmall?.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: -1,
+                          Flexible(
+                            child: Text(
+                              CurrencyFormatter.format(summary.potentialMonthlySavings, currencyCode),
+                              style: theme.textTheme.displaySmall?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: -1,
+                                fontSize: 32,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                           const SizedBox(width: 8),
                           Padding(
-                            padding: const EdgeInsets.only(bottom: 6),
+                            padding: const EdgeInsets.only(bottom: 4),
                             child: Text(
                               '/month',
-                              style: theme.textTheme.bodyLarge?.copyWith(
+                              style: theme.textTheme.bodyMedium?.copyWith(
                                 color: Colors.white.withValues(alpha: 0.7),
                                 fontWeight: FontWeight.w500,
+                                fontSize: 14,
                               ),
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: AppSpacing.md),
+                      const SizedBox(height: 12),
                       Container(
-                        padding: const EdgeInsets.all(AppSpacing.md),
+                        padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
                           color: Colors.white.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(AppRadius.md),
+                          borderRadius: BorderRadius.circular(12),
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -165,13 +208,14 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
                                 Icon(
                                   Icons.calendar_month_rounded,
                                   color: Colors.white.withValues(alpha: 0.8),
-                                  size: 18,
+                                  size: 16,
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
                                   'Yearly potential:',
                                   style: theme.textTheme.bodyMedium?.copyWith(
                                     color: Colors.white.withValues(alpha: 0.8),
+                                    fontSize: 13,
                                   ),
                                 ),
                               ],
@@ -180,7 +224,8 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
                               CurrencyFormatter.format(summary.potentialYearlySavings, currencyCode),
                               style: theme.textTheme.titleMedium?.copyWith(
                                 color: Colors.white,
-                                fontWeight: FontWeight.w700,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 15,
                               ),
                             ),
                           ],
@@ -188,46 +233,46 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
                       ),
                     ],
                   ),
-                ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.2, end: 0),
+                ).animate().fadeIn(duration: 300.ms).slideY(begin: 0.1, end: 0),
 
-                const SizedBox(height: AppSpacing.lg),
+                const SizedBox(height: 16),
 
-                // Quick Stats
+                // Quick Stats - More compact
                 Row(
                   children: [
                     Expanded(
                       child: _buildStatCard(
                         context,
                         icon: Icons.receipt_long_rounded,
-                        label: 'Active Subs',
+                        label: 'Active',
                         value: '${summary.totalSubscriptions}',
                         color: AppColors.info,
                       ),
                     ),
-                    const SizedBox(width: AppSpacing.sm),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: _buildStatCard(
                         context,
                         icon: Icons.search_rounded,
-                        label: 'To Review',
+                        label: 'Review',
                         value: '${summary.subscriptionsToReview}',
                         color: AppColors.warning,
                       ),
                     ),
-                    const SizedBox(width: AppSpacing.sm),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: _buildStatCard(
                         context,
                         icon: Icons.cancel_outlined,
-                        label: 'To Cancel',
+                        label: 'Cancel',
                         value: '${summary.subscriptionsToCancel}',
                         color: AppColors.error,
                       ),
                     ),
                   ],
-                ).animate().fadeIn(duration: 400.ms, delay: 100.ms),
+                ).animate().fadeIn(duration: 300.ms, delay: 50.ms),
 
-                const SizedBox(height: AppSpacing.xl),
+                const SizedBox(height: 20),
 
                 // Spending by Category
                 Text(
@@ -235,17 +280,27 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
                   style: theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w700,
                     color: AppColors.getTextPrimary(context),
+                    fontSize: 18,
                   ),
                 ),
-                const SizedBox(height: AppSpacing.md),
+                const SizedBox(height: 12),
 
                 Container(
-                  padding: const EdgeInsets.all(AppSpacing.md),
+                  padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: AppColors.getCardBackground(context),
-                    borderRadius: BorderRadius.circular(AppRadius.lg),
-                    boxShadow: isDark ? null : AppColors.cardShadow,
-                    border: isDark ? Border.all(color: AppColors.darkBorder, width: 1) : null,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: isDark ? null : [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.04),
+                        blurRadius: 10,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                    border: isDark ? Border.all(
+                      color: AppColors.darkBorder.withValues(alpha: 0.5),
+                      width: 1,
+                    ) : null,
                   ),
                   child: Column(
                     children: summary.spendByCategory.entries.map((entry) {
@@ -253,35 +308,42 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
                           ? (entry.value / summary.totalMonthlySpend * 100)
                           : 0.0;
                       return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+                        padding: const EdgeInsets.symmetric(vertical: 8),
                         child: Column(
                           children: [
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text(
-                                  _formatCategoryName(entry.key),
-                                  style: theme.textTheme.bodyMedium?.copyWith(
-                                    fontWeight: FontWeight.w500,
-                                    color: AppColors.getTextPrimary(context),
+                                Expanded(
+                                  child: Text(
+                                    _formatCategoryName(entry.key),
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.getTextPrimary(context),
+                                      fontSize: 14,
+                                    ),
                                   ),
                                 ),
+                                const SizedBox(width: 12),
                                 Text(
                                   CurrencyFormatter.format(entry.value, currencyCode),
                                   style: theme.textTheme.bodyMedium?.copyWith(
-                                    fontWeight: FontWeight.w700,
+                                    fontWeight: FontWeight.w800,
                                     color: AppColors.getTextPrimary(context),
+                                    fontSize: 14,
                                   ),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 6),
+                            const SizedBox(height: 8),
                             ClipRRect(
-                              borderRadius: BorderRadius.circular(4),
+                              borderRadius: BorderRadius.circular(6),
                               child: LinearProgressIndicator(
                                 value: percentage / 100,
-                                minHeight: 8,
-                                backgroundColor: isDark ? AppColors.darkSurfaceVariant : AppColors.subtleGray,
+                                minHeight: 6,
+                                backgroundColor: isDark
+                                    ? AppColors.darkSurfaceVariant.withValues(alpha: 0.5)
+                                    : AppColors.subtleGray.withValues(alpha: 0.5),
                                 valueColor: AlwaysStoppedAnimation(
                                   _getCategoryColor(entry.key),
                                 ),
@@ -292,9 +354,9 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
                       );
                     }).toList(),
                   ),
-                ).animate().fadeIn(duration: 400.ms, delay: 200.ms),
+                ).animate().fadeIn(duration: 300.ms, delay: 100.ms),
 
-                const SizedBox(height: AppSpacing.xl),
+                const SizedBox(height: 20),
 
                 // Recommendations
                 Text(
@@ -302,16 +364,18 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
                   style: theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w700,
                     color: AppColors.getTextPrimary(context),
+                    fontSize: 18,
                   ),
                 ),
-                const SizedBox(height: AppSpacing.sm),
+                const SizedBox(height: 6),
                 Text(
-                  'Based on typical usage patterns in US & EU markets',
-                  style: theme.textTheme.bodyMedium?.copyWith(
+                  'Based on typical usage patterns',
+                  style: theme.textTheme.bodySmall?.copyWith(
                     color: AppColors.getTextSecondary(context),
+                    fontSize: 12,
                   ),
                 ),
-                const SizedBox(height: AppSpacing.md),
+                const SizedBox(height: 12),
               ],
             ),
           ),
@@ -319,15 +383,15 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
 
         // Analysis List
         SliverPadding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
           sliver: SliverList(
             delegate: SliverChildBuilderDelegate(
               (context, index) {
                 final analysis = summary.analyses[index];
                 return _buildAnalysisCard(context, ref, analysis, index)
                     .animate()
-                    .fadeIn(duration: 300.ms, delay: (300 + index * 50).ms)
-                    .slideX(begin: 0.1, end: 0);
+                    .fadeIn(duration: 250.ms, delay: (150 + index * 30).ms)
+                    .slideX(begin: 0.05, end: 0);
               },
               childCount: summary.analyses.length,
             ),
@@ -335,7 +399,7 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
         ),
 
         const SliverToBoxAdapter(
-          child: SizedBox(height: 100),
+          child: SizedBox(height: 80),
         ),
       ],
     );
@@ -350,35 +414,53 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppColors.getCardBackground(context),
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        boxShadow: isDark ? null : AppColors.cardShadow,
-        border: isDark ? Border.all(color: AppColors.darkBorder, width: 1) : null,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: isDark ? null : [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+        border: isDark ? Border.all(
+          color: AppColors.darkBorder.withValues(alpha: 0.5),
+          width: 1,
+        ) : null,
       ),
       child: Column(
         children: [
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(AppRadius.sm),
+              color: color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: color.withValues(alpha: 0.2),
+                width: 1,
+              ),
             ),
             child: Icon(icon, color: color, size: 20),
           ),
-          const SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: 10),
           Text(
             value,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.w800,
               color: AppColors.getTextPrimary(context),
+              fontSize: 22,
+              letterSpacing: -0.5,
             ),
           ),
+          const SizedBox(height: 2),
           Text(
             label,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: AppColors.getTextSecondary(context),
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
             ),
           ),
         ],
@@ -397,19 +479,34 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-      padding: const EdgeInsets.all(AppSpacing.md),
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.getCardBackground(context),
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        boxShadow: isDark ? null : AppColors.cardShadow,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: isDark ? null : [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
         border: analysis.recommendation == RecommendationType.cancel
-            ? Border.all(color: AppColors.error.withValues(alpha: 0.3))
+            ? Border.all(
+                color: AppColors.error.withValues(alpha: isDark ? 0.4 : 0.3),
+                width: 1.5,
+              )
             : analysis.recommendation == RecommendationType.review
-                ? Border.all(color: AppColors.warning.withValues(alpha: 0.3))
-                : isDark
-                    ? Border.all(color: AppColors.darkBorder, width: 1)
-                    : null,
+                ? Border.all(
+                    color: AppColors.warning.withValues(alpha: isDark ? 0.4 : 0.3),
+                    width: 1.5,
+                  )
+                : (isDark
+                    ? Border.all(
+                        color: AppColors.darkBorder.withValues(alpha: 0.5),
+                        width: 1,
+                      )
+                    : null),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -418,50 +515,64 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
           Row(
             children: [
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Row(
                   children: [
-                    Row(
-                      children: [
-                        Text(
-                          analysis.subscriptionName,
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.getTextPrimary(context),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          analysis.recommendationEmoji,
-                          style: const TextStyle(fontSize: 16),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
                     Text(
-                      '${CurrencyFormatter.format(analysis.monthlyAmount, currencyCode)}/month',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: AppColors.getTextSecondary(context),
+                      analysis.recommendationEmoji,
+                      style: const TextStyle(fontSize: 20),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            analysis.subscriptionName,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.getTextPrimary(context),
+                              fontSize: 15,
+                              letterSpacing: -0.2,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '${CurrencyFormatter.format(analysis.monthlyAmount, currencyCode)}/month',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: AppColors.getTextSecondary(context),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
               ),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.md,
-                  vertical: AppSpacing.xs,
+                  horizontal: 10,
+                  vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: _getRecommendationColor(analysis.recommendation).withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(AppRadius.round),
+                  color: _getRecommendationColor(analysis.recommendation).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: _getRecommendationColor(analysis.recommendation).withValues(alpha: 0.3),
+                    width: 1,
+                  ),
                 ),
                 child: Text(
                   _getRecommendationLabel(analysis.recommendation),
                   style: TextStyle(
                     color: _getRecommendationColor(analysis.recommendation),
-                    fontWeight: FontWeight.w600,
-                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 11,
+                    letterSpacing: 0.3,
                   ),
                 ),
               ),
@@ -469,35 +580,40 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
           ),
 
           // Usage Score
-          const SizedBox(height: AppSpacing.md),
+          const SizedBox(height: 14),
           Row(
             children: [
               Text(
                 'Usage Score:',
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: AppColors.getTextSecondary(context),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 10),
               Expanded(
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(6),
                   child: LinearProgressIndicator(
                     value: analysis.usageScore / 100,
                     minHeight: 6,
-                    backgroundColor: isDark ? AppColors.darkSurfaceVariant : AppColors.subtleGray,
+                    backgroundColor: isDark
+                        ? AppColors.darkSurfaceVariant.withValues(alpha: 0.5)
+                        : AppColors.subtleGray.withValues(alpha: 0.5),
                     valueColor: AlwaysStoppedAnimation(
                       _getUsageColor(analysis.usageScore),
                     ),
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 10),
               Text(
                 '${analysis.usageScore}%',
                 style: theme.textTheme.bodySmall?.copyWith(
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w700,
                   color: _getUsageColor(analysis.usageScore),
+                  fontSize: 12,
                 ),
               ),
             ],
@@ -505,16 +621,19 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
 
           // Reasons
           if (analysis.reasons.isNotEmpty) ...[
-            const SizedBox(height: AppSpacing.md),
+            const SizedBox(height: 12),
             ...analysis.reasons.map((reason) => Padding(
-              padding: const EdgeInsets.only(bottom: 4),
+              padding: const EdgeInsets.only(bottom: 6),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(
-                    Icons.info_outline_rounded,
-                    size: 16,
-                    color: AppColors.getTextSecondary(context),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Icon(
+                      Icons.info_outline_rounded,
+                      size: 14,
+                      color: AppColors.getTextSecondary(context).withValues(alpha: 0.7),
+                    ),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
@@ -522,6 +641,8 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
                       reason,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: AppColors.getTextSecondary(context),
+                        fontSize: 12,
+                        height: 1.4,
                       ),
                     ),
                   ),
@@ -532,13 +653,16 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
 
           // Alternatives
           if (analysis.alternatives.isNotEmpty) ...[
-            const SizedBox(height: AppSpacing.sm),
+            const SizedBox(height: 10),
             Container(
-              padding: const EdgeInsets.all(AppSpacing.sm),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.info.withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(AppRadius.md),
-                border: isDark ? Border.all(color: AppColors.info.withValues(alpha: 0.2)) : null,
+                color: AppColors.info.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: AppColors.info.withValues(alpha: isDark ? 0.2 : 0.15),
+                  width: 1,
+                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -550,19 +674,22 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
                       Text(
                         'Suggestions:',
                         style: theme.textTheme.bodySmall?.copyWith(
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.w700,
                           color: AppColors.info,
+                          fontSize: 12,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 6),
                   ...analysis.alternatives.map((alt) => Padding(
-                    padding: const EdgeInsets.only(left: 22, top: 2),
+                    padding: const EdgeInsets.only(left: 22, top: 3),
                     child: Text(
                       '• $alt',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: AppColors.getTextPrimary(context),
+                        fontSize: 12,
+                        height: 1.4,
                       ),
                     ),
                   )),
@@ -573,12 +700,16 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
 
           // Potential Savings
           if (analysis.potentialSavings > 0) ...[
-            const SizedBox(height: AppSpacing.md),
+            const SizedBox(height: 12),
             Container(
-              padding: const EdgeInsets.all(AppSpacing.sm),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.success.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(AppRadius.md),
+                color: AppColors.success.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: AppColors.success.withValues(alpha: isDark ? 0.3 : 0.2),
+                  width: 1,
+                ),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -586,16 +717,19 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
                   const Icon(Icons.savings_outlined, size: 18, color: AppColors.success),
                   const SizedBox(width: 8),
                   Text(
-                    'Potential savings: ',
+                    'Save ',
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: AppColors.success,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                   Text(
-                    '${CurrencyFormatter.format(analysis.potentialSavings, currencyCode)}/month',
+                    '${CurrencyFormatter.format(analysis.potentialSavings, currencyCode)}/mo',
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w800,
                       color: AppColors.success,
+                      fontSize: 13,
                     ),
                   ),
                 ],
@@ -603,10 +737,10 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
             ),
           ],
 
-          // Action Button for cancel recommendations
+          // Action Buttons
           if (analysis.recommendation == RecommendationType.cancel ||
               analysis.recommendation == RecommendationType.review) ...[
-            const SizedBox(height: AppSpacing.md),
+            const SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
@@ -617,15 +751,25 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
                     },
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppColors.primaryPink,
-                      side: BorderSide(color: AppColors.primaryPink),
+                      side: BorderSide(
+                        color: AppColors.primaryPink.withValues(alpha: 0.5),
+                        width: 1.5,
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 10),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        borderRadius: BorderRadius.circular(10),
                       ),
                     ),
-                    child: const Text('View Details'),
+                    child: const Text(
+                      'View Details',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                      ),
+                    ),
                   ),
                 ),
-                const SizedBox(width: AppSpacing.sm),
+                const SizedBox(width: 10),
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () async {
@@ -638,6 +782,9 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
                             content: Text('${analysis.subscriptionName} cancelled'),
                             backgroundColor: AppColors.success,
                             behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
                           ),
                         );
                       }
@@ -645,11 +792,19 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.error,
                       foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 10),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        borderRadius: BorderRadius.circular(10),
                       ),
                     ),
-                    child: const Text('Cancel Sub'),
+                    child: const Text(
+                      'Cancel Sub',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -662,33 +817,64 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
 
   Widget _buildLoadingState() {
     return const Center(
-      child: CircularProgressIndicator(
-        color: AppColors.primaryPink,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          CircularProgressIndicator(
+            color: AppColors.primaryPink,
+            strokeWidth: 3,
+          ),
+          SizedBox(height: 16),
+          Text(
+            'Analyzing subscriptions...',
+            style: TextStyle(
+              color: AppColors.primaryPink,
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
+            ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildErrorState(BuildContext context, Object error) {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.error_outline, size: 48, color: AppColors.error),
-          const SizedBox(height: 16),
-          Text(
-            'Could not load analysis',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: AppColors.getTextPrimary(context),
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: AppColors.error.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.error_outline_rounded,
+                size: 48,
+                color: AppColors.error,
+              ),
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            error.toString(),
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: AppColors.getTextSecondary(context),
+            const SizedBox(height: 20),
+            Text(
+              'Could not load analysis',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                color: AppColors.getTextPrimary(context),
+                fontWeight: FontWeight.w700,
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 8),
+            Text(
+              error.toString(),
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppColors.getTextSecondary(context),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
