@@ -1,7 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
-// 👇 App Check import eklendi
+// 👇 App Check import
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -20,8 +20,14 @@ import 'package:payday/core/providers/repository_providers.dart';
 import 'package:payday/core/providers/theme_providers.dart';
 import 'package:payday/core/providers/auth_providers.dart';
 
-// ✅ EKLENDİ: Premium provider'a erişmemiz lazım
+// ✅ Premium Provider
 import 'package:payday/features/premium/providers/premium_providers.dart';
+
+// ✅ EKLENDİ: Migration için gerekli servis ve repolar
+import 'package:payday/core/services/data_migration_service.dart';
+import 'package:payday/core/repositories/local/local_user_settings_repository.dart';
+// Provider'ı yenilemek için home providers (userSettingsProvider orada tanımlı)
+import 'package:payday/features/home/providers/home_providers.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -33,18 +39,12 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // 👇 App Check Aktivasyonu
-  // Firebase.initializeApp'ten hemen sonra, diğer servislerden önce çağırıyoruz.
   await FirebaseAppCheck.instance.activate(
-    // Android için: Debug moddaysa debug provider, değilse Play Integrity
     androidProvider: kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
-    // iOS için: Debug moddaysa debug provider, değilse App Attest
-    appleProvider: kDebugMode ? AppleProvider.debug : AppleProvider.appAttest,  );
+    appleProvider: kDebugMode ? AppleProvider.debug : AppleProvider.appAttest,
+  );
 
-  // RevenueCat'i başlat
   await RevenueCatService().init();
-
-  // Debug Logu: Başlangıçta RevenueCat hazır mı?
   debugPrint("RevenueCat Initialized");
 
   FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
@@ -90,11 +90,16 @@ class _PaydayAppState extends ConsumerState<PaydayApp> {
 
   Future<void> _initializeAuth() async {
     try {
-      final authService = ref.read(authServiceProvider);
-      if (authService.currentUser == null) {
-        debugPrint('No user signed in. Signing in anonymously...');
+      // ✅ Auth durumunun yüklenmesini bekle (Race condition önleyici)
+      final user = await ref.read(currentUserProvider.future);
+
+      if (user == null) {
+        debugPrint('No user signed in (persisted check complete). Signing in anonymously...');
+        final authService = ref.read(authServiceProvider);
         await authService.signInAnonymously();
         debugPrint('Signed in anonymously.');
+      } else {
+        debugPrint('User already signed in: ${user.uid}');
       }
     } catch (e, stack) {
       debugPrint('Error signing in anonymously: $e');
@@ -191,37 +196,77 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     _checkStatusAndNavigate();
   }
 
-  // ✅ BU FONKSİYON GÜNCELLENDİ: ARTIK AUTH PROVIDER'I BEKLİYOR
   Future<void> _checkStatusAndNavigate() async {
-    // 1. Animasyon süresi VE Auth durumunun yüklenmesini paralel bekle
-    // Bu sayede eğer auth işlemi 2 saniyeden uzun sürerse onu da beklemiş oluruz.
+    // 1. Animasyon ve Auth yüklenmesini bekle
     await Future.wait([
-      Future.delayed(const Duration(milliseconds: 2000)), // Min bekleme süresi
-      ref.read(currentUserProvider.future), // Auth state'in ilk değerini almasını bekle
+      Future.delayed(const Duration(milliseconds: 2000)),
+      ref.read(currentUserProvider.future),
     ]);
 
     if (!mounted) return;
 
-    // 2. Premium durumunu kontrol et
-    debugPrint("Splash: Checking Premium Status...");
+    // 2. Premium kontrolü
     try {
       await refreshPremiumStatus(ref);
-      final isPremium = ref.read(isPremiumProvider);
-      debugPrint("Splash: Premium Status Checked -> $isPremium");
     } catch (e) {
       debugPrint("Splash: Premium Check Failed -> $e");
     }
 
-    // 3. Onboarding durumunu kontrol et
-    // Auth artık yüklendiği için doğru repository (Firebase/Local) seçilecektir.
+    // 3. Onboarding kontrolü
+    // Eğer Google ile girmişse bu repo "Firebase" reposudur.
     final repository = ref.read(userSettingsRepositoryProvider);
-    final hasCompletedOnboarding = await repository.hasCompletedOnboarding();
+    bool hasCompletedOnboarding = false;
 
-    debugPrint("Splash: Has Completed Onboarding -> $hasCompletedOnboarding");
+    try {
+      // Firebase'i kontrol et
+      hasCompletedOnboarding = await repository.hasCompletedOnboarding();
+      debugPrint("Splash: Has Completed Onboarding (Firebase Check) -> $hasCompletedOnboarding");
+
+      // 🔴 SORUN ÇÖZÜCÜ EKLEME: Firebase'de yoksa LOCAL'i kontrol et ve TAŞI
+      if (!hasCompletedOnboarding) {
+        final user = ref.read(currentUserProvider).asData?.value;
+
+        // Kullanıcı var ve Anonim değilse (Google/Apple)
+        if (user != null && !user.isAnonymous) {
+          debugPrint("Splash: User is authenticated but Firebase has no data. Checking Local Storage...");
+
+          final localRepo = LocalUserSettingsRepository();
+          final localHasData = await localRepo.hasCompletedOnboarding();
+
+          if (localHasData) {
+            debugPrint("Splash: ✅ Local data FOUND! Starting migration to Firebase...");
+
+            try {
+              final migrationService = ref.read(dataMigrationServiceProvider);
+              // Local veriyi alıp şu anki Firebase User ID'ye taşı
+              await migrationService.migrateLocalToFirebase(user.uid, 'local_user');
+
+              debugPrint("Splash: Migration successful.");
+
+              // Migration bittiği için artık onboarding tamamlandı kabul ediyoruz.
+              hasCompletedOnboarding = true;
+
+              // Home Provider'ını invalidate et ki Firebase'den taze veriyi çeksin
+              ref.invalidate(userSettingsProvider);
+
+            } catch (e) {
+              debugPrint("Splash: ❌ Migration failed: $e");
+              // Hata olsa bile local veriyi gördüğümüz için kullanıcıyı Home'a almayı deneyebiliriz
+              // Ama güvenli olsun diye şimdilik false bırakıyoruz veya kullanıcıya uyarı gösterilebilir.
+            }
+          } else {
+            debugPrint("Splash: No local data found either.");
+          }
+        }
+      }
+
+    } catch (e) {
+      debugPrint("Splash: Error checking onboarding status: $e");
+    }
 
     if (!mounted) return;
 
-    // 4. Yönlendirme yap
+    // 4. Yönlendirme
     if (hasCompletedOnboarding) {
       Navigator.of(context).pushReplacementNamed('/home');
     } else {
@@ -332,7 +377,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
                 const SizedBox(height: AppSpacing.xl),
 
-                // App Name with slide animation
+                // App Name
                 SlideTransition(
                   position: _slideAnimation,
                   child: FadeTransition(
