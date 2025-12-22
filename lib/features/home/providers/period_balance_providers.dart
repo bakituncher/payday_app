@@ -25,27 +25,22 @@ final selectedPayPeriodProvider = FutureProvider<PayPeriod?>((ref) async {
 
 /// Period balance computed from ledger.
 ///
-/// Opening balance strategy (safe default):
-/// - Use `UserSettings.currentBalance` as *closing* snapshot of the current period.
-/// - Derive opening = currentBalance - netChangeInPeriod.
-///
-/// This lets us show correct period totals without requiring a data migration yet.
+/// Yeni strateji:
+/// - Artık openingBalance'ı dışarıdan vermiyoruz.
+/// - PeriodBalanceService.computeAuto geçmiş işlemlerden otomatik hesaplar.
 final selectedPeriodBalanceProvider = FutureProvider<PeriodBalance?>((ref) async {
   final userId = ref.watch(currentUserIdProvider);
-  final settings = await ref.watch(userSettingsProvider.future);
+  // pay period hâlâ userSettings'e bağlı olabilir
+  // final settings = await ref.watch(userSettingsProvider.future);
   final period = await ref.watch(selectedPayPeriodProvider.future);
 
-  if (settings == null || period == null) return null;
+  if (period == null) return null;
 
   final PeriodBalanceService service = ref.watch(periodBalanceServiceProvider);
 
-  // First compute with openingBalance=0 to get netChange.
-  final tmp = await service.compute(userId: userId, period: period, openingBalance: 0.0);
-  final netChange = tmp.income - tmp.expensesGross + tmp.savingsWithdrawals;
-
-  // Derive opening from snapshot to avoid needing historical periods right now.
-  final opening = settings.currentBalance - netChange;
-
-  return service.compute(userId: userId, period: period, openingBalance: opening);
+  // Doğrudan computeAuto kullan.
+  return service.computeAuto(
+    userId: userId,
+    period: period,
+  );
 });
-

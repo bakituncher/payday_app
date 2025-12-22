@@ -1,264 +1,170 @@
-/// Notification Service for bill reminders and subscription alerts
-/// Industry-grade implementation with local notifications support
-import 'package:flutter/foundation.dart';
-import 'package:payday/core/models/bill_reminder.dart';
+import 'dart:async';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:timezone/data/latest_all.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
+import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:payday/core/models/subscription.dart';
 
-/// Notification types for the app
-enum NotificationType {
-  billReminder,
-  subscriptionDue,
-  paydayReminder,
-  savingsGoal,
-  unusedSubscription,
-  weeklyReport,
-}
+class NotificationService {
+  static final NotificationService _instance = NotificationService._internal();
+  factory NotificationService() => _instance;
+  NotificationService._internal();
 
-/// Notification data model
-class AppNotification {
-  final String id;
-  final String title;
-  final String body;
-  final NotificationType type;
-  final DateTime scheduledTime;
-  final Map<String, dynamic>? payload;
-  final String? actionRoute;
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
 
-  const AppNotification({
-    required this.id,
-    required this.title,
-    required this.body,
-    required this.type,
-    required this.scheduledTime,
-    this.payload,
-    this.actionRoute,
-  });
-}
-
-/// Notification service interface
-abstract class NotificationService {
-  /// Initialize the notification service
-  Future<void> initialize();
-
-  /// Request notification permissions
-  Future<bool> requestPermissions();
-
-  /// Check if notifications are enabled
-  Future<bool> areNotificationsEnabled();
-
-  /// Schedule a notification
-  Future<void> scheduleNotification(AppNotification notification);
-
-  /// Cancel a scheduled notification
-  Future<void> cancelNotification(String notificationId);
-
-  /// Cancel all notifications
-  Future<void> cancelAllNotifications();
-
-  /// Get pending notifications
-  Future<List<AppNotification>> getPendingNotifications();
-
-  /// Schedule bill reminder notification
-  Future<void> scheduleBillReminder(BillReminder reminder);
-
-  /// Schedule subscription due notification
-  Future<void> scheduleSubscriptionDueNotification(Subscription subscription);
-
-  /// Schedule payday reminder
-  Future<void> schedulePaydayReminder(DateTime payday);
-
-  /// Schedule weekly subscription report
-  Future<void> scheduleWeeklyReport();
-}
-
-/// Local notification service implementation
-/// Note: For production, integrate with flutter_local_notifications package
-class LocalNotificationService implements NotificationService {
-  final List<AppNotification> _scheduledNotifications = [];
   bool _initialized = false;
 
-  @override
   Future<void> initialize() async {
     if (_initialized) return;
 
-    // In production, initialize flutter_local_notifications here
-    // final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-    //     FlutterLocalNotificationsPlugin();
-    // const AndroidInitializationSettings initializationSettingsAndroid =
-    //     AndroidInitializationSettings('@mipmap/ic_launcher');
-    // const DarwinInitializationSettings initializationSettingsDarwin =
-    //     DarwinInitializationSettings();
-    // const InitializationSettings initializationSettings = InitializationSettings(
-    //   android: initializationSettingsAndroid,
-    //   iOS: initializationSettingsDarwin,
-    // );
-    // await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+    // 1. Saat Dilimi Ayarları (Çok Önemli)
+    tz.initializeTimeZones();
+    final String timeZoneName = await FlutterTimezone.getLocalTimezone();
+    tz.setLocalLocation(tz.getLocation(timeZoneName));
 
+    // 2. Android Ayarları
+    const AndroidInitializationSettings initializationSettingsAndroid =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+
+    // 3. iOS Ayarları
+    const DarwinInitializationSettings initializationSettingsDarwin =
+        DarwinInitializationSettings(
+      requestSoundPermission: false,
+      requestBadgePermission: false,
+      requestAlertPermission: false,
+    );
+
+    const InitializationSettings initializationSettings = InitializationSettings(
+      android: initializationSettingsAndroid,
+      iOS: initializationSettingsDarwin,
+    );
+
+    await flutterLocalNotificationsPlugin.initialize(initializationSettings);
     _initialized = true;
-    debugPrint('NotificationService: Initialized');
   }
 
-  @override
-  Future<bool> requestPermissions() async {
-    // In production, request permissions from flutter_local_notifications
-    // For iOS:
-    // final result = await flutterLocalNotificationsPlugin
-    //     .resolvePlatformSpecificImplementation<
-    //         IOSFlutterLocalNotificationsPlugin>()
-    //     ?.requestPermissions(alert: true, badge: true, sound: true);
-    // return result ?? false;
+  Future<void> requestPermissions() async {
+    await flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.requestNotificationsPermission();
 
-    debugPrint('NotificationService: Permissions requested');
-    return true;
+    await flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+            IOSFlutterLocalNotificationsPlugin>()
+        ?.requestPermissions(
+          alert: true,
+          badge: true,
+          sound: true,
+        );
   }
 
-  @override
-  Future<bool> areNotificationsEnabled() async {
-    // Check notification permissions
-    return true;
-  }
-
-  @override
-  Future<void> scheduleNotification(AppNotification notification) async {
-    await initialize();
-
-    // In production, use flutter_local_notifications
-    // await flutterLocalNotificationsPlugin.zonedSchedule(
-    //   notification.id.hashCode,
-    //   notification.title,
-    //   notification.body,
-    //   tz.TZDateTime.from(notification.scheduledTime, tz.local),
-    //   NotificationDetails(
-    //     android: AndroidNotificationDetails(
-    //       'bill_reminders',
-    //       'Bill Reminders',
-    //       channelDescription: 'Notifications for upcoming bills',
-    //       importance: Importance.high,
-    //       priority: Priority.high,
-    //     ),
-    //     iOS: const DarwinNotificationDetails(),
-    //   ),
-    //   androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-    //   uiLocalNotificationDateInterpretation:
-    //       UILocalNotificationDateInterpretation.absoluteTime,
-    // );
-
-    _scheduledNotifications.add(notification);
-    debugPrint('NotificationService: Scheduled - ${notification.title}');
-  }
-
-  @override
-  Future<void> cancelNotification(String notificationId) async {
-    // In production:
-    // await flutterLocalNotificationsPlugin.cancel(notificationId.hashCode);
-
-    _scheduledNotifications.removeWhere(
-      (n) => n.id == notificationId || n.id.startsWith('$notificationId\_'),
-    );
-    debugPrint('NotificationService: Cancelled - $notificationId');
-  }
-
-  @override
-  Future<void> cancelAllNotifications() async {
-    // In production:
-    // await flutterLocalNotificationsPlugin.cancelAll();
-
-    _scheduledNotifications.clear();
-    debugPrint('NotificationService: All notifications cancelled');
-  }
-
-  @override
-  Future<List<AppNotification>> getPendingNotifications() async {
-    return List.unmodifiable(_scheduledNotifications);
-  }
-
-  @override
-  Future<void> scheduleBillReminder(BillReminder reminder) async {
-    final notification = AppNotification(
-      id: 'bill_${reminder.id}',
-      title: '${reminder.emoji} ${reminder.subscriptionName} due soon',
-      body: '\$${reminder.amount.toStringAsFixed(2)} due on ${_formatDate(reminder.dueDate)}',
-      type: NotificationType.billReminder,
-      scheduledTime: reminder.reminderDate,
-      payload: {
-        'subscriptionId': reminder.subscriptionId,
-        'amount': reminder.amount,
-      },
-      actionRoute: '/subscriptions',
+  // --- GÜNLÜK 3 BİLDİRİM (İngilizce Metinler) ---
+  Future<void> scheduleDailyEngagementReminders() async {
+    // ID: 100 -> Sabah 09:00
+    await _scheduleDaily(
+      100,
+      'Good Morning! \u2600\ufe0f',
+      'Have you planned your budget for today?',
+      9, 0,
     );
 
-    await scheduleNotification(notification);
-  }
-
-  @override
-  Future<void> scheduleSubscriptionDueNotification(Subscription subscription) async {
-    final reminderDate = subscription.nextBillingDate.subtract(
-      Duration(days: subscription.reminderDaysBefore),
+    // ID: 101 -> Öğlen 14:00
+    await _scheduleDaily(
+      101,
+      'Track Your Spending \ud83d\udcb8',
+      "Don't forget to log your lunch or coffee expenses.",
+      14, 0,
     );
 
-    if (reminderDate.isAfter(DateTime.now())) {
-      final notification = AppNotification(
-        id: 'sub_${subscription.id}_${subscription.nextBillingDate.millisecondsSinceEpoch}',
-        title: '${subscription.emoji} ${subscription.name} billing soon',
-        body: '\$${subscription.amount.toStringAsFixed(2)} will be charged on ${_formatDate(subscription.nextBillingDate)}',
-        type: NotificationType.subscriptionDue,
-        scheduledTime: reminderDate,
-        payload: {
-          'subscriptionId': subscription.id,
-          'amount': subscription.amount,
-        },
-        actionRoute: '/subscriptions/${subscription.id}',
-      );
+    // ID: 102 -> Akşam 20:00
+    await _scheduleDaily(
+      102,
+      'Wrap Up Your Day \ud83c\udf19',
+      'Take a moment to review your daily transactions.',
+      20, 0,
+    );
+  }
 
-      await scheduleNotification(notification);
+  // Yardımcı Fonksiyon (Google Play Dostu - Inexact Mode)
+  Future<void> _scheduleDaily(int id, String title, String body, int hour, int minute) async {
+    await flutterLocalNotificationsPlugin.zonedSchedule(
+      id,
+      title,
+      body,
+      _nextInstanceOfTime(hour, minute),
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'daily_reminders',
+          'Daily Reminders',
+          channelDescription: 'Daily engagement notifications',
+          importance: Importance.defaultImportance,
+          priority: Priority.defaultPriority,
+        ),
+        iOS: DarwinNotificationDetails(),
+      ),
+      // Google Play dostu inexact mod
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+      matchDateTimeComponents: DateTimeComponents.time, // Her gün tekrarla
+    );
+  }
+
+  // --- ABONELİK HATIRLATMASI ---
+  Future<void> scheduleSubscriptionReminder(Subscription subscription) async {
+    if (!subscription.reminderEnabled) return;
+
+    // Hatırlatma Tarihi: Fatura tarihinden X gün önce, sabah 10:00'da
+    final billingDate = subscription.nextBillingDate;
+    var scheduledDate = billingDate.subtract(Duration(days: subscription.reminderDaysBefore));
+
+    // Saat 10:00 olarak ayarla
+    final notificationTime = DateTime(
+      scheduledDate.year,
+      scheduledDate.month,
+      scheduledDate.day,
+      10, 0,
+    );
+
+    if (notificationTime.isBefore(DateTime.now())) return;
+
+    // ID üret (String ID'yi Integer'a çeviriyoruz)
+    final notificationId = subscription.id.hashCode;
+
+    await flutterLocalNotificationsPlugin.zonedSchedule(
+      notificationId,
+      'Upcoming Bill: ${subscription.name}',
+      'Your payment of ${subscription.amount} ${subscription.currency} is coming up.',
+      tz.TZDateTime.from(notificationTime, tz.local),
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'subscription_reminders',
+          'Subscription Alerts',
+          importance: Importance.max,
+          priority: Priority.high,
+        ),
+        iOS: DarwinNotificationDetails(),
+      ),
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+    );
+  }
+
+  // Abonelik silinirse bildirimi de sil
+  Future<void> cancelSubscriptionNotification(String subscriptionId) async {
+    await flutterLocalNotificationsPlugin.cancel(subscriptionId.hashCode);
+  }
+
+  tz.TZDateTime _nextInstanceOfTime(int hour, int minute) {
+    final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
+    tz.TZDateTime scheduledDate =
+        tz.TZDateTime(tz.local, now.year, now.month, now.day, hour, minute);
+    if (scheduledDate.isBefore(now)) {
+      scheduledDate = scheduledDate.add(const Duration(days: 1));
     }
-  }
-
-  @override
-  Future<void> schedulePaydayReminder(DateTime payday) async {
-    final reminderDate = payday.subtract(const Duration(days: 1));
-
-    if (reminderDate.isAfter(DateTime.now())) {
-      final notification = AppNotification(
-        id: 'payday_${payday.millisecondsSinceEpoch}',
-        title: '💰 Payday Tomorrow!',
-        body: 'Your payday is tomorrow. Time to review your budget!',
-        type: NotificationType.paydayReminder,
-        scheduledTime: reminderDate,
-        actionRoute: '/home',
-      );
-
-      await scheduleNotification(notification);
-    }
-  }
-
-  @override
-  Future<void> scheduleWeeklyReport() async {
-    // Schedule for Sunday at 6 PM
-    final now = DateTime.now();
-    var nextSunday = now.add(Duration(days: DateTime.sunday - now.weekday));
-    if (nextSunday.isBefore(now)) {
-      nextSunday = nextSunday.add(const Duration(days: 7));
-    }
-    final reportTime = DateTime(nextSunday.year, nextSunday.month, nextSunday.day, 18, 0);
-
-    final notification = AppNotification(
-      id: 'weekly_report_${reportTime.millisecondsSinceEpoch}',
-      title: '📊 Weekly Subscription Report',
-      body: 'Check your subscription spending for this week',
-      type: NotificationType.weeklyReport,
-      scheduledTime: reportTime,
-      actionRoute: '/subscriptions/analysis',
-    );
-
-    await scheduleNotification(notification);
-  }
-
-  String _formatDate(DateTime date) {
-    final months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-    ];
-    return '${months[date.month - 1]} ${date.day}';
+    return scheduledDate;
   }
 }

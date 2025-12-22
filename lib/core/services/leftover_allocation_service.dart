@@ -241,49 +241,11 @@ class LeftoverAllocationService {
     String userId,
     double amount,
   ) async {
-    // Update user settings to track rollover
-    final settings = await _userSettingsRepository.getUserSettings(userId);
-    if (settings != null) {
-      // Store rollover amount in settings (we'd need to add this field)
-      // For now, create a "Rollover" savings goal
-      final goals = await _savingsGoalRepository.getSavingsGoals(userId);
-      final rolloverGoal = goals.where(
-        (g) => g.name.toLowerCase().contains('rollover') ||
-               g.name.toLowerCase().contains('next month'),
-      ).firstOrNull;
-
-      if (rolloverGoal != null) {
-        await _savingsGoalRepository.addMoneyToGoal(rolloverGoal.id, amount, userId);
-        return AllocationResult(
-          success: true,
-          message: 'Rolled over \$${amount.toStringAsFixed(2)} to next month',
-          action: LeftoverAction.rollover,
-          amount: amount,
-        );
-      } else {
-        final newGoal = SavingsGoal(
-          id: 'rollover_${DateTime.now().millisecondsSinceEpoch}',
-          userId: userId,
-          name: 'Next Month Buffer',
-          targetAmount: amount * 2, // Allow accumulation
-          currentAmount: amount,
-          emoji: '🔄',
-          createdAt: DateTime.now(),
-        );
-        await _savingsGoalRepository.addSavingsGoal(newGoal);
-        return AllocationResult(
-          success: true,
-          message: 'Created rollover fund with \$${amount.toStringAsFixed(2)}',
-          action: LeftoverAction.rollover,
-          amount: amount,
-          createdGoalId: newGoal.id,
-        );
-      }
-    }
-
+    // Yeni mantık: hiçbir transfer veya SavingsGoal işlemi yapma.
+    // Para cüzdanda kalır ve ledger/PeriodBalanceService ile otomatik devreder.
     return AllocationResult(
-      success: false,
-      message: 'Could not process rollover',
+      success: true,
+      message: '${amount.toStringAsFixed(2)} bir sonraki aya devredildi.',
       action: LeftoverAction.rollover,
       amount: amount,
     );
@@ -350,4 +312,3 @@ class AllocationResult {
     this.error,
   });
 }
-

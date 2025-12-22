@@ -110,7 +110,7 @@ class SubscriptionNotifier extends StateNotifier<AsyncValue<void>> {
 
       try {
         final notificationService = _ref.read(notificationServiceProvider);
-        await notificationService.scheduleSubscriptionDueNotification(subscription);
+        await notificationService.scheduleSubscriptionReminder(subscription);
       } catch (notificationError) {
         // Keep silent for notification scheduling issues
         print('Warning: Failed to schedule notification: $notificationError');
@@ -159,7 +159,7 @@ class SubscriptionNotifier extends StateNotifier<AsyncValue<void>> {
       await repository.deleteSubscription(subscriptionId, userId);
 
       final notificationService = _ref.read(notificationServiceProvider);
-      await notificationService.cancelNotification('sub_$subscriptionId');
+      await notificationService.cancelSubscriptionNotification(subscriptionId);
 
       _invalidateProviders();
       state = const AsyncValue.data(null);
@@ -183,7 +183,7 @@ class SubscriptionNotifier extends StateNotifier<AsyncValue<void>> {
       await repository.updateSubscription(updated);
 
       final notificationService = _ref.read(notificationServiceProvider);
-      await notificationService.cancelNotification('sub_$subscriptionId');
+      await notificationService.cancelSubscriptionNotification(subscriptionId);
 
       _invalidateProviders();
       state = const AsyncValue.data(null);
@@ -311,8 +311,8 @@ class SubscriptionNotifier extends StateNotifier<AsyncValue<void>> {
   Future<void> _rescheduleNotification(Subscription subscription) async {
     try {
       final notificationService = _ref.read(notificationServiceProvider);
-      await notificationService.cancelNotification('sub_${subscription.id}');
-      await notificationService.scheduleSubscriptionDueNotification(subscription);
+      await notificationService.cancelSubscriptionNotification(subscription.id);
+      await notificationService.scheduleSubscriptionReminder(subscription);
     } catch (e) {
       print('Warning: Failed to reschedule notification: $e');
     }
