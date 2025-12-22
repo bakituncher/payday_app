@@ -21,6 +21,10 @@ import 'package:intl/intl.dart';
 
 // ✅ EKLENDİ: Premium durumunu kontrol etmek için gerekli
 import 'package:payday/features/premium/providers/premium_providers.dart';
+// ✅ EKLENDİ: Döngü hesapları için servis
+import 'package:payday/core/services/date_cycle_service.dart';
+// ✅ EKLENDİ: Period balance provider'larını invalidate edebilmek için
+import 'package:payday/features/home/providers/period_balance_providers.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -604,12 +608,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
         await repository.saveUserSettings(updatedSettings);
 
+        // Provider zincirini tazele: ayarlar ve dönem bakiyeleri
         ref.invalidate(userSettingsProvider);
         ref.invalidate(currentCycleTransactionsProvider);
         ref.invalidate(totalExpensesProvider);
         ref.invalidate(dailyAllowableSpendProvider);
         ref.invalidate(budgetHealthProvider);
         ref.invalidate(currentMonthlySummaryProvider);
+        // ✅ EKLENDİ: Period ve period balance
+        ref.invalidate(selectedPayPeriodProvider);
+        ref.invalidate(selectedPeriodBalanceProvider);
 
         if (mounted) {
           HapticFeedback.mediumImpact();
@@ -1178,7 +1186,37 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   child: GestureDetector(
                     onTap: () {
                       HapticFeedback.lightImpact();
+                      final prevCycle = _selectedPayCycle;
                       setState(() => _selectedPayCycle = cycle);
+
+                      // Eğer döngü tipi değiştiyse nextPayday'i yeni döngüye göre otomatik ayarla
+                      if (prevCycle != cycle) {
+                        final adjusted = DateCycleService.calculateNextPayday(_nextPayday, cycle);
+                        setState(() => _nextPayday = adjusted);
+
+                        // Kullanıcıya bilgi ver
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Row(
+                              children: [
+                                const Icon(Icons.info_outline_rounded, color: Colors.white),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'Pay cycle changed to "$cycle". Next payday adjusted. Tap date to change.',
+                                  ),
+                                ),
+                              ],
+                            ),
+                            backgroundColor: AppColors.primaryPink,
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            duration: const Duration(seconds: 4),
+                          ),
+                        );
+                      }
                     },
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
