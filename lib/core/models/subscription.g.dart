@@ -6,69 +6,63 @@ part of 'subscription.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_$SubscriptionImpl _$$SubscriptionImplFromJson(Map<String, dynamic> json) =>
-    _$SubscriptionImpl(
-      id: json['id'] as String,
-      userId: json['userId'] as String,
-      name: json['name'] as String,
-      amount: (json['amount'] as num).toDouble(),
-      currency: json['currency'] as String,
-      frequency: $enumDecode(_$RecurrenceFrequencyEnumMap, json['frequency']),
-      category: $enumDecode(_$SubscriptionCategoryEnumMap, json['category']),
-      nextBillingDate: DateTime.parse(json['nextBillingDate'] as String),
-      description: json['description'] as String? ?? '',
-      logoUrl: json['logoUrl'] as String? ?? '',
-      emoji: json['emoji'] as String? ?? '💳',
-      status:
-          $enumDecodeNullable(_$SubscriptionStatusEnumMap, json['status']) ??
-          SubscriptionStatus.active,
-      autoRenew: json['autoRenew'] as bool? ?? true,
-      reminderEnabled: json['reminderEnabled'] as bool? ?? true,
-      reminderDaysBefore: (json['reminderDaysBefore'] as num?)?.toInt() ?? 2,
-      startDate: json['startDate'] == null
-          ? null
-          : DateTime.parse(json['startDate'] as String),
-      cancelledAt: json['cancelledAt'] == null
-          ? null
-          : DateTime.parse(json['cancelledAt'] as String),
-      trialEndsAt: json['trialEndsAt'] == null
-          ? null
-          : DateTime.parse(json['trialEndsAt'] as String),
-      pausedAt: json['pausedAt'] == null
-          ? null
-          : DateTime.parse(json['pausedAt'] as String),
-      createdAt: json['createdAt'] == null
-          ? null
-          : DateTime.parse(json['createdAt'] as String),
-      updatedAt: json['updatedAt'] == null
-          ? null
-          : DateTime.parse(json['updatedAt'] as String),
-    );
+_$SubscriptionImpl _$$SubscriptionImplFromJson(
+  Map<String, dynamic> json,
+) => _$SubscriptionImpl(
+  id: json['id'] as String,
+  userId: json['userId'] as String,
+  name: json['name'] as String,
+  amount: (json['amount'] as num).toDouble(),
+  currency: json['currency'] as String,
+  frequency: $enumDecode(_$RecurrenceFrequencyEnumMap, json['frequency']),
+  category: $enumDecode(_$SubscriptionCategoryEnumMap, json['category']),
+  nextBillingDate: DateTime.parse(json['nextBillingDate'] as String),
+  description: json['description'] as String? ?? '',
+  logoUrl: json['logoUrl'] as String? ?? '',
+  emoji: json['emoji'] as String? ?? '💳',
+  status:
+      $enumDecodeNullable(_$SubscriptionStatusEnumMap, json['status']) ??
+      SubscriptionStatus.active,
+  autoRenew: json['autoRenew'] as bool? ?? true,
+  reminderEnabled: json['reminderEnabled'] as bool? ?? true,
+  reminderDaysBefore: (json['reminderDaysBefore'] as num?)?.toInt() ?? 2,
+  startDate: const TimestampDateTimeConverter().fromJson(json['startDate']),
+  cancelledAt: const TimestampDateTimeConverter().fromJson(json['cancelledAt']),
+  trialEndsAt: const TimestampDateTimeConverter().fromJson(json['trialEndsAt']),
+  pausedAt: const TimestampDateTimeConverter().fromJson(json['pausedAt']),
+  createdAt: const TimestampDateTimeConverter().fromJson(json['createdAt']),
+  updatedAt: const TimestampDateTimeConverter().fromJson(json['updatedAt']),
+);
 
-Map<String, dynamic> _$$SubscriptionImplToJson(_$SubscriptionImpl instance) =>
-    <String, dynamic>{
-      'id': instance.id,
-      'userId': instance.userId,
-      'name': instance.name,
-      'amount': instance.amount,
-      'currency': instance.currency,
-      'frequency': _$RecurrenceFrequencyEnumMap[instance.frequency]!,
-      'category': _$SubscriptionCategoryEnumMap[instance.category]!,
-      'nextBillingDate': instance.nextBillingDate.toIso8601String(),
-      'description': instance.description,
-      'logoUrl': instance.logoUrl,
-      'emoji': instance.emoji,
-      'status': _$SubscriptionStatusEnumMap[instance.status]!,
-      'autoRenew': instance.autoRenew,
-      'reminderEnabled': instance.reminderEnabled,
-      'reminderDaysBefore': instance.reminderDaysBefore,
-      'startDate': instance.startDate?.toIso8601String(),
-      'cancelledAt': instance.cancelledAt?.toIso8601String(),
-      'trialEndsAt': instance.trialEndsAt?.toIso8601String(),
-      'pausedAt': instance.pausedAt?.toIso8601String(),
-      'createdAt': instance.createdAt?.toIso8601String(),
-      'updatedAt': instance.updatedAt?.toIso8601String(),
-    };
+Map<String, dynamic> _$$SubscriptionImplToJson(
+  _$SubscriptionImpl instance,
+) => <String, dynamic>{
+  'id': instance.id,
+  'userId': instance.userId,
+  'name': instance.name,
+  'amount': instance.amount,
+  'currency': instance.currency,
+  'frequency': _$RecurrenceFrequencyEnumMap[instance.frequency]!,
+  'category': _$SubscriptionCategoryEnumMap[instance.category]!,
+  'nextBillingDate': instance.nextBillingDate.toIso8601String(),
+  'description': instance.description,
+  'logoUrl': instance.logoUrl,
+  'emoji': instance.emoji,
+  'status': _$SubscriptionStatusEnumMap[instance.status]!,
+  'autoRenew': instance.autoRenew,
+  'reminderEnabled': instance.reminderEnabled,
+  'reminderDaysBefore': instance.reminderDaysBefore,
+  'startDate': const TimestampDateTimeConverter().toJson(instance.startDate),
+  'cancelledAt': const TimestampDateTimeConverter().toJson(
+    instance.cancelledAt,
+  ),
+  'trialEndsAt': const TimestampDateTimeConverter().toJson(
+    instance.trialEndsAt,
+  ),
+  'pausedAt': const TimestampDateTimeConverter().toJson(instance.pausedAt),
+  'createdAt': const TimestampDateTimeConverter().toJson(instance.createdAt),
+  'updatedAt': const TimestampDateTimeConverter().toJson(instance.updatedAt),
+};
 
 const _$RecurrenceFrequencyEnumMap = {
   RecurrenceFrequency.daily: 'daily',

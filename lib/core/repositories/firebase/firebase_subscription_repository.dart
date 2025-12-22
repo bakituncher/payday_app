@@ -22,12 +22,19 @@ class FirebaseSubscriptionRepository implements SubscriptionRepository {
 
   @override
   Future<void> addSubscription(Subscription subscription) async {
-    await _getCollection(subscription.userId).doc(subscription.id).set(subscription.toJson());
+    await _getCollection(subscription.userId).doc(subscription.id).set({
+      ...subscription.toJson(),
+      'createdAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
   }
 
   @override
   Future<void> updateSubscription(Subscription subscription) async {
-    await _getCollection(subscription.userId).doc(subscription.id).update(subscription.toJson());
+    await _getCollection(subscription.userId).doc(subscription.id).update({
+      ...subscription.toJson(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
   }
 
   @override

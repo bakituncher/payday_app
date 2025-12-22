@@ -1,6 +1,7 @@
 /// Subscription model for tracking recurring payments
 /// Industry-grade implementation with Firebase support
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:payday/core/models/converters/timestamp_converter.dart';
 
 part 'subscription.freezed.dart';
 part 'subscription.g.dart';
@@ -73,7 +74,7 @@ class Subscription with _$Subscription {
     required String currency,
     required RecurrenceFrequency frequency,
     required SubscriptionCategory category,
-    required DateTime nextBillingDate,
+    @TimestampDateTimeConverter() required DateTime nextBillingDate,
     @Default('') String description,
     @Default('') String logoUrl,
     @Default('💳') String emoji,
@@ -81,12 +82,12 @@ class Subscription with _$Subscription {
     @Default(true) bool autoRenew,
     @Default(true) bool reminderEnabled,
     @Default(2) int reminderDaysBefore,
-    DateTime? startDate,
-    DateTime? cancelledAt,
-    DateTime? trialEndsAt,
-    DateTime? pausedAt,
-    DateTime? createdAt,
-    DateTime? updatedAt,
+    @TimestampDateTimeConverter() DateTime? startDate,
+    @TimestampDateTimeConverter() DateTime? cancelledAt,
+    @TimestampDateTimeConverter() DateTime? trialEndsAt,
+    @TimestampDateTimeConverter() DateTime? pausedAt,
+    @TimestampDateTimeConverter() DateTime? createdAt,
+    @TimestampDateTimeConverter() DateTime? updatedAt,
   }) = _Subscription;
 
   factory Subscription.fromJson(Map<String, dynamic> json) =>

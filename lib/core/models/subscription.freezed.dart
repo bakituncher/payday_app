@@ -28,6 +28,7 @@ mixin _$Subscription {
   String get currency => throw _privateConstructorUsedError;
   RecurrenceFrequency get frequency => throw _privateConstructorUsedError;
   SubscriptionCategory get category => throw _privateConstructorUsedError;
+  @TimestampDateTimeConverter()
   DateTime get nextBillingDate => throw _privateConstructorUsedError;
   String get description => throw _privateConstructorUsedError;
   String get logoUrl => throw _privateConstructorUsedError;
@@ -36,11 +37,17 @@ mixin _$Subscription {
   bool get autoRenew => throw _privateConstructorUsedError;
   bool get reminderEnabled => throw _privateConstructorUsedError;
   int get reminderDaysBefore => throw _privateConstructorUsedError;
+  @TimestampDateTimeConverter()
   DateTime? get startDate => throw _privateConstructorUsedError;
+  @TimestampDateTimeConverter()
   DateTime? get cancelledAt => throw _privateConstructorUsedError;
+  @TimestampDateTimeConverter()
   DateTime? get trialEndsAt => throw _privateConstructorUsedError;
+  @TimestampDateTimeConverter()
   DateTime? get pausedAt => throw _privateConstructorUsedError;
+  @TimestampDateTimeConverter()
   DateTime? get createdAt => throw _privateConstructorUsedError;
+  @TimestampDateTimeConverter()
   DateTime? get updatedAt => throw _privateConstructorUsedError;
 
   /// Serializes this Subscription to a JSON map.
@@ -68,7 +75,7 @@ abstract class $SubscriptionCopyWith<$Res> {
     String currency,
     RecurrenceFrequency frequency,
     SubscriptionCategory category,
-    DateTime nextBillingDate,
+    @TimestampDateTimeConverter() DateTime nextBillingDate,
     String description,
     String logoUrl,
     String emoji,
@@ -76,12 +83,12 @@ abstract class $SubscriptionCopyWith<$Res> {
     bool autoRenew,
     bool reminderEnabled,
     int reminderDaysBefore,
-    DateTime? startDate,
-    DateTime? cancelledAt,
-    DateTime? trialEndsAt,
-    DateTime? pausedAt,
-    DateTime? createdAt,
-    DateTime? updatedAt,
+    @TimestampDateTimeConverter() DateTime? startDate,
+    @TimestampDateTimeConverter() DateTime? cancelledAt,
+    @TimestampDateTimeConverter() DateTime? trialEndsAt,
+    @TimestampDateTimeConverter() DateTime? pausedAt,
+    @TimestampDateTimeConverter() DateTime? createdAt,
+    @TimestampDateTimeConverter() DateTime? updatedAt,
   });
 }
 
@@ -231,7 +238,7 @@ abstract class _$$SubscriptionImplCopyWith<$Res>
     String currency,
     RecurrenceFrequency frequency,
     SubscriptionCategory category,
-    DateTime nextBillingDate,
+    @TimestampDateTimeConverter() DateTime nextBillingDate,
     String description,
     String logoUrl,
     String emoji,
@@ -239,12 +246,12 @@ abstract class _$$SubscriptionImplCopyWith<$Res>
     bool autoRenew,
     bool reminderEnabled,
     int reminderDaysBefore,
-    DateTime? startDate,
-    DateTime? cancelledAt,
-    DateTime? trialEndsAt,
-    DateTime? pausedAt,
-    DateTime? createdAt,
-    DateTime? updatedAt,
+    @TimestampDateTimeConverter() DateTime? startDate,
+    @TimestampDateTimeConverter() DateTime? cancelledAt,
+    @TimestampDateTimeConverter() DateTime? trialEndsAt,
+    @TimestampDateTimeConverter() DateTime? pausedAt,
+    @TimestampDateTimeConverter() DateTime? createdAt,
+    @TimestampDateTimeConverter() DateTime? updatedAt,
   });
 }
 
@@ -386,7 +393,7 @@ class _$SubscriptionImpl extends _Subscription {
     required this.currency,
     required this.frequency,
     required this.category,
-    required this.nextBillingDate,
+    @TimestampDateTimeConverter() required this.nextBillingDate,
     this.description = '',
     this.logoUrl = '',
     this.emoji = '💳',
@@ -394,12 +401,12 @@ class _$SubscriptionImpl extends _Subscription {
     this.autoRenew = true,
     this.reminderEnabled = true,
     this.reminderDaysBefore = 2,
-    this.startDate,
-    this.cancelledAt,
-    this.trialEndsAt,
-    this.pausedAt,
-    this.createdAt,
-    this.updatedAt,
+    @TimestampDateTimeConverter() this.startDate,
+    @TimestampDateTimeConverter() this.cancelledAt,
+    @TimestampDateTimeConverter() this.trialEndsAt,
+    @TimestampDateTimeConverter() this.pausedAt,
+    @TimestampDateTimeConverter() this.createdAt,
+    @TimestampDateTimeConverter() this.updatedAt,
   }) : super._();
 
   factory _$SubscriptionImpl.fromJson(Map<String, dynamic> json) =>
@@ -420,6 +427,7 @@ class _$SubscriptionImpl extends _Subscription {
   @override
   final SubscriptionCategory category;
   @override
+  @TimestampDateTimeConverter()
   final DateTime nextBillingDate;
   @override
   @JsonKey()
@@ -443,16 +451,22 @@ class _$SubscriptionImpl extends _Subscription {
   @JsonKey()
   final int reminderDaysBefore;
   @override
+  @TimestampDateTimeConverter()
   final DateTime? startDate;
   @override
+  @TimestampDateTimeConverter()
   final DateTime? cancelledAt;
   @override
+  @TimestampDateTimeConverter()
   final DateTime? trialEndsAt;
   @override
+  @TimestampDateTimeConverter()
   final DateTime? pausedAt;
   @override
+  @TimestampDateTimeConverter()
   final DateTime? createdAt;
   @override
+  @TimestampDateTimeConverter()
   final DateTime? updatedAt;
 
   @override
@@ -552,7 +566,7 @@ abstract class _Subscription extends Subscription {
     required final String currency,
     required final RecurrenceFrequency frequency,
     required final SubscriptionCategory category,
-    required final DateTime nextBillingDate,
+    @TimestampDateTimeConverter() required final DateTime nextBillingDate,
     final String description,
     final String logoUrl,
     final String emoji,
@@ -560,12 +574,12 @@ abstract class _Subscription extends Subscription {
     final bool autoRenew,
     final bool reminderEnabled,
     final int reminderDaysBefore,
-    final DateTime? startDate,
-    final DateTime? cancelledAt,
-    final DateTime? trialEndsAt,
-    final DateTime? pausedAt,
-    final DateTime? createdAt,
-    final DateTime? updatedAt,
+    @TimestampDateTimeConverter() final DateTime? startDate,
+    @TimestampDateTimeConverter() final DateTime? cancelledAt,
+    @TimestampDateTimeConverter() final DateTime? trialEndsAt,
+    @TimestampDateTimeConverter() final DateTime? pausedAt,
+    @TimestampDateTimeConverter() final DateTime? createdAt,
+    @TimestampDateTimeConverter() final DateTime? updatedAt,
   }) = _$SubscriptionImpl;
   const _Subscription._() : super._();
 
@@ -587,6 +601,7 @@ abstract class _Subscription extends Subscription {
   @override
   SubscriptionCategory get category;
   @override
+  @TimestampDateTimeConverter()
   DateTime get nextBillingDate;
   @override
   String get description;
@@ -603,16 +618,22 @@ abstract class _Subscription extends Subscription {
   @override
   int get reminderDaysBefore;
   @override
+  @TimestampDateTimeConverter()
   DateTime? get startDate;
   @override
+  @TimestampDateTimeConverter()
   DateTime? get cancelledAt;
   @override
+  @TimestampDateTimeConverter()
   DateTime? get trialEndsAt;
   @override
+  @TimestampDateTimeConverter()
   DateTime? get pausedAt;
   @override
+  @TimestampDateTimeConverter()
   DateTime? get createdAt;
   @override
+  @TimestampDateTimeConverter()
   DateTime? get updatedAt;
 
   /// Create a copy of Subscription
