@@ -46,8 +46,10 @@ class FinancialInsightsService {
     }
 
     // Add subscriptions to expenses
-    expensesByCategory['Subscriptions'] = totalSubscriptions;
-
+// Add subscriptions to expenses (Sadece tutar 0'dan büyükse ekle)
+    if (totalSubscriptions > 0) {
+      expensesByCategory['Subscriptions'] = totalSubscriptions;
+    }
     // Generate insights
     final insights = _generateInsights(
       totalIncome: totalIncome,
