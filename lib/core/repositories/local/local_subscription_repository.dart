@@ -6,6 +6,7 @@ import 'package:payday/core/models/subscription.dart';
 import 'package:payday/core/models/subscription_analysis.dart';
 import 'package:payday/core/models/bill_reminder.dart';
 import 'package:payday/core/repositories/subscription_repository.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class LocalSubscriptionRepository implements SubscriptionRepository {
   static const String _subscriptionsKey = 'local_subscriptions';
@@ -42,8 +43,36 @@ class LocalSubscriptionRepository implements SubscriptionRepository {
     if (_cachedSubscriptions == null) return;
 
     final prefs = await SharedPreferences.getInstance();
-    final jsonList = _cachedSubscriptions!.map((s) => s.toJson()).toList();
+    final jsonList = _cachedSubscriptions!
+        .map((s) => _encodeForLocal(s.toJson()))
+        .toList();
     await prefs.setString(_subscriptionsKey, json.encode(jsonList));
+  }
+
+  Map<String, dynamic> _encodeForLocal(Map<String, dynamic> data) {
+    final result = <String, dynamic>{};
+    data.forEach((key, value) {
+      if (value is Timestamp) {
+        result[key] = value.toDate().toIso8601String();
+      } else if (value is DateTime) {
+        result[key] = value.toIso8601String();
+      } else if (value is Map<String, dynamic>) {
+        result[key] = _encodeForLocal(value);
+      } else if (value is List) {
+        result[key] = value
+            .map((e) => e is Map<String, dynamic>
+                ? _encodeForLocal(e)
+                : e is Timestamp
+                    ? e.toDate().toIso8601String()
+                    : e is DateTime
+                        ? e.toIso8601String()
+                        : e)
+            .toList();
+      } else {
+        result[key] = value;
+      }
+    });
+    return result;
   }
 
   // Load reminders from SharedPreferences
@@ -341,51 +370,61 @@ class LocalSubscriptionRepository implements SubscriptionRepository {
     final spending = await getSpendingByCategory(userId);
     final totalMonthly = await getTotalMonthlyCost(userId);
     final totalYearly = await getTotalYearlyCost(userId);
+    final unusedSubs = await getUnusedSubscriptions(userId, 30);
 
     // Convert SubscriptionCategory map to String map for spendByCategory
     final Map<String, double> spendByCategory = {};
     for (final entry in spending.entries) {
-      spendByCategory[entry.key.name] = entry.value;
+      spendByCategory[entry.key.toString()] = entry.value;
     }
+
+    // Calculate potential savings from unused subscriptions
+    final potentialMonthlySavings = unusedSubs.fold<double>(
+      0.0,
+      (sum, sub) => sum + sub.monthlyCost,
+    );
+    final potentialYearlySavings = unusedSubs.fold<double>(
+      0.0,
+      (sum, sub) => sum + sub.yearlyCost,
+    );
 
     return SubscriptionSummary(
       userId: userId,
       totalSubscriptions: subscriptions.length,
       totalMonthlySpend: totalMonthly,
       totalYearlySpend: totalYearly,
-      potentialMonthlySavings: 0.0, // Would need more logic for this
-      potentialYearlySavings: 0.0,
-      subscriptionsToReview: 0,
+      potentialMonthlySavings: potentialMonthlySavings,
+      potentialYearlySavings: potentialYearlySavings,
+      subscriptionsToReview: unusedSubs.length,
       subscriptionsToCancel: 0,
       spendByCategory: spendByCategory,
-      analyses: [],
       lastAnalyzedAt: DateTime.now(),
     );
   }
 
   @override
   Future<List<Subscription>> getUnusedSubscriptions(String userId, int thresholdDays) async {
-    // For now, return empty list - would need usage tracking
-    return [];
+    final subscriptions = await getActiveSubscriptions(userId);
+    final now = DateTime.now();
+    final thresholdDate = now.subtract(Duration(days: thresholdDays));
+
+    return subscriptions.where((sub) {
+      // Use createdAt as a fallback since lastAccessedAt doesn't exist in the model
+      final lastUsed = sub.createdAt ?? now;
+      return lastUsed.isBefore(thresholdDate);
+    }).toList();
   }
 
   @override
   Future<void> markSubscriptionUsed(String subscriptionId) async {
-    // Would need to track last used date
     await _loadSubscriptions();
     final index = _cachedSubscriptions!.indexWhere((s) => s.id == subscriptionId);
     if (index != -1) {
+      // Since lastAccessedAt doesn't exist in the model, we just update the updatedAt field
       _cachedSubscriptions![index] = _cachedSubscriptions![index].copyWith(
         updatedAt: DateTime.now(),
       );
       await _saveSubscriptions();
     }
   }
-
-  /// Clear cache to force reload from storage
-  void clearCache() {
-    _cachedSubscriptions = null;
-    _cachedReminders = null;
-  }
 }
-
