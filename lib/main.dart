@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:payday/core/services/revenue_cat_service.dart';
+import 'package:payday/core/services/notification_service.dart';
 import 'firebase_options.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -86,6 +87,16 @@ class _PaydayAppState extends ConsumerState<PaydayApp> {
   void initState() {
     super.initState();
     Future.microtask(() => _initializeAuth());
+    // Bildirim sistemini başlat
+    _setupNotifications();
+  }
+
+  Future<void> _setupNotifications() async {
+    final notificationService = NotificationService();
+    await notificationService.initialize();
+    await notificationService.requestPermissions();
+    await notificationService.scheduleDailyEngagementReminders();
+    debugPrint("🔔 Bildirim sistemi hazır ve günlük planlar kuruldu.");
   }
 
   Future<void> _initializeAuth() async {

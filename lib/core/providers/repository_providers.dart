@@ -73,7 +73,7 @@ final monthlySummaryRepositoryProvider = Provider<MonthlySummaryRepository>((ref
 
 /// Notification Service Provider
 final notificationServiceProvider = Provider<NotificationService>((ref) {
-  return LocalNotificationService();
+  return NotificationService();
 });
 
 /// Current User ID Provider
@@ -132,4 +132,3 @@ final autoDepositServiceProvider = Provider<AutoDepositService>((ref) {
     transactionManager: transactionManager,
   );
 });
-
