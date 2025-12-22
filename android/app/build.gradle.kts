@@ -25,6 +25,9 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+
+        // flutter_local_notifications (ve bazı diğer eklentiler) Java 8+ API'leri için bunu ister.
+        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlinOptions {
@@ -61,6 +64,12 @@ android {
             signingConfig = signingConfigs.getByName("release")
         }
     }
+}
+
+// Kotlin DSL'de dependencies bloğu yoksa ekliyoruz.
+dependencies {
+    // Java 8+ core library desugaring
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }
 
 flutter {
