@@ -5,6 +5,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:payday/core/models/transaction.dart';
 import 'package:payday/core/repositories/transaction_repository.dart';
 
+// ✅ DÜZELTME: 'Transaction' ismini gizleyerek çakışmayı önledik.
+// Sadece 'Timestamp' sınıfına ihtiyacımız var.
+import 'package:cloud_firestore/cloud_firestore.dart' hide Transaction;
+
 class LocalTransactionRepository implements TransactionRepository {
   static const String _storageKey = 'local_transactions';
 
@@ -37,7 +41,24 @@ class LocalTransactionRepository implements TransactionRepository {
     if (_cachedTransactions == null) return;
 
     final prefs = await SharedPreferences.getInstance();
-    final jsonList = _cachedTransactions!.map((t) => t.toJson()).toList();
+
+    // Timestamp kontrolü ve temizleme işlemi
+    final jsonList = _cachedTransactions!.map((t) {
+      final Map<String, dynamic> data = t.toJson();
+      final Map<String, dynamic> sanitizedData = {};
+
+      data.forEach((key, value) {
+        // Eğer değer Firestore Timestamp ise, ISO String'e çevir
+        if (value is Timestamp) {
+          sanitizedData[key] = value.toDate().toIso8601String();
+        } else {
+          sanitizedData[key] = value;
+        }
+      });
+
+      return sanitizedData;
+    }).toList();
+
     await prefs.setString(_storageKey, json.encode(jsonList));
   }
 
@@ -50,16 +71,16 @@ class LocalTransactionRepository implements TransactionRepository {
 
   @override
   Future<List<Transaction>> getTransactionsForCurrentCycle(
-    String userId,
-    DateTime payCycleStart,
-  ) async {
+      String userId,
+      DateTime payCycleStart,
+      ) async {
     final transactions = await _loadTransactions();
     return transactions
         .where((t) =>
-            t.userId == userId &&
-            (t.date.isAfter(payCycleStart) ||
-             t.date.isAtSameMomentAs(payCycleStart)) &&
-            t.date.isBefore(DateTime.now().add(const Duration(days: 1))))
+    t.userId == userId &&
+        (t.date.isAfter(payCycleStart) ||
+            t.date.isAtSameMomentAs(payCycleStart)) &&
+        t.date.isBefore(DateTime.now().add(const Duration(days: 1))))
         .toList()
       ..sort((a, b) => b.date.compareTo(a.date));
   }
@@ -90,9 +111,9 @@ class LocalTransactionRepository implements TransactionRepository {
 
   @override
   Future<double> getTotalExpensesForCycle(
-    String userId,
-    DateTime payCycleStart,
-  ) async {
+      String userId,
+      DateTime payCycleStart,
+      ) async {
     final transactions = await getTransactionsForCurrentCycle(userId, payCycleStart);
     return transactions
         .where((t) => t.isExpense)
@@ -104,7 +125,7 @@ class LocalTransactionRepository implements TransactionRepository {
     await _loadTransactions();
     final initialCount = _cachedTransactions!.length;
     _cachedTransactions!.removeWhere(
-      (t) => t.userId == userId && t.date.isBefore(date),
+          (t) => t.userId == userId && t.date.isBefore(date),
     );
     final deletedCount = initialCount - _cachedTransactions!.length;
     if (deletedCount > 0) {
@@ -131,4 +152,3 @@ class LocalTransactionRepository implements TransactionRepository {
     _cachedTransactions = null;
   }
 }
-

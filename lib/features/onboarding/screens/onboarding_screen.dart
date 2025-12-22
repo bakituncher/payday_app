@@ -9,8 +9,11 @@ import 'package:payday/core/providers/repository_providers.dart';
 import 'package:payday/core/utils/currency_formatter.dart';
 import 'package:payday/shared/widgets/payday_button.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-// ✅ EKLENDİ: Home Provider'larını yenilemek için gerekli import
 import 'package:payday/features/home/providers/home_providers.dart';
+
+// ✅ EKLENDİ: Transaction oluşturmak için gerekli importlar
+import 'package:payday/core/models/transaction.dart' as model; // Alias kullanıyoruz
+import 'package:uuid/uuid.dart';
 
 class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({super.key});
@@ -97,6 +100,38 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       final userId = ref.read(currentUserIdProvider);
       final initialBalance = double.tryParse(_initialBalanceController.text) ?? 0.0;
 
+      // 1. Transaction Oluştur (Eğer bakiye > 0 ise)
+      // ✅ DÜZELTİLDİ: Transaction model yapınıza uygun parametreler kullanıldı.
+      if (initialBalance > 0) {
+        final transactionRepo = ref.read(transactionRepositoryProvider);
+
+        final initialDeposit = model.Transaction(
+          id: const Uuid().v4(),
+          userId: userId,
+          amount: initialBalance,
+
+          // isExpense: FALSE (Bu bir gelirdir)
+          isExpense: false,
+
+          // Kategori Bilgileri (Zorunlu alanlar)
+          categoryId: 'initial_deposit',
+          categoryName: 'Initial Deposit',
+          categoryEmoji: '💰',
+
+          date: DateTime.now(),
+
+          // Açıklama (Title yerine Note kullanılıyor)
+          note: 'Starting balance',
+
+          isRecurring: false,
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        );
+
+        await transactionRepo.addTransaction(initialDeposit);
+      }
+
+      // 2. Ayarları Kaydet
       final settings = UserSettings(
         userId: userId,
         currency: _selectedCurrency,
@@ -108,15 +143,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         updatedAt: DateTime.now(),
       );
 
-      // 1. Ayarları kaydet
       await ref.read(userSettingsRepositoryProvider).saveUserSettings(settings);
 
-      // 2. ✅ KRİTİK: Home ekranı providers'larını sıfırla (yeniden çekmesini sağla)
-      // Bunu yapmazsak Home ekranı hala eski (null) değeri hatırlar.
+      // 3. Provider'ları Sıfırla
       ref.invalidate(userSettingsProvider);
 
       if (mounted) {
-        // 3. Home'a git ve geri gelmeyi engelle
         Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
       }
     } catch (e) {

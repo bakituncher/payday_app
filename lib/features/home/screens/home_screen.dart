@@ -276,16 +276,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             const SizedBox(height: 8),
 
                             // Budget Progress Card
-                            Consumer(
-                              builder: (context, ref, _) {
-                                final periodBalanceAsync = ref.watch(selectedPeriodBalanceProvider);
-                                final effectiveBalance = periodBalanceAsync.value?.closingBalance ?? settings.currentBalance;
-
-                                return BudgetProgressCard(
-                                  currency: settings.currency,
-                                  currentBalance: effectiveBalance,
-                                );
-                              },
+                            // ✅ DÜZELTME: PeriodBalance yerine doğrudan UserSettings.currentBalance kullanılıyor.
+                            // PeriodBalance sadece transaction'ları hesapladığı için ilk girişteki pool'u görmezden geliyordu.
+                            BudgetProgressCard(
+                              currency: settings.currency,
+                              currentBalance: settings.currentBalance,
                             )
                                 .animate()
                                 .fadeIn(duration: 500.ms, delay: 300.ms)
