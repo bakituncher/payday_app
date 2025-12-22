@@ -29,7 +29,7 @@ class MonthlySummaryCard extends ConsumerWidget {
         );
       },
       child: Container(
-        padding: const EdgeInsets.all(AppSpacing.md),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: AppColors.getCardBackground(context),
           borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -92,39 +92,41 @@ class MonthlySummaryCard extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Header
+        // Header - Kompakt
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
                     gradient: AppColors.premiumGradient,
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    borderRadius: BorderRadius.circular(6),
                   ),
                   child: const Icon(
                     Icons.calendar_today_rounded,
                     color: Colors.white,
-                    size: 18,
+                    size: 14,
                   ),
                 ),
-                const SizedBox(width: AppSpacing.sm),
+                const SizedBox(width: 8),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'Pay Period',
-                      style: theme.textTheme.titleMedium?.copyWith(
+                      style: theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w700,
                         color: AppColors.getTextPrimary(context),
+                        fontSize: 13,
                       ),
                     ),
                     Text(
                       payCycle,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: AppColors.getTextSecondary(context),
+                        fontSize: 10,
                       ),
                     ),
                   ],
@@ -134,16 +136,17 @@ class MonthlySummaryCard extends ConsumerWidget {
             Icon(
               Icons.chevron_right_rounded,
               color: AppColors.getTextSecondary(context),
+              size: 18,
             ),
           ],
         ),
 
-        const SizedBox(height: AppSpacing.md),
+        const SizedBox(height: 10),
 
-        // Total Spending
+        // Total Spending - Kompakt
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(AppSpacing.md),
+          padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
             gradient: AppColors.pinkGradient,
             borderRadius: BorderRadius.circular(AppRadius.md),
@@ -155,22 +158,24 @@ class MonthlySummaryCard extends ConsumerWidget {
                 'Total Spending',
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: Colors.white.withValues(alpha: 0.8),
+                  fontSize: 10,
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 3),
               // GÜNCELLEME: Merkezi CurrencyFormatter kullanılıyor
               Text(
                 CurrencyFormatter.format(totalSpending, currency),
-                style: theme.textTheme.headlineSmall?.copyWith(
+                style: theme.textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.w800,
                   color: Colors.white,
+                  fontSize: 20,
                 ),
               ),
             ],
           ),
         ),
 
-        const SizedBox(height: AppSpacing.sm),
+        const SizedBox(height: 8),
 
         // Spending Chart
         _buildMiniChart(context, transactions, currency),
@@ -198,7 +203,7 @@ class MonthlySummaryCard extends ConsumerWidget {
     final maxAmount = expensesByDate.values.isEmpty ? 100.0 : expensesByDate.values.reduce((a, b) => a > b ? a : b);
 
     return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: AppColors.getCardBackground(context),
         borderRadius: BorderRadius.circular(AppRadius.md),
@@ -215,9 +220,10 @@ class MonthlySummaryCard extends ConsumerWidget {
             style: theme.textTheme.bodySmall?.copyWith(
               color: AppColors.getTextSecondary(context),
               fontWeight: FontWeight.w600,
+              fontSize: 10,
             ),
           ),
-          const SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.end,
@@ -261,7 +267,7 @@ class MonthlySummaryCard extends ConsumerWidget {
                       // Bar
                       Container(
                         width: double.infinity,
-                        height: (heightFactor * 40).clamp(2, 40),
+                        height: (heightFactor * 35).clamp(2, 35),
                         decoration: BoxDecoration(
                           gradient: amount > 0 ? AppColors.pinkGradient : null,
                           color: amount == 0 ? AppColors.getSubtle(context) : null,

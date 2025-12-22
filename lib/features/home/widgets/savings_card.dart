@@ -74,28 +74,28 @@ class SavingsCard extends ConsumerWidget {
                 ),
               ),
             ),
-            // Content
+            // Content - Kompakt
             Padding(
-              padding: const EdgeInsets.all(AppSpacing.lg),
+              padding: const EdgeInsets.all(12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Header
+                  // Header - Kompakt
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(10),
+                        padding: const EdgeInsets.all(7),
                         decoration: BoxDecoration(
                           color: Colors.white.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(AppRadius.md),
+                          borderRadius: BorderRadius.circular(8),
                         ),
                         child: const Icon(
                           Icons.savings_rounded,
                           color: Colors.white,
-                          size: 20,
+                          size: 16,
                         ),
                       ),
-                      const SizedBox(width: AppSpacing.sm),
+                      const SizedBox(width: 8),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -105,6 +105,7 @@ class SavingsCard extends ConsumerWidget {
                               style: theme.textTheme.bodyMedium?.copyWith(
                                 color: Colors.white.withValues(alpha: 0.9),
                                 fontWeight: FontWeight.w600,
+                                fontSize: 13,
                               ),
                             ),
                             Text(
@@ -115,13 +116,14 @@ class SavingsCard extends ConsumerWidget {
                               ),
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: Colors.white.withValues(alpha: 0.7),
+                                fontSize: 11,
                               ),
                             ),
                           ],
                         ),
                       ),
                       Container(
-                        padding: const EdgeInsets.all(8),
+                        padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
                           color: Colors.white.withValues(alpha: 0.2),
                           shape: BoxShape.circle,
@@ -129,13 +131,13 @@ class SavingsCard extends ConsumerWidget {
                         child: Icon(
                           Icons.arrow_forward_ios_rounded,
                           color: Colors.white,
-                          size: 16,
+                          size: 12,
                         ),
                       ),
                     ],
                   ),
 
-                  const SizedBox(height: AppSpacing.md),
+                  const SizedBox(height: 10),
 
                   // Amount
                   savingsGoalsAsync.when(

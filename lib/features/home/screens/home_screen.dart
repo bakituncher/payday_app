@@ -137,7 +137,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       parent: BouncingScrollPhysics(),
                     ),
                     slivers: [
-                      // Premium App Bar
+                      // Premium App Bar - Kompakt
                       SliverAppBar(
                         expandedHeight: 0,
                         floating: true,
@@ -145,31 +145,32 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         backgroundColor: AppColors.getBackground(context),
                         elevation: 0,
                         surfaceTintColor: Colors.transparent,
+                        toolbarHeight: 56, // Daha düşük toolbar
                         title: Row(
                           children: [
                             Container(
-                              padding: const EdgeInsets.all(8),
+                              padding: const EdgeInsets.all(6),
                               decoration: BoxDecoration(
                                 gradient: AppColors.pinkGradient,
-                                borderRadius: BorderRadius.circular(AppRadius.md),
+                                borderRadius: BorderRadius.circular(AppRadius.sm),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: AppColors.primaryPink.withValues(alpha: 0.3),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 2),
+                                    color: AppColors.primaryPink.withValues(alpha: 0.2),
+                                    blurRadius: 6,
+                                    offset: const Offset(0, 1),
                                   ),
                                 ],
                               ),
                               child: const Icon(
                                 Icons.account_balance_wallet_rounded,
                                 color: Colors.white,
-                                size: 20,
+                                size: 18,
                               ),
                             ),
-                            const SizedBox(width: AppSpacing.sm),
+                            const SizedBox(width: 8),
                             Text(
                               'Payday',
-                              style: theme.textTheme.headlineSmall?.copyWith(
+                              style: theme.textTheme.titleLarge?.copyWith(
                                 fontWeight: FontWeight.w800,
                                 color: AppColors.getTextPrimary(context),
                                 letterSpacing: -0.5,
@@ -178,58 +179,49 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           ],
                         ),
                         actions: [
-                          Container(
-                            margin: const EdgeInsets.only(right: AppSpacing.sm),
-                            decoration: BoxDecoration(
-                              color: AppColors.getSubtle(context),
-                              borderRadius: BorderRadius.circular(AppRadius.md),
-                            ),
-                            child: IconButton(
-                              icon: const Icon(Icons.notifications_none_rounded),
-                              onPressed: () {
-                                HapticFeedback.lightImpact();
-                                // TODO: Navigate to notifications
-                              },
-                              color: AppColors.getTextPrimary(context),
-                            ),
+                          IconButton(
+                            icon: const Icon(Icons.notifications_none_rounded, size: 22),
+                            onPressed: () {
+                              HapticFeedback.lightImpact();
+                              // TODO: Navigate to notifications
+                            },
+                            color: AppColors.getTextPrimary(context),
+                            padding: const EdgeInsets.all(8),
+                            constraints: const BoxConstraints(),
                           ),
-                          Container(
-                            margin: const EdgeInsets.only(right: AppSpacing.md),
-                            decoration: BoxDecoration(
-                              color: AppColors.getSubtle(context),
-                              borderRadius: BorderRadius.circular(AppRadius.md),
-                            ),
-                            child: IconButton(
-                              icon: const Icon(Icons.settings_outlined),
-                              onPressed: () {
-                                HapticFeedback.lightImpact();
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => const SettingsScreen(),
-                                  ),
-                                );
-                              },
-                              color: AppColors.getTextPrimary(context),
-                            ),
+                          IconButton(
+                            icon: const Icon(Icons.settings_outlined, size: 22),
+                            onPressed: () {
+                              HapticFeedback.lightImpact();
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const SettingsScreen(),
+                                ),
+                              );
+                            },
+                            color: AppColors.getTextPrimary(context),
+                            padding: const EdgeInsets.all(8),
+                            constraints: const BoxConstraints(),
                           ),
+                          const SizedBox(width: 8),
                         ],
                       ),
 
-                      // Content
+                      // Content - Kompakt Layout
                       SliverPadding(
-                        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
                         sliver: SliverList(
                           delegate: SliverChildListDelegate([
-                            const SizedBox(height: AppSpacing.sm),
+                            const SizedBox(height: 6),
 
-                            // Greeting
+                            // Greeting - Daha küçük
                             _GreetingSection()
                                 .animate()
                                 .fadeIn(duration: 400.ms)
                                 .slideY(begin: -0.1, end: 0),
 
-                            const SizedBox(height: AppSpacing.md),
+                            const SizedBox(height: 10),
 
                             // Countdown Card - THE HERO
                             CountdownCard(
@@ -245,7 +237,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               curve: Curves.easeOutBack,
                             ),
 
-                            const SizedBox(height: AppSpacing.sm),
+                            const SizedBox(height: 8),
 
                             // Daily Allowable Spend Card
                             const DailySpendCard()
@@ -253,9 +245,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 .fadeIn(duration: 500.ms, delay: 200.ms)
                                 .slideX(begin: -0.1, end: 0),
 
-                            const SizedBox(height: AppSpacing.sm),
+                            const SizedBox(height: 8),
 
-                            // Quick Actions Row
+                            // Quick Actions Row - Daha kompakt
                             Row(
                               children: [
                                 Expanded(
@@ -266,7 +258,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                     onTap: () => _showAddFundsSheet(context),
                                   ),
                                 ),
-                                const SizedBox(width: AppSpacing.sm),
+                                const SizedBox(width: 8),
                                 Expanded(
                                   child: _QuickActionButton(
                                     icon: Icons.remove_circle_outline_rounded,
@@ -281,7 +273,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 .fadeIn(duration: 500.ms, delay: 250.ms)
                                 .slideY(begin: 0.1, end: 0),
 
-                            const SizedBox(height: AppSpacing.sm),
+                            const SizedBox(height: 8),
 
                             // Budget Progress Card
                             Consumer(
@@ -299,7 +291,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 .fadeIn(duration: 500.ms, delay: 300.ms)
                                 .slideX(begin: 0.1, end: 0),
 
-                            const SizedBox(height: AppSpacing.sm),
+                            const SizedBox(height: 8),
 
                             // Savings Card
                             const SavingsCard()
@@ -307,7 +299,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 .fadeIn(duration: 500.ms, delay: 325.ms)
                                 .slideX(begin: -0.1, end: 0),
 
-                            const SizedBox(height: AppSpacing.sm),
+                            const SizedBox(height: 8),
 
                             // Active Subscriptions Card
                             const ActiveSubscriptionsCard()
@@ -315,7 +307,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 .fadeIn(duration: 500.ms, delay: 350.ms)
                                 .slideY(begin: 0.1, end: 0),
 
-                            const SizedBox(height: AppSpacing.sm),
+                            const SizedBox(height: 8),
 
                             // Monthly Summary Card
                             const MonthlySummaryCard()
@@ -323,7 +315,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 .fadeIn(duration: 500.ms, delay: 375.ms)
                                 .slideY(begin: 0.1, end: 0),
 
-                            const SizedBox(height: AppSpacing.sm),
+                            const SizedBox(height: 8),
 
                             // Recent Transactions
                             RecentTransactionsCard(
@@ -333,16 +325,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 .fadeIn(duration: 500.ms, delay: 400.ms)
                                 .slideY(begin: 0.1, end: 0),
 
-                            const SizedBox(height: AppSpacing.sm),
+                            const SizedBox(height: 8),
 
                             // ✅ REKLAM ALANI
-                            // PaydayBannerAd, isPremiumProvider'ı dinlediği için
-                            // yukarıdaki initState içindeki kontrol sonucunda otomatik gizlenecek.
                             const PaydayBannerAd()
                                 .animate()
                                 .fadeIn(duration: 600.ms, delay: 500.ms),
 
-                            const SizedBox(height: 120), // Space for FAB
+                            const SizedBox(height: 90), // FAB için alan
                           ]),
                         ),
                       ),
@@ -554,23 +544,25 @@ class _GreetingSection extends StatelessWidget {
           children: [
             Text(
               greeting.emoji,
-              style: const TextStyle(fontSize: 28),
+              style: const TextStyle(fontSize: 18),
             ),
-            const SizedBox(width: AppSpacing.sm),
+            const SizedBox(width: 6),
             Text(
               greeting.text,
-              style: theme.textTheme.headlineSmall?.copyWith(
+              style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w700,
                 color: AppColors.getTextPrimary(context),
+                fontSize: 16,
               ),
             ),
           ],
         ),
-        const SizedBox(height: AppSpacing.xs),
+        const SizedBox(height: 2),
         Text(
           'Here\'s your financial overview',
-          style: theme.textTheme.bodyMedium?.copyWith(
+          style: theme.textTheme.bodySmall?.copyWith(
             color: AppColors.getTextSecondary(context),
+            fontSize: 11,
           ),
         ),
       ],
@@ -613,10 +605,10 @@ class _QuickActionButton extends StatelessWidget {
         onTap();
       },
       child: Container(
-        height: 56, // Sabit yükseklik
+        height: 50, // Daha düşük yükseklik
         padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.sm,
-          vertical: AppSpacing.xs,
+          horizontal: 10,
+          vertical: 8,
         ),
         decoration: BoxDecoration(
           color: AppColors.getCardBackground(context),
@@ -632,14 +624,14 @@ class _QuickActionButton extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              padding: const EdgeInsets.all(6),
+              padding: const EdgeInsets.all(5),
               decoration: BoxDecoration(
                 color: color.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
-              child: Icon(icon, color: color, size: 18),
+              child: Icon(icon, color: color, size: 16),
             ),
-            const SizedBox(width: AppSpacing.xs),
+            const SizedBox(width: 6),
             Flexible(
               child: Text(
                 label,
@@ -649,7 +641,7 @@ class _QuickActionButton extends StatelessWidget {
                 style: theme.textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w600,
                   color: AppColors.getTextPrimary(context),
-                  fontSize: 14,
+                  fontSize: 13,
                 ),
               ),
             ),
@@ -689,8 +681,8 @@ class _PremiumFABState extends State<_PremiumFAB> {
             : Matrix4.identity(),
         child: Container(
           padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.lg,
-            vertical: AppSpacing.md,
+            horizontal: 16,
+            vertical: 12,
           ),
           decoration: BoxDecoration(
             gradient: AppColors.premiumGradient,
@@ -707,24 +699,24 @@ class _PremiumFABState extends State<_PremiumFAB> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                padding: const EdgeInsets.all(4),
+                padding: const EdgeInsets.all(3),
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(5),
                 ),
                 child: const Icon(
                   Icons.add_rounded,
                   color: Colors.white,
-                  size: 18,
+                  size: 16,
                 ),
               ),
-              const SizedBox(width: AppSpacing.sm),
+              const SizedBox(width: 8),
               const Text(
                 'Add Expense',
                 style: TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w600,
-                  fontSize: 15,
+                  fontSize: 14,
                 ),
               ),
             ],
