@@ -25,25 +25,20 @@ class DataMigrationService {
     final firebaseSettingsRepo = FirebaseUserSettingsRepository();
 
     // 🔴 1. ADIM: HEDEF HESAP KONTROLÜ (Check Remote Existence)
-    // Eğer hedef hesapta (targetUserId) zaten UserSettings varsa, bu eski bir kullanıcıdır.
-    // ONUN VERİSİNİ EZMEMELİYİZ. Migration'ı iptal et.
     try {
       final existingRemoteSettings = await firebaseSettingsRepo.getUserSettings(targetUserId);
       if (existingRemoteSettings != null) {
         print('⚠️ CRITICAL: Target user already has data (Balance: ${existingRemoteSettings.currentBalance}).');
         print('🛑 Migration ABORTED to prevent data loss. Keeping existing account data.');
-        return; // Fonksiyondan çık, yazma yapma!
+        return;
       }
     } catch (e) {
       print('⚠️ Error checking remote data: $e');
-      // Bağlantı hatası varsa risk almamak için yine durabiliriz veya devam edebiliriz.
-      // Güvenli olan durmaktır.
       print('🛑 Migration ABORTED due to connection error (Safety First).');
       return;
     }
 
-    // Buraya geldiysek hedef hesap BOŞ demektir. Güvenle taşıyabiliriz.
-    print('✅ Target account is empty. Proceeding with migration...');
+    print('✅ Target account is empty or has no valid settings. Proceeding with migration...');
 
     final errors = <Object>[];
 
@@ -53,8 +48,10 @@ class DataMigrationService {
       final settings = await localSettingsRepo.getUserSettings(sourceUserId);
 
       if (settings != null) {
-        final newSettings = settings.copyWith(userId: targetUserId);
-        // Repo zaten yukarıda tanımlı
+        final newSettings = settings.copyWith(
+          userId: targetUserId,
+          updatedAt: DateTime.now(),
+        );
         await firebaseSettingsRepo.saveUserSettings(newSettings);
         print('Migrated User Settings');
       }

@@ -221,21 +221,26 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
           debugPrint("Splash: Authenticated user but no Firebase data found via Onboarding check. Checking Local...");
 
           final localRepo = LocalUserSettingsRepository();
-          final localHasData = await localRepo.hasCompletedOnboarding();
+          final localSettings = await localRepo.getUserSettings('check_local');
+          final localHasData = localSettings != null && await localRepo.hasCompletedOnboarding();
 
-          if (localHasData) {
+          if (localHasData && localSettings != null) {
             debugPrint("Splash: ✅ Local data found! Attempting migration...");
 
             try {
               final migrationService = ref.read(dataMigrationServiceProvider);
-              await migrationService.migrateLocalToFirebase(user.uid, 'local_user');
+              await migrationService.migrateLocalToFirebase(user.uid, localSettings.userId);
               ref.invalidate(userSettingsProvider);
-              debugPrint("Splash: Migration process finished (Success or Aborted safely).");
-              hasCompletedOnboarding = true;
+              debugPrint("Splash: Migration process finished (Success or Aborted safely). Rechecking onboarding...");
+              hasCompletedOnboarding = await repository.hasCompletedOnboarding();
 
+              // Eğer hala görünmüyorsa, en azından local veri var diye true'ya çekelim
+              if (!hasCompletedOnboarding) {
+                hasCompletedOnboarding = true;
+              }
             } catch (e) {
               debugPrint("Splash: Migration Failed with error: $e");
-              hasCompletedOnboarding = true;
+              hasCompletedOnboarding = localHasData;
             }
           }
         }
