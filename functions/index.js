@@ -5,105 +5,101 @@ admin.initializeApp();
 
 exports.checkSubscriptionDueDates = onSchedule(
   {
-    schedule: "every 1 hours", // ✅ Her saat başı çalış
-    region: "us-central1",     // Zaman dilimi ayarını kaldırdık, UTC baz alacağız
+    schedule: "every 1 hours",
+    region: "us-central1",
   },
   async (event) => {
     const db = admin.firestore();
     const messaging = admin.messaging();
 
-    // 1. Şu anki UTC saatini al
-    const now = new Date();
-    const currentUtcHour = now.getUTCHours();
-
-    // 2. Hedefimiz: Kullanıcının yerel saatinin 09:00 olması.
-    // Formül: (UTC Saati + Kullanıcı Offseti) = 09:00
-    // Buradan kullanıcı offsetini bulalım: Offset = 9 - UTC Saati
-    let targetOffset = 9 - currentUtcHour;
-
-    // Dünyanın dönüşünü hesaba kat (Örn: UTC 20:00 iken, sabah 9 olması için +13 saat ilerideki Yeni Zelanda gerekir)
-    // Offsetler genelde -12 ile +14 arasındadır.
-    if (targetOffset < -12) {
-        targetOffset += 24;
-    } else if (targetOffset > 14) {
-        targetOffset -= 24;
-    }
-
-    console.log(`🕒 UTC Saat: ${currentUtcHour}:00. Hedef Yerel Saat: 09:00.`);
-    console.log(`🌍 Bu saatte bildirim alacak kullanıcıların UTC Offseti: ${targetOffset}`);
+    console.log("🚀 Bildirim kontrolü başladı (Force Run Modu)...");
 
     try {
-      // 3. Sadece bu saat dilimindeki (Offset'teki) kullanıcıları bul
-      // Bu sayede tüm veritabanını taramaktan kurtuluruz, maliyet düşer.
-      const usersSnapshot = await db.collection("users")
-        .where("utcOffset", "==", targetOffset)
-        .get();
+      // 1. Tüm kullanıcıları çek (Timezone filtresi olmadan)
+      const usersSnapshot = await db.collection("users").get();
 
       if (usersSnapshot.empty) {
-        console.log(`✅ Offset'i ${targetOffset} olan kullanıcı bulunamadı.`);
+        console.log("❌ Kayıtlı kullanıcı bulunamadı.");
         return;
       }
 
-      console.log(`bust: ${usersSnapshot.size} kullanıcı bu saat diliminde.`);
-
-      // Bildirim listesi
       const notifications = [];
+      let processedCount = 0;
 
-      // 4. Bulunan her kullanıcı için abonelikleri kontrol et
+      // 2. Her kullanıcıyı kontrol et
       for (const userDoc of usersSnapshot.docs) {
         const userData = userDoc.data();
         const userId = userDoc.id;
 
-        if (!userData.fcmToken) continue;
+        if (!userData.fcmToken) {
+          console.log(`⚠️ Kullanıcının fcmToken'ı yok, atlanıyor: ${userId}`);
+          continue;
+        }
 
-        // Bu kullanıcının aboneliklerini çek
-        // (Yarına ait ödemesi olanları)
+        // Kullanıcının UTC Offset bilgisini al (Yoksa varsayılan 3 - Türkiye)
+        const userOffset = userData.utcOffset !== undefined ? userData.utcOffset : 3;
 
-        // Kullanıcının yerel saatine göre "Yarın"ı hesapla
-        // Basitlik adına sunucu tarihini baz alıp 1 gün ekliyoruz,
-        // çünkü zaten kullanıcının sabah 9'una denk geldik.
-        const userTomorrow = new Date();
-        userTomorrow.setDate(userTomorrow.getDate() + 1);
-        userTomorrow.setHours(0,0,0,0); // Gün başı
+        // 3. Kullanıcının YEREL saatine göre "Yarın"ı hesapla
+        const now = new Date();
+        const userLocalNow = new Date(now.getTime() + (userOffset * 60 * 60 * 1000));
 
-        const userTomorrowEnd = new Date(userTomorrow);
-        userTomorrowEnd.setHours(23,59,59,999); // Gün sonu
+        const userTomorrowStartLocal = new Date(userLocalNow);
+        userTomorrowStartLocal.setDate(userTomorrowStartLocal.getDate() + 1);
+        userTomorrowStartLocal.setHours(0, 0, 0, 0);
 
+        const userTomorrowEndLocal = new Date(userLocalNow);
+        userTomorrowEndLocal.setDate(userTomorrowEndLocal.getDate() + 1);
+        userTomorrowEndLocal.setHours(23, 59, 59, 999);
+
+        // 4. Firestore sorgusu için tarihleri UTC'ye geri çevir
+        const queryStart = new Date(userTomorrowStartLocal.getTime() - (userOffset * 60 * 60 * 1000));
+        const queryEnd = new Date(userTomorrowEndLocal.getTime() - (userOffset * 60 * 60 * 1000));
+
+        // 5. Abonelikleri sorgula
         const subscriptionsSnapshot = await db.collection(`users/${userId}/subscriptions`)
-            .where("nextPaymentDate", ">=", admin.firestore.Timestamp.fromDate(userTomorrow))
-            .where("nextPaymentDate", "<=", admin.firestore.Timestamp.fromDate(userTomorrowEnd))
+            .where("nextPaymentDate", ">=", admin.firestore.Timestamp.fromDate(queryStart))
+            .where("nextPaymentDate", "<=", admin.firestore.Timestamp.fromDate(queryEnd))
             .get();
 
         if (subscriptionsSnapshot.empty) continue;
 
-        // Bildirim gönder
+        // 6. Bildirimleri hazırla
         for (const subDoc of subscriptionsSnapshot.docs) {
-            const subData = subDoc.data();
+          const subData = subDoc.data();
 
-            const message = {
-                token: userData.fcmToken,
-                notification: {
-                    title: "Ödeme Hatırlatması 💸",
-                    body: `${subData.name} ödemesi yarın!`,
-                },
-                data: {
-                    route: "/subscriptions",
-                    click_action: "FLUTTER_NOTIFICATION_CLICK"
-                }
-            };
-            notifications.push(messaging.send(message));
+          console.log(`🔔 Bildirim Hazırlanıyor: ${userId} -> ${subData.name}`);
+
+          const message = {
+            token: userData.fcmToken,
+            notification: {
+              title: "Ödeme Hatırlatması 💸",
+              body: `${subData.name} ödemesi yarın!`,
+            },
+            data: {
+              route: "/subscriptions",
+              click_action: "FLUTTER_NOTIFICATION_CLICK",
+            },
+          };
+          notifications.push(messaging.send(message));
+          processedCount++;
         }
       }
 
+      // 7. Gönderim
       if (notifications.length > 0) {
-        await Promise.allSettled(notifications);
-        console.log(`🚀 Toplam ${notifications.length} bildirim gönderildi.`);
+        const results = await Promise.allSettled(notifications);
+        const ok = results.filter((r) => r.status === "fulfilled").length;
+        const failed = results.filter((r) => r.status === "rejected").length;
+        if (failed > 0) {
+          console.error(`❌ ${failed} bildirim gönderilemedi, detaylar:`, results.filter((r) => r.status === "rejected"));
+        }
+        console.log(`✅ Toplam ${processedCount} bildirim hazırlandı, gönderim sonucu: ${ok} başarılı / ${failed} başarısız.`);
       } else {
-        console.log("🔕 Bu saat dilimindeki kullanıcıların yarın için ödemesi yok.");
+        console.log("🔕 Bu döngüde gönderilecek bildirim yok.");
       }
 
     } catch (error) {
-      console.error("❌ Hata oluştu:", error);
+      console.error("❌ Hata:", error);
     }
   }
 );
