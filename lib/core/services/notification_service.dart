@@ -2,13 +2,14 @@ import 'dart:async';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
-// Arka plan mesajlarını işlemek için üst düzey fonksiyon (Class dışında olmalı)
+// ⚠️ ÖNEMLİ: Bu fonksiyon sınıfın dışında, en üst seviyede olmalıdır.
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
-  debugPrint("Arka plan mesajı alındı: ${message.messageId}");
+  debugPrint("🌙 Arka plan mesajı alındı: ${message.messageId}");
 }
 
 class NotificationService {
@@ -20,14 +21,44 @@ class NotificationService {
   final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
 
   bool _initialized = false;
+  GlobalKey<NavigatorState>? _navigatorKey;
+  Function(String)? _onTokenRefresh;
 
-  Future<void> initialize() async {
+  /// Servisi başlatır.
+  /// [navigatorKey]: Bildirime tıklandığında sayfa yönlendirmesi yapmak için gereklidir.
+  /// [onTokenRefresh]: Token değiştiğinde (veya ilk açılışta) veritabanına kaydetmek için callback.
+  Future<void> initialize({
+    required GlobalKey<NavigatorState> navigatorKey,
+    Function(String)? onTokenRefresh,
+  }) async {
     if (_initialized) return;
 
-    // 1. Arka plan handler'ı kaydet (main.dart içinde de çağrılabilir ama burada tanımlı olması iyidir)
+    _navigatorKey = navigatorKey;
+    _onTokenRefresh = onTokenRefresh;
+
+    // 1. Arka plan handler'ı kaydet
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-    // 2. Yerel Bildirim Ayarları (Ön planda göstermek için)
+    // 2. İzinleri İste
+    await requestPermissions();
+
+    // 3. Yerel Bildirim Kanalı (Android)
+    await _createNotificationChannel();
+
+    // 4. Yerel Bildirim Ayarları
+    await _initLocalNotifications();
+
+    // 5. Firebase Mesaj Dinleyicileri (Foreground, Background, Terminated)
+    _setupMessageListeners();
+
+    // 6. Token İşlemleri (Veritabanı kaydı için)
+    await _setupToken();
+
+    _initialized = true;
+    debugPrint("🔔 NotificationService tamamen başlatıldı.");
+  }
+
+  Future<void> _initLocalNotifications() async {
     const AndroidInitializationSettings initializationSettingsAndroid =
     AndroidInitializationSettings('@mipmap/ic_launcher');
 
@@ -46,58 +77,93 @@ class NotificationService {
     await _localNotifications.initialize(
       initializationSettings,
       onDidReceiveNotificationResponse: (details) {
-        // Bildirime tıklandığında yapılacak işlemler
-        debugPrint("Bildirime tıklandı: ${details.payload}");
+        // Uygulama açıkken bildirime tıklandığında (Foreground click)
+        if (details.payload != null) {
+          _navigateFromPayload(details.payload!);
+        }
       },
     );
+  }
 
-    // 3. Android için Bildirim Kanalı Oluştur (Önemli)
-    await _createNotificationChannel();
-
-    // 4. Ön Plan Mesajlarını Dinle
+  void _setupMessageListeners() {
+    // A. Uygulama Açıkken (Foreground)
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      debugPrint("☀️ Ön plan mesajı: ${message.notification?.title}");
       _showForegroundNotification(message);
     });
 
-    // 5. Uygulama kapalıyken bildirime tıklanıp açıldığında
+    // B. Uygulama Arka Plandan Açıldığında (Background -> Foreground)
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      debugPrint("Bildirim ile uygulama açıldı: ${message.data}");
-      // Burada ilgili ekrana yönlendirme yapabilirsiniz
+      debugPrint("🚀 Uygulama bildirimle açıldı (Background): ${message.data}");
+      _handleRemoteMessageNavigation(message);
     });
 
-    _initialized = true;
+    // C. Uygulama Tamamen Kapalıyken Açıldığında (Terminated -> Foreground)
+    _firebaseMessaging.getInitialMessage().then((RemoteMessage? message) {
+      if (message != null) {
+        debugPrint("🏁 Uygulama bildirimle başlatıldı (Terminated): ${message.data}");
+        _handleRemoteMessageNavigation(message);
+      }
+    });
+  }
+
+  Future<void> _setupToken() async {
+    // Mevcut token'ı al
+    String? token = await _firebaseMessaging.getToken();
+    if (token != null && _onTokenRefresh != null) {
+      debugPrint("🔥 Mevcut FCM Token: $token");
+      _onTokenRefresh!(token);
+    }
+
+    // Token yenilenirse dinle ve güncelle
+    _firebaseMessaging.onTokenRefresh.listen((newToken) {
+      debugPrint("♻️ FCM Token Yenilendi: $newToken");
+      if (_onTokenRefresh != null) {
+        _onTokenRefresh!(newToken);
+      }
+    });
+  }
+
+  void _handleRemoteMessageNavigation(RemoteMessage message) {
+    // Mesajın data kısmında 'route' anahtarı var mı?
+    // Örnek: { "route": "/subscriptions", "id": "123" }
+    if (message.data.containsKey('route')) {
+      final String route = message.data['route'];
+      // İsteğe bağlı olarak id gibi parametreleri de alabilirsin
+      // final String? id = message.data['id'];
+
+      // Biraz gecikme ekleyerek sayfanın hazır olmasını bekle (özellikle cold start için)
+      Future.delayed(const Duration(milliseconds: 500), () {
+        _navigatorKey?.currentState?.pushNamed(route);
+      });
+    }
+  }
+
+  void _navigateFromPayload(String payload) {
+    // Payload doğrudan bir route ise (örn: "/home")
+    if (payload.startsWith('/')) {
+      _navigatorKey?.currentState?.pushNamed(payload);
+    } else {
+      // Karmaşık bir yapıysa (JSON string) decode edilebilir.
+      debugPrint("Payload işlenemedi veya route değil: $payload");
+    }
   }
 
   Future<void> requestPermissions() async {
-    // Firebase Messaging İzinleri
     NotificationSettings settings = await _firebaseMessaging.requestPermission(
       alert: true,
       badge: true,
       sound: true,
       provisional: false,
     );
-
     debugPrint('Kullanıcı izin durumu: ${settings.authorizationStatus}');
-
-    // FCM Token'ı Al ve Yazdır
-    await _getToken();
-  }
-
-  Future<void> _getToken() async {
-    try {
-      String? token = await _firebaseMessaging.getToken();
-      debugPrint("🔥 FCM Token: $token");
-      // Bu token'ı veritabanınıza kaydedip sunucunuzdan bildirim atarken kullanacaksınız.
-    } catch (e) {
-      debugPrint("FCM Token alma hatası: $e");
-    }
   }
 
   Future<void> _createNotificationChannel() async {
     const AndroidNotificationChannel channel = AndroidNotificationChannel(
-      'high_importance_channel', // id
-      'Yüksek Öncelikli Bildirimler', // title
-      description: 'Bu kanal önemli bildirimler içindir.', // description
+      'high_importance_channel',
+      'Yüksek Öncelikli Bildirimler',
+      description: 'Bu kanal önemli bildirimler içindir.',
       importance: Importance.max,
     );
 
@@ -106,7 +172,6 @@ class NotificationService {
         ?.createNotificationChannel(channel);
   }
 
-  // FCM mesajı geldiğinde yerel bildirim olarak göster
   Future<void> _showForegroundNotification(RemoteMessage message) async {
     RemoteNotification? notification = message.notification;
     AndroidNotification? android = message.notification?.android;
@@ -131,7 +196,8 @@ class NotificationService {
             presentSound: true,
           ),
         ),
-        payload: message.data.toString(),
+        // Payload olarak gidilecek rotayı veriyoruz (varsa)
+        payload: message.data['route'] ?? '/home',
       );
     }
   }
