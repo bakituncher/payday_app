@@ -97,6 +97,7 @@ flutter:
     - assets/google_logo.svg
     - assets/icon.png
     - assets/splash.png
+    - assets/inapp.png
     - .env
 
 # Flutter native splash configuration

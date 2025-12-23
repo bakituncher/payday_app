@@ -31,6 +31,8 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
+  bool _showPayday = true;
+  late final _timer = Stream.periodic(const Duration(seconds: 4), (count) => count % 2 == 0);
 
   @override
   void initState() {
@@ -72,6 +74,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     // Wait a bit for visual feedback
     await Future.delayed(const Duration(milliseconds: 500));
+  }
+
+  ({String text, String emoji}) _getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour >= 0 && hour < 6) {
+      return (text: 'Good Night', emoji: '🌙');
+    } else if (hour >= 6 && hour < 12) {
+      return (text: 'Good Morning', emoji: '☀️');
+    } else if (hour >= 12 && hour < 17) {
+      return (text: 'Good Afternoon', emoji: '👋');
+    } else {
+      return (text: 'Good Evening', emoji: '🌆');
+    }
   }
 
   @override
@@ -146,37 +161,44 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         elevation: 0,
                         surfaceTintColor: Colors.transparent,
                         toolbarHeight: 56, // Daha düşük toolbar
-                        title: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(6),
-                              decoration: BoxDecoration(
-                                gradient: AppColors.pinkGradient,
-                                borderRadius: BorderRadius.circular(AppRadius.sm),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: AppColors.primaryPink.withValues(alpha: 0.2),
-                                    blurRadius: 6,
-                                    offset: const Offset(0, 1),
+                        titleSpacing: 16, // Sol tarafa yapışık
+                        title: StreamBuilder<bool>(
+                          stream: _timer,
+                          initialData: true,
+                          builder: (context, snapshot) {
+                            final showPayday = snapshot.data ?? true;
+                            final greeting = _getGreeting();
+
+                            return AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 500),
+                              switchInCurve: Curves.easeInOut,
+                              switchOutCurve: Curves.easeInOut,
+                              transitionBuilder: (child, animation) {
+                                return FadeTransition(
+                                  opacity: animation,
+                                  child: SlideTransition(
+                                    position: Tween<Offset>(
+                                      begin: const Offset(0, 0.3),
+                                      end: Offset.zero,
+                                    ).animate(animation),
+                                    child: child,
                                   ),
-                                ],
+                                );
+                              },
+                              child: Align(
+                                key: ValueKey(showPayday),
+                                alignment: Alignment.centerLeft,
+                                child: Text(
+                                  showPayday ? 'Payday' : greeting.text,
+                                  style: theme.textTheme.titleLarge?.copyWith(
+                                    fontWeight: FontWeight.w800,
+                                    color: AppColors.getTextPrimary(context),
+                                    letterSpacing: -0.5,
+                                  ),
+                                ),
                               ),
-                              child: const Icon(
-                                Icons.account_balance_wallet_rounded,
-                                color: Colors.white,
-                                size: 18,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Payday',
-                              style: theme.textTheme.titleLarge?.copyWith(
-                                fontWeight: FontWeight.w800,
-                                color: AppColors.getTextPrimary(context),
-                                letterSpacing: -0.5,
-                              ),
-                            ),
-                          ],
+                            );
+                          },
                         ),
                         actions: [
                           IconButton(
