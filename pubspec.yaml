@@ -75,6 +75,9 @@ dev_dependencies:
   freezed: ^2.5.7
   json_serializable: ^6.8.0
 
+  # Native Splash
+  flutter_native_splash: ^2.4.5
+
   # Launcher Icons
   flutter_launcher_icons: ^0.13.1
 
@@ -93,14 +96,22 @@ flutter:
   assets:
     - assets/google_logo.svg
     - assets/icon.png
+    - assets/splash.png
     - .env
 
-# Flutter Launcher Icons Configuration
-flutter_launcher_icons:
+# Flutter native splash configuration
+flutter_native_splash:
+  color: "#FFFFFF"
+  image: assets/splash.png
   android: true
   ios: true
-  image_path: "assets/icon.png"
-  min_sdk_android: 21 # android min sdk min:16, default 21
-  adaptive_icon_background: "#FFFFFF"
-  adaptive_icon_foreground: "assets/icon.png"
-  remove_alpha_ios: true # Apple App Store ikonlarda alfa kanalına izin vermez
+
+  # Dark mode'da da aynı beyaz splash kalsın
+  color_dark: "#FFFFFF"
+  image_dark: assets/splash.png
+
+  android_12:
+    color: "#FFFFFF"
+    image: assets/splash.png
+    color_dark: "#FFFFFF"
+    image_dark: assets/splash.png
