@@ -23,6 +23,8 @@ class TimestampDateTimeConverter implements JsonConverter<DateTime?, Object?> {
   @override
   Object? toJson(DateTime? date) {
     if (date == null) return null;
-    return Timestamp.fromDate(date);
+    // Use epoch millis so JSON encoding works for local persistence; Firestore
+    // layers should convert back to Timestamp when writing.
+    return date.millisecondsSinceEpoch;
   }
 }

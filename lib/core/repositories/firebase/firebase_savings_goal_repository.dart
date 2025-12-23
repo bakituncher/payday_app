@@ -34,6 +34,7 @@ class FirebaseSavingsGoalRepository implements SavingsGoalRepository {
       await _getCollection(goal.userId).doc(goal.id).set({
         ...goal.toJson(),
         'createdAt': Timestamp.fromDate(goal.createdAt),
+        'targetDate': goal.targetDate != null ? Timestamp.fromDate(goal.targetDate!) : null,
         'updatedAt': FieldValue.serverTimestamp(),
       });
       print('🔥 Firebase: Savings goal added successfully');
@@ -47,6 +48,7 @@ class FirebaseSavingsGoalRepository implements SavingsGoalRepository {
   Future<void> updateSavingsGoal(SavingsGoal goal) async {
     await _getCollection(goal.userId).doc(goal.id).update({
       ...goal.toJson(),
+      'targetDate': goal.targetDate != null ? Timestamp.fromDate(goal.targetDate!) : null,
       'updatedAt': FieldValue.serverTimestamp(),
     });
   }

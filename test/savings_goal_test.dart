@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:payday/core/models/savings_goal.dart';
 
@@ -121,6 +122,25 @@ void main() {
       expect(recovered.emoji, '🚗');
       expect(recovered.autoTransferEnabled, isTrue);
       expect(recovered.createdAt, original.createdAt);
+    });
+
+    test('JSON serialization uses encodable primitives (epoch millis)', () {
+      final now = DateTime(2025, 5, 5, 12, 30);
+      final goal = SavingsGoal(
+        id: 'g_epoch',
+        userId: 'u_test',
+        name: 'Bike',
+        targetAmount: 1000,
+        emoji: '🚲',
+        createdAt: now,
+      );
+
+      final json = goal.toJson();
+      expect(json['createdAt'], isA<int>());
+      expect(() => jsonEncode(json), returnsNormally);
+
+      final restored = SavingsGoal.fromJson(json);
+      expect(restored.createdAt, goal.createdAt);
     });
   });
 }
