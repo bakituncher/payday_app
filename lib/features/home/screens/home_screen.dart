@@ -18,7 +18,6 @@ import 'package:payday/features/settings/screens/settings_screen.dart';
 import 'package:payday/shared/widgets/payday_button.dart';
 import 'package:payday/shared/widgets/payday_banner_ad.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:payday/features/home/providers/period_balance_providers.dart';
 import 'package:payday/features/premium/providers/premium_providers.dart';
 import 'package:payday/core/providers/repository_providers.dart';
 
