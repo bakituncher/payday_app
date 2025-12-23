@@ -19,30 +19,27 @@ _$BudgetGoalImpl _$$BudgetGoalImplFromJson(Map<String, dynamic> json) =>
       isActive: json['isActive'] as bool? ?? true,
       notifyOnWarning: json['notifyOnWarning'] as bool? ?? true,
       warningThreshold: (json['warningThreshold'] as num?)?.toInt() ?? 80,
-      createdAt: json['createdAt'] == null
-          ? null
-          : DateTime.parse(json['createdAt'] as String),
-      updatedAt: json['updatedAt'] == null
-          ? null
-          : DateTime.parse(json['updatedAt'] as String),
+      createdAt: const TimestampDateTimeConverter().fromJson(json['createdAt']),
+      updatedAt: const TimestampDateTimeConverter().fromJson(json['updatedAt']),
     );
 
-Map<String, dynamic> _$$BudgetGoalImplToJson(_$BudgetGoalImpl instance) =>
-    <String, dynamic>{
-      'id': instance.id,
-      'userId': instance.userId,
-      'categoryId': instance.categoryId,
-      'categoryName': instance.categoryName,
-      'categoryEmoji': instance.categoryEmoji,
-      'limitAmount': instance.limitAmount,
-      'spentAmount': instance.spentAmount,
-      'period': _$BudgetPeriodEnumMap[instance.period]!,
-      'isActive': instance.isActive,
-      'notifyOnWarning': instance.notifyOnWarning,
-      'warningThreshold': instance.warningThreshold,
-      'createdAt': instance.createdAt?.toIso8601String(),
-      'updatedAt': instance.updatedAt?.toIso8601String(),
-    };
+Map<String, dynamic> _$$BudgetGoalImplToJson(
+  _$BudgetGoalImpl instance,
+) => <String, dynamic>{
+  'id': instance.id,
+  'userId': instance.userId,
+  'categoryId': instance.categoryId,
+  'categoryName': instance.categoryName,
+  'categoryEmoji': instance.categoryEmoji,
+  'limitAmount': instance.limitAmount,
+  'spentAmount': instance.spentAmount,
+  'period': _$BudgetPeriodEnumMap[instance.period]!,
+  'isActive': instance.isActive,
+  'notifyOnWarning': instance.notifyOnWarning,
+  'warningThreshold': instance.warningThreshold,
+  'createdAt': const TimestampDateTimeConverter().toJson(instance.createdAt),
+  'updatedAt': const TimestampDateTimeConverter().toJson(instance.updatedAt),
+};
 
 const _$BudgetPeriodEnumMap = {
   BudgetPeriod.weekly: 'weekly',

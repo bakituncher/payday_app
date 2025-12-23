@@ -27,9 +27,10 @@ mixin _$SavingsGoal {
   double get targetAmount => throw _privateConstructorUsedError;
   double get currentAmount => throw _privateConstructorUsedError;
   String get emoji => throw _privateConstructorUsedError;
+  @TimestampDateTimeConverter()
   DateTime get createdAt => throw _privateConstructorUsedError;
-  DateTime? get targetDate =>
-      throw _privateConstructorUsedError; // Auto-transfer settings
+  @TimestampDateTimeConverter()
+  DateTime? get targetDate => throw _privateConstructorUsedError; // Auto-transfer settings
   bool get autoTransferEnabled => throw _privateConstructorUsedError;
   double get autoTransferAmount => throw _privateConstructorUsedError;
 
@@ -57,8 +58,8 @@ abstract class $SavingsGoalCopyWith<$Res> {
     double targetAmount,
     double currentAmount,
     String emoji,
-    DateTime createdAt,
-    DateTime? targetDate,
+    @TimestampDateTimeConverter() DateTime createdAt,
+    @TimestampDateTimeConverter() DateTime? targetDate,
     bool autoTransferEnabled,
     double autoTransferAmount,
   });
@@ -154,8 +155,8 @@ abstract class _$$SavingsGoalImplCopyWith<$Res>
     double targetAmount,
     double currentAmount,
     String emoji,
-    DateTime createdAt,
-    DateTime? targetDate,
+    @TimestampDateTimeConverter() DateTime createdAt,
+    @TimestampDateTimeConverter() DateTime? targetDate,
     bool autoTransferEnabled,
     double autoTransferAmount,
   });
@@ -243,8 +244,8 @@ class _$SavingsGoalImpl implements _SavingsGoal {
     required this.targetAmount,
     this.currentAmount = 0.0,
     required this.emoji,
-    required this.createdAt,
-    this.targetDate,
+    @TimestampDateTimeConverter() required this.createdAt,
+    @TimestampDateTimeConverter() this.targetDate,
     this.autoTransferEnabled = false,
     this.autoTransferAmount = 0.0,
   });
@@ -266,8 +267,10 @@ class _$SavingsGoalImpl implements _SavingsGoal {
   @override
   final String emoji;
   @override
+  @TimestampDateTimeConverter()
   final DateTime createdAt;
   @override
+  @TimestampDateTimeConverter()
   final DateTime? targetDate;
   // Auto-transfer settings
   @override
@@ -343,8 +346,8 @@ abstract class _SavingsGoal implements SavingsGoal {
     required final double targetAmount,
     final double currentAmount,
     required final String emoji,
-    required final DateTime createdAt,
-    final DateTime? targetDate,
+    @TimestampDateTimeConverter() required final DateTime createdAt,
+    @TimestampDateTimeConverter() final DateTime? targetDate,
     final bool autoTransferEnabled,
     final double autoTransferAmount,
   }) = _$SavingsGoalImpl;
@@ -365,8 +368,10 @@ abstract class _SavingsGoal implements SavingsGoal {
   @override
   String get emoji;
   @override
+  @TimestampDateTimeConverter()
   DateTime get createdAt;
   @override
+  @TimestampDateTimeConverter()
   DateTime? get targetDate; // Auto-transfer settings
   @override
   bool get autoTransferEnabled;

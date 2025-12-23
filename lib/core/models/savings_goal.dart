@@ -1,5 +1,6 @@
 /// Savings Goal model
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'converters/timestamp_converter.dart';
 
 part 'savings_goal.freezed.dart';
 part 'savings_goal.g.dart';
@@ -13,8 +14,8 @@ class SavingsGoal with _$SavingsGoal {
     required double targetAmount,
     @Default(0.0) double currentAmount,
     required String emoji,
-    required DateTime createdAt,
-    DateTime? targetDate,
+    @TimestampDateTimeConverter() required DateTime createdAt,
+    @TimestampDateTimeConverter() DateTime? targetDate,
     // Auto-transfer settings
     @Default(false) bool autoTransferEnabled,
     @Default(0.0) double autoTransferAmount, // Amount to transfer per payday
@@ -41,4 +42,3 @@ extension SavingsGoalExtension on SavingsGoal {
     return remaining > 0 ? remaining : 0.0;
   }
 }
-

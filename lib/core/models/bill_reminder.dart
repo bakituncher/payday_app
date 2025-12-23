@@ -1,6 +1,7 @@
 /// Bill Reminder model for scheduled payment notifications
 /// Industry-grade implementation with Firebase support
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'converters/timestamp_converter.dart';
 
 part 'bill_reminder.freezed.dart';
 part 'bill_reminder.g.dart';
@@ -40,16 +41,16 @@ class BillReminder with _$BillReminder {
     required String subscriptionName,
     required double amount,
     @Default('USD') String currency,
-    required DateTime dueDate,
-    required DateTime reminderDate,
+    @TimestampDateTimeConverter() required DateTime dueDate,
+    @TimestampDateTimeConverter() required DateTime reminderDate,
     @Default(ReminderStatus.pending) ReminderStatus status,
     @Default(ReminderPriority.medium) ReminderPriority priority,
     @Default('') String note,
     @Default('💳') String emoji,
-    DateTime? sentAt,
-    DateTime? dismissedAt,
-    DateTime? snoozeUntil,
-    DateTime? createdAt,
+    @TimestampDateTimeConverter() DateTime? sentAt,
+    @TimestampDateTimeConverter() DateTime? dismissedAt,
+    @TimestampDateTimeConverter() DateTime? snoozeUntil,
+    @TimestampDateTimeConverter() DateTime? createdAt,
   }) = _BillReminder;
 
   factory BillReminder.fromJson(Map<String, dynamic> json) =>

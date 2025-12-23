@@ -31,7 +31,11 @@ class FirebaseSavingsGoalRepository implements SavingsGoalRepository {
   Future<void> addSavingsGoal(SavingsGoal goal) async {
     print('🔥 Firebase: Adding savings goal - ID: ${goal.id}, User: ${goal.userId}, Name: ${goal.name}');
     try {
-      await _getCollection(goal.userId).doc(goal.id).set(goal.toJson());
+      await _getCollection(goal.userId).doc(goal.id).set({
+        ...goal.toJson(),
+        'createdAt': Timestamp.fromDate(goal.createdAt),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
       print('🔥 Firebase: Savings goal added successfully');
     } catch (e) {
       print('❌ Firebase: Error adding savings goal: $e');
@@ -41,7 +45,10 @@ class FirebaseSavingsGoalRepository implements SavingsGoalRepository {
 
   @override
   Future<void> updateSavingsGoal(SavingsGoal goal) async {
-    await _getCollection(goal.userId).doc(goal.id).update(goal.toJson());
+    await _getCollection(goal.userId).doc(goal.id).update({
+      ...goal.toJson(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
   }
 
   @override

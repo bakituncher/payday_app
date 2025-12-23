@@ -37,12 +37,8 @@ _$MonthlySummaryImpl _$$MonthlySummaryImplFromJson(
   savingsGoalProgress: (json['savingsGoalProgress'] as num?)?.toDouble() ?? 0,
   emergencyFundProgress:
       (json['emergencyFundProgress'] as num?)?.toDouble() ?? 0,
-  createdAt: json['createdAt'] == null
-      ? null
-      : DateTime.parse(json['createdAt'] as String),
-  finalizedAt: json['finalizedAt'] == null
-      ? null
-      : DateTime.parse(json['finalizedAt'] as String),
+  createdAt: const TimestampDateTimeConverter().fromJson(json['createdAt']),
+  finalizedAt: const TimestampDateTimeConverter().fromJson(json['finalizedAt']),
 );
 
 Map<String, dynamic> _$$MonthlySummaryImplToJson(
@@ -63,8 +59,10 @@ Map<String, dynamic> _$$MonthlySummaryImplToJson(
   'leftoverSuggestions': instance.leftoverSuggestions,
   'savingsGoalProgress': instance.savingsGoalProgress,
   'emergencyFundProgress': instance.emergencyFundProgress,
-  'createdAt': instance.createdAt?.toIso8601String(),
-  'finalizedAt': instance.finalizedAt?.toIso8601String(),
+  'createdAt': const TimestampDateTimeConverter().toJson(instance.createdAt),
+  'finalizedAt': const TimestampDateTimeConverter().toJson(
+    instance.finalizedAt,
+  ),
 };
 
 const _$FinancialHealthEnumMap = {

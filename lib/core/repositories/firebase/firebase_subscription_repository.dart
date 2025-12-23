@@ -24,6 +24,7 @@ class FirebaseSubscriptionRepository implements SubscriptionRepository {
   Future<void> addSubscription(Subscription subscription) async {
     await _getCollection(subscription.userId).doc(subscription.id).set({
       ...subscription.toJson(),
+      'nextBillingDate': Timestamp.fromDate(subscription.nextBillingDate),
       'createdAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
     });
@@ -33,6 +34,7 @@ class FirebaseSubscriptionRepository implements SubscriptionRepository {
   Future<void> updateSubscription(Subscription subscription) async {
     await _getCollection(subscription.userId).doc(subscription.id).update({
       ...subscription.toJson(),
+      'nextBillingDate': Timestamp.fromDate(subscription.nextBillingDate),
       'updatedAt': FieldValue.serverTimestamp(),
     });
   }
@@ -99,8 +101,8 @@ class FirebaseSubscriptionRepository implements SubscriptionRepository {
 
     final snapshot = await _getCollection(userId)
         .where('status', whereIn: ['active', 'trial'])
-        .where('nextBillingDate', isGreaterThanOrEqualTo: now)
-        .where('nextBillingDate', isLessThanOrEqualTo: futureDate)
+        .where('nextBillingDate', isGreaterThanOrEqualTo: Timestamp.fromDate(now))
+        .where('nextBillingDate', isLessThanOrEqualTo: Timestamp.fromDate(futureDate))
         .orderBy('nextBillingDate')
         .get();
 

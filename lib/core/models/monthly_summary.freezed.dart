@@ -38,7 +38,9 @@ mixin _$MonthlySummary {
       throw _privateConstructorUsedError;
   double get savingsGoalProgress => throw _privateConstructorUsedError;
   double get emergencyFundProgress => throw _privateConstructorUsedError;
+  @TimestampDateTimeConverter()
   DateTime? get createdAt => throw _privateConstructorUsedError;
+  @TimestampDateTimeConverter()
   DateTime? get finalizedAt => throw _privateConstructorUsedError;
 
   /// Serializes this MonthlySummary to a JSON map.
@@ -74,8 +76,8 @@ abstract class $MonthlySummaryCopyWith<$Res> {
     List<LeftoverSuggestion> leftoverSuggestions,
     double savingsGoalProgress,
     double emergencyFundProgress,
-    DateTime? createdAt,
-    DateTime? finalizedAt,
+    @TimestampDateTimeConverter() DateTime? createdAt,
+    @TimestampDateTimeConverter() DateTime? finalizedAt,
   });
 }
 
@@ -213,8 +215,8 @@ abstract class _$$MonthlySummaryImplCopyWith<$Res>
     List<LeftoverSuggestion> leftoverSuggestions,
     double savingsGoalProgress,
     double emergencyFundProgress,
-    DateTime? createdAt,
-    DateTime? finalizedAt,
+    @TimestampDateTimeConverter() DateTime? createdAt,
+    @TimestampDateTimeConverter() DateTime? finalizedAt,
   });
 }
 
@@ -344,8 +346,8 @@ class _$MonthlySummaryImpl extends _MonthlySummary {
     final List<LeftoverSuggestion> leftoverSuggestions = const [],
     this.savingsGoalProgress = 0,
     this.emergencyFundProgress = 0,
-    this.createdAt,
-    this.finalizedAt,
+    @TimestampDateTimeConverter() this.createdAt,
+    @TimestampDateTimeConverter() this.finalizedAt,
   }) : _expensesByCategory = expensesByCategory,
        _insights = insights,
        _leftoverSuggestions = leftoverSuggestions,
@@ -410,8 +412,10 @@ class _$MonthlySummaryImpl extends _MonthlySummary {
   @JsonKey()
   final double emergencyFundProgress;
   @override
+  @TimestampDateTimeConverter()
   final DateTime? createdAt;
   @override
+  @TimestampDateTimeConverter()
   final DateTime? finalizedAt;
 
   @override
@@ -515,8 +519,8 @@ abstract class _MonthlySummary extends MonthlySummary {
     final List<LeftoverSuggestion> leftoverSuggestions,
     final double savingsGoalProgress,
     final double emergencyFundProgress,
-    final DateTime? createdAt,
-    final DateTime? finalizedAt,
+    @TimestampDateTimeConverter() final DateTime? createdAt,
+    @TimestampDateTimeConverter() final DateTime? finalizedAt,
   }) = _$MonthlySummaryImpl;
   const _MonthlySummary._() : super._();
 
@@ -554,8 +558,10 @@ abstract class _MonthlySummary extends MonthlySummary {
   @override
   double get emergencyFundProgress;
   @override
+  @TimestampDateTimeConverter()
   DateTime? get createdAt;
   @override
+  @TimestampDateTimeConverter()
   DateTime? get finalizedAt;
 
   /// Create a copy of MonthlySummary
@@ -1223,6 +1229,7 @@ mixin _$LeftoverAllocation {
   String get summaryId => throw _privateConstructorUsedError;
   LeftoverAction get action => throw _privateConstructorUsedError;
   double get amount => throw _privateConstructorUsedError;
+  @TimestampDateTimeConverter()
   DateTime get allocatedAt => throw _privateConstructorUsedError;
   String get note => throw _privateConstructorUsedError;
 
@@ -1249,7 +1256,7 @@ abstract class $LeftoverAllocationCopyWith<$Res> {
     String summaryId,
     LeftoverAction action,
     double amount,
-    DateTime allocatedAt,
+    @TimestampDateTimeConverter() DateTime allocatedAt,
     String note,
   });
 }
@@ -1328,7 +1335,7 @@ abstract class _$$LeftoverAllocationImplCopyWith<$Res>
     String summaryId,
     LeftoverAction action,
     double amount,
-    DateTime allocatedAt,
+    @TimestampDateTimeConverter() DateTime allocatedAt,
     String note,
   });
 }
@@ -1399,7 +1406,7 @@ class _$LeftoverAllocationImpl implements _LeftoverAllocation {
     required this.summaryId,
     required this.action,
     required this.amount,
-    required this.allocatedAt,
+    @TimestampDateTimeConverter() required this.allocatedAt,
     this.note = '',
   });
 
@@ -1417,6 +1424,7 @@ class _$LeftoverAllocationImpl implements _LeftoverAllocation {
   @override
   final double amount;
   @override
+  @TimestampDateTimeConverter()
   final DateTime allocatedAt;
   @override
   @JsonKey()
@@ -1480,7 +1488,7 @@ abstract class _LeftoverAllocation implements LeftoverAllocation {
     required final String summaryId,
     required final LeftoverAction action,
     required final double amount,
-    required final DateTime allocatedAt,
+    @TimestampDateTimeConverter() required final DateTime allocatedAt,
     final String note,
   }) = _$LeftoverAllocationImpl;
 
@@ -1498,6 +1506,7 @@ abstract class _LeftoverAllocation implements LeftoverAllocation {
   @override
   double get amount;
   @override
+  @TimestampDateTimeConverter()
   DateTime get allocatedAt;
   @override
   String get note;

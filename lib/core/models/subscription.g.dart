@@ -16,7 +16,8 @@ _$SubscriptionImpl _$$SubscriptionImplFromJson(
   currency: json['currency'] as String,
   frequency: $enumDecode(_$RecurrenceFrequencyEnumMap, json['frequency']),
   category: $enumDecode(_$SubscriptionCategoryEnumMap, json['category']),
-  nextBillingDate: DateTime.parse(json['nextBillingDate'] as String),
+  nextBillingDate:
+      const TimestampDateTimeConverter().fromJson(json['nextBillingDate'])!,
   description: json['description'] as String? ?? '',
   logoUrl: json['logoUrl'] as String? ?? '',
   emoji: json['emoji'] as String? ?? '💳',
@@ -44,7 +45,8 @@ Map<String, dynamic> _$$SubscriptionImplToJson(
   'currency': instance.currency,
   'frequency': _$RecurrenceFrequencyEnumMap[instance.frequency]!,
   'category': _$SubscriptionCategoryEnumMap[instance.category]!,
-  'nextBillingDate': instance.nextBillingDate.toIso8601String(),
+  'nextBillingDate':
+      const TimestampDateTimeConverter().toJson(instance.nextBillingDate),
   'description': instance.description,
   'logoUrl': instance.logoUrl,
   'emoji': instance.emoji,
