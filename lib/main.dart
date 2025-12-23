@@ -84,12 +84,13 @@ class _PaydayAppState extends ConsumerState<PaydayApp> {
     _setupNotifications();
   }
 
+  // _PaydayAppState sınıfı içinde
   Future<void> _setupNotifications() async {
     final notificationService = NotificationService();
     await notificationService.initialize();
     await notificationService.requestPermissions();
-    await notificationService.scheduleDailyEngagementReminders();
-    debugPrint("🔔 Bildirim sistemi hazır ve günlük planlar kuruldu.");
+    // Artık scheduleDailyEngagementReminders() yok, çünkü bildirimler sunucudan gelecek.
+    debugPrint("🔔 FCM Bildirim sistemi hazır.");
   }
 
   Future<void> _initializeAuth() async {
