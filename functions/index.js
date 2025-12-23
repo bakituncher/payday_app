@@ -1,105 +1,133 @@
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const admin = require("firebase-admin");
+const { logger } = require("firebase-functions");
 
 admin.initializeApp();
 
-exports.checkSubscriptionDueDates = onSchedule(
+// ⏰ ZAMAN AYARI: Her gün 10:00 (Türkiye Saati)
+exports.checkSubscriptionReminders = onSchedule(
   {
-    schedule: "every 1 hours", // Test için "every 5 minutes" da yapabilirsiniz
+    schedule: "every day 10:00",
+    timeZone: "Europe/Istanbul",
     region: "us-central1",
   },
   async (event) => {
     const db = admin.firestore();
     const messaging = admin.messaging();
 
-    console.log("🚀 FORCE DEBUG MODU: Tarih kontrolü olmadan bildirim gönderiliyor...");
+    // --- SAAT DİLİMİ DÜZELTMESİ ---
+    // Sunucu saati (UTC) yerine Türkiye saatini (UTC+3) baz alıyoruz.
+    const now = new Date();
+
+    // Türkiye'deki günün tarihini string olarak al (Örn: "12/24/2025")
+    const turkeyDateString = now.toLocaleDateString("en-US", {
+        timeZone: "Europe/Istanbul"
+    });
+
+    // O string'den yeni bir tarih objesi oluştur (Otomatik olarak 00:00 olur)
+    const today = new Date(turkeyDateString);
+
+    // Emin olmak için saati sıfırla
+    today.setHours(0, 0, 0, 0);
+
+    logger.info(`📅 Türkiye Tarihi Baz Alındı: ${today.toDateString()} (Sunucu saati: ${now.toISOString()})`);
 
     try {
-      // 1. Tüm kullanıcıları çek
-      const usersSnapshot = await db.collection("users").get();
+      const snapshot = await db.collectionGroup("subscriptions")
+        .where("reminderEnabled", "==", true)
+        .where("status", "==", "active")
+        .get();
 
-      if (usersSnapshot.empty) {
-        console.log("❌ Kayıtlı kullanıcı bulunamadı.");
+      if (snapshot.empty) {
+        logger.info("📭 Hatırlatılacak aktif abonelik yok.");
         return;
       }
 
-      const notifications = [];
-      let processedCount = 0;
+      const promises = [];
+      let sentCount = 0;
 
-      // 2. Her kullanıcıyı kontrol et
-      for (const userDoc of usersSnapshot.docs) {
-        const userData = userDoc.data();
-        const userId = userDoc.id;
+      for (const doc of snapshot.docs) {
+        const sub = doc.data();
+        const docId = doc.id;
 
-        if (!userData.fcmToken) {
-          console.log(`⚠️ Token yok, atlanıyor: ${userId}`);
-          continue;
+        if (!sub.nextBillingDate || !sub.userId) continue;
+
+        // --- TARİH DÖNÜŞTÜRME (Timestamp veya String) ---
+        let nextBillDate;
+        try {
+            if (typeof sub.nextBillingDate.toDate === 'function') {
+                nextBillDate = sub.nextBillingDate.toDate();
+            } else {
+                nextBillDate = new Date(sub.nextBillingDate);
+            }
+        } catch (e) {
+            logger.warn(`⚠️ Tarih hatası: ${docId}`);
+            continue;
         }
 
-        // --- TARİH HESAPLAMALARINI DEVRE DIŞI BIRAKTIK ---
-        // Amaç: Sistem çalışıyor mu test etmek.
+        // Fatura Tarihini al ve saatini sıfırla
+        nextBillDate.setHours(0, 0, 0, 0);
 
-        // 3. Abonelikleri sorgula (Tarih filtresi YOK, sadece 1 tane örnek al)
-        const subscriptionsSnapshot = await db.collection(`users/${userId}/subscriptions`)
-            .limit(1) // Sadece 1 tane getir, spam olmasın
-            .get();
+        // Kaç gün önce?
+        const daysBefore = sub.reminderDaysBefore || 1;
 
-        let notificationTitle = "Test Bildirimi 🧪";
-        let notificationBody = "Bu bir test bildirimidir. Sistem çalışıyor!";
-        let route = "/home"; // Varsayılan rota
+        // Hatırlatma Tarihi = Fatura - Gün Sayısı
+        const reminderDate = new Date(nextBillDate);
+        reminderDate.setDate(reminderDate.getDate() - daysBefore);
 
-        // Eğer kullanıcının hiç aboneliği yoksa bile test mesajı gitsin
-        if (!subscriptionsSnapshot.empty) {
-          const subData = subscriptionsSnapshot.docs[0].data();
-          notificationTitle = "Ödeme Hatırlatması 💸";
-          notificationBody = `${subData.name} için ödeme zamanı (Test)`;
-          route = "/subscriptions";
-        } else {
-             console.log(`ℹ️ Kullanıcının aboneliği yok, genel test mesajı gönderilecek: ${userId}`);
+        // --- DETAYLI LOG (Hata ayıklamak için) ---
+        // Sadece beklediğimiz tarihse log basalım ki ortalık karışmasın
+        if (Math.abs(reminderDate.getTime() - today.getTime()) < 86400000) { // 1 gün fark varsa logla
+             logger.info(`🔍 İnceleme: ${sub.name} -> Hedef: ${reminderDate.toDateString()} | Bugün: ${today.toDateString()}`);
         }
 
-        console.log(`🔔 GÖNDERİLİYOR: ${userId} -> ${notificationBody}`);
-
-        const message = {
-          token: userData.fcmToken,
-          notification: {
-            title: notificationTitle,
-            body: notificationBody,
-          },
-          data: {
-            route: route,
-            click_action: "FLUTTER_NOTIFICATION_CLICK",
-            // Test olduğunu belli eden bir parametre
-            isTest: "true"
-          },
-        };
-
-        // Hata yakalamayı bireysel yapalım ki biri patlarsa döngü durmasın
-        const sendPromise = messaging.send(message)
-            .then(() => {
-                console.log(`✅ Başarılı: ${userId}`);
-                return { status: "fulfilled" };
-            })
-            .catch((e) => {
-                console.error(`❌ Hata (${userId}):`, e.message);
-                // Token geçersizse silmeyi deneyebilirsin (isteğe bağlı)
-                return { status: "rejected", error: e };
-            });
-
-        notifications.push(sendPromise);
-        processedCount++;
+        // KONTROL: Eşit mi?
+        if (reminderDate.getTime() === today.getTime()) {
+           logger.info(`🔔 EŞLEŞTİ! ${sub.name} bildirimi gönderiliyor.`);
+           promises.push(sendNotification(db, messaging, sub.userId, sub));
+           sentCount++;
+        }
       }
 
-      // 4. Sonuçları bekle
-      if (notifications.length > 0) {
-        await Promise.all(notifications);
-        console.log(`🏁 İşlem tamamlandı. Toplam deneme: ${processedCount}`);
-      } else {
-        console.log("🔕 Hiçbir kullanıcıda geçerli token bulunamadı.");
+      if (promises.length > 0) {
+        await Promise.all(promises);
       }
+
+      logger.info(`✅ İşlem tamamlandı. Bugün ${sentCount} kişiye bildirim gönderildi.`);
 
     } catch (error) {
-      console.error("🔥 Genel Kritik Hata:", error);
+      logger.error("🔥 Kritik Hata:", error);
     }
   }
 );
+
+async function sendNotification(db, messaging, userId, sub) {
+  try {
+    const userDoc = await db.collection("users").doc(userId).get();
+    if (!userDoc.exists) return;
+
+    const userData = userDoc.data();
+    const token = userData.fcmToken;
+
+    if (!token) return;
+
+    const message = {
+      token: token,
+      notification: {
+        title: "Ödemeniz Yaklaşıyor! 🔔",
+        body: `${sub.name} ödemeniz ${sub.reminderDaysBefore} gün içinde yapılacak. Tutar: ${sub.amount} ${sub.currency || ''}`,
+      },
+      data: {
+        route: "/subscriptions",
+        subscriptionId: sub.id,
+        click_action: "FLUTTER_NOTIFICATION_CLICK"
+      },
+    };
+
+    await messaging.send(message);
+    logger.info(`🚀 Gönderildi -> ${sub.name}`);
+
+  } catch (error) {
+    logger.error(`❌ Bildirim hatası (User: ${userId}):`, error.message);
+  }
+}
