@@ -1,5 +1,3 @@
-/// Subscription Detail Screen
-/// Shows detailed information about a subscription
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,7 +9,6 @@ import 'package:payday/core/providers/currency_providers.dart';
 import 'package:payday/core/utils/currency_formatter.dart';
 import 'package:intl/intl.dart';
 import 'package:payday/features/subscriptions/screens/add_subscription_screen.dart';
-import 'package:payday/shared/widgets/payday_button.dart';
 
 class SubscriptionDetailScreen extends ConsumerWidget {
   final Subscription subscription;
@@ -25,258 +22,264 @@ class SubscriptionDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final currencyCode = ref.watch(currencyCodeProvider);
-    final dateFormat = DateFormat('MMM d, yyyy');
+    final dateFormat = DateFormat('d MMM yyyy');
+
+    // Aktiflik kontrolü
+    final bool isActive = subscription.status == SubscriptionStatus.active;
+
+    // Progress Bar Hesabı
+    double calculateProgress() {
+      if (!isActive) return 0.0;
+
+      final now = DateTime.now();
+      final cycleDuration = subscription.frequency == 'yearly' ? 365 : 30;
+      final estimatedStartDate = subscription.nextBillingDate.subtract(Duration(days: cycleDuration));
+
+      final totalMilliseconds = subscription.nextBillingDate.difference(estimatedStartDate).inMilliseconds;
+      final elapsedMilliseconds = now.difference(estimatedStartDate).inMilliseconds;
+
+      if (totalMilliseconds == 0) return 0.0;
+
+      double progress = elapsedMilliseconds / totalMilliseconds;
+      return progress.clamp(0.0, 1.0);
+    }
 
     return Scaffold(
       backgroundColor: AppColors.getBackground(context),
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
-          // App Bar
+          // --- HEADER ---
           SliverAppBar(
-            expandedHeight: 200,
+            expandedHeight: 240,
             pinned: true,
+            stretch: true,
             backgroundColor: AppColors.getBackground(context),
             elevation: 0,
-            leading: Container(
-              margin: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.9),
-                borderRadius: BorderRadius.circular(AppRadius.md),
-              ),
-              child: IconButton(
-                icon: const Icon(Icons.arrow_back_ios_new_rounded),
-                onPressed: () => Navigator.of(context).pop(),
-                color: AppColors.darkCharcoal,
-              ),
+            // Sol: Geri Dön
+            leading: _buildGlassIconButton(
+              context,
+              icon: Icons.arrow_back_ios_new_rounded,
+              onTap: () => Navigator.of(context).pop(),
             ),
+            // Sağ: Edit Butonu (Tek başına)
             actions: [
-              Container(
-                margin: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.9),
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                ),
-                child: PopupMenuButton<String>(
-                  icon: Icon(Icons.more_vert_rounded, color: AppColors.darkCharcoal),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.md),
-                  ),
-                  itemBuilder: (context) => [
-                    const PopupMenuItem(value: 'edit', child: Text('Edit')),
-                    const PopupMenuItem(value: 'pause', child: Text('Pause')),
-                    const PopupMenuItem(
-                      value: 'cancel',
-                      child: Text('Cancel Subscription', style: TextStyle(color: AppColors.error)),
-                    ),
-                    const PopupMenuItem(
-                      value: 'delete',
-                      child: Text('Delete', style: TextStyle(color: AppColors.error)),
-                    ),
-                  ],
-                  onSelected: (value) => _handleMenuAction(context, ref, value),
-                ),
+              _buildGlassIconButton(
+                context,
+                icon: Icons.edit_rounded,
+                onTap: () => _handleMenuAction(context, ref, 'edit'),
               ),
+              const SizedBox(width: 8),
             ],
             flexibleSpace: FlexibleSpaceBar(
-              background: Container(
-                decoration: BoxDecoration(
-                  gradient: AppColors.premiumGradient,
-                ),
-                child: SafeArea(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const SizedBox(height: 40),
-                      Container(
-                        width: 80,
-                        height: 80,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(AppRadius.lg),
-                        ),
-                        child: Center(
-                          child: Text(
-                            subscription.emoji,
-                            style: const TextStyle(fontSize: 40),
-                          ),
-                        ),
-                      ).animate().scale(duration: 400.ms, curve: Curves.elasticOut),
-                      const SizedBox(height: AppSpacing.md),
-                      Text(
-                        subscription.name,
-                        style: theme.textTheme.headlineSmall?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ).animate().fadeIn(delay: 100.ms),
-                      const SizedBox(height: 4),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(AppRadius.round),
-                        ),
-                        child: Text(
-                          subscription.status.name.toUpperCase(),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ).animate().fadeIn(delay: 150.ms),
-                    ],
+              background: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: AppColors.premiumGradient,
+                    ),
                   ),
-                ),
+                  // Dekoratif Daire
+                  Positioned(
+                    top: -50,
+                    right: -50,
+                    child: Container(
+                      width: 200,
+                      height: 200,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white.withValues(alpha: 0.1),
+                      ),
+                    ),
+                  ),
+                  SafeArea(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const SizedBox(height: 20),
+                        Hero(
+                          tag: 'sub_icon_${subscription.id}',
+                          child: Container(
+                            width: 88,
+                            height: 88,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.25),
+                              borderRadius: BorderRadius.circular(24),
+                              border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 1.5),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.1),
+                                  blurRadius: 20,
+                                  offset: const Offset(0, 10),
+                                ),
+                              ],
+                            ),
+                            child: Center(
+                              child: Text(
+                                subscription.emoji,
+                                style: const TextStyle(fontSize: 42),
+                              ),
+                            ),
+                          ),
+                        ).animate().scale(duration: 400.ms, curve: Curves.elasticOut),
+                        const SizedBox(height: 16),
+                        Hero(
+                          tag: 'sub_name_${subscription.id}',
+                          child: Material(
+                            color: Colors.transparent,
+                            child: Text(
+                              subscription.name,
+                              style: theme.textTheme.headlineSmall?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: -0.5,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ).animate().fadeIn(delay: 100.ms),
+                        const SizedBox(height: 8),
+                        _buildStatusBadge(subscription.status),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
 
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.md),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Cost Section
+                  // --- FİYAT KARTI ---
                   Container(
-                    padding: const EdgeInsets.all(AppSpacing.lg),
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
                       color: AppColors.getCardBackground(context),
-                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                      borderRadius: BorderRadius.circular(32),
                       boxShadow: AppColors.getCardShadow(context),
+                      border: Border.all(color: AppColors.getBorder(context).withValues(alpha: 0.5)),
                     ),
                     child: Column(
                       children: [
+                        Text(
+                          'Current Plan',
+                          style: theme.textTheme.labelMedium?.copyWith(
+                            color: AppColors.getTextSecondary(context),
+                            letterSpacing: 1.2,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.baseline,
+                          textBaseline: TextBaseline.alphabetic,
                           children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  CurrencyFormatter.format(subscription.amount, currencyCode),
-                                  style: theme.textTheme.headlineMedium?.copyWith(
-                                    fontWeight: FontWeight.w800,
-                                    color: AppColors.getTextPrimary(context),
-                                  ),
-                                ),
-                                Text(
-                                  subscription.frequencyText,
-                                  style: theme.textTheme.bodyMedium?.copyWith(
-                                    color: AppColors.getTextSecondary(context),
-                                  ),
-                                ),
-                              ],
+                            Text(
+                              CurrencyFormatter.format(subscription.amount, currencyCode),
+                              style: theme.textTheme.displaySmall?.copyWith(
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.getTextPrimary(context),
+                                letterSpacing: -1,
+                              ),
                             ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: AppSpacing.md,
-                                vertical: AppSpacing.sm,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.primaryPink.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(AppRadius.md),
-                              ),
-                              child: Column(
-                                children: [
-                                  Text(
-                                    CurrencyFormatter.format(subscription.yearlyCost, currencyCode),
-                                    style: theme.textTheme.titleMedium?.copyWith(
-                                      fontWeight: FontWeight.w700,
-                                      color: AppColors.primaryPink,
-                                    ),
-                                  ),
-                                  Text(
-                                    '/year',
-                                    style: theme.textTheme.bodySmall?.copyWith(
-                                      color: AppColors.primaryPink,
-                                    ),
-                                  ),
-                                ],
+                            Text(
+                              ' /${subscription.frequencyText.toLowerCase()}',
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                color: AppColors.getTextSecondary(context),
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
                           ],
                         ),
-                      ],
-                    ),
-                  ).animate().fadeIn(duration: 300.ms, delay: 200.ms),
+                        const SizedBox(height: 24),
 
-                  const SizedBox(height: AppSpacing.md),
-
-                  // Next Billing
-                  Container(
-                    padding: const EdgeInsets.all(AppSpacing.lg),
-                    decoration: BoxDecoration(
-                      color: AppColors.getCardBackground(context),
-                      borderRadius: BorderRadius.circular(AppRadius.lg),
-                      boxShadow: AppColors.getCardShadow(context),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: AppColors.warning.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(AppRadius.md),
-                          ),
-                          child: Icon(
-                            Icons.event_note_rounded,
-                            color: AppColors.warning,
-                            size: 24,
-                          ),
-                        ),
-                        const SizedBox(width: AppSpacing.md),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                        if (isActive) ...[
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(
-                                'Next Billing Date',
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: AppColors.getTextSecondary(context),
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                dateFormat.format(subscription.nextBillingDate),
-                                style: theme.textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.getTextPrimary(context),
-                                ),
-                              ),
+                              Text('Billing Cycle', style: TextStyle(fontSize: 12, color: AppColors.getTextSecondary(context), fontWeight: FontWeight.w600)),
+                              Text('${subscription.daysUntilBilling} days left', style: TextStyle(fontSize: 12, color: subscription.daysUntilBilling <= 3 ? AppColors.error : AppColors.primaryPink, fontWeight: FontWeight.w700)),
                             ],
                           ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppSpacing.md,
-                            vertical: AppSpacing.sm,
-                          ),
-                          decoration: BoxDecoration(
-                            color: subscription.daysUntilBilling <= 3
-                                ? AppColors.warning.withValues(alpha: 0.1)
-                                : AppColors.getSubtle(context),
-                            borderRadius: BorderRadius.circular(AppRadius.round),
-                          ),
-                          child: Text(
-                            '${subscription.daysUntilBilling} days',
-                            style: TextStyle(
-                              color: subscription.daysUntilBilling <= 3
-                                  ? AppColors.warning
-                                  : AppColors.getTextSecondary(context),
-                              fontWeight: FontWeight.w600,
+                          const SizedBox(height: 8),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: LinearProgressIndicator(
+                              value: calculateProgress(),
+                              minHeight: 8,
+                              backgroundColor: AppColors.getBackground(context),
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                  subscription.daysUntilBilling <= 3 ? AppColors.error : AppColors.primaryPink
+                              ),
                             ),
                           ),
-                        ),
+                          const SizedBox(height: 8),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: Text(
+                              'Next: ${dateFormat.format(subscription.nextBillingDate)}',
+                              style: TextStyle(fontSize: 11, color: AppColors.getTextSecondary(context)),
+                            ),
+                          ),
+                        ] else ...[
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.cancel_outlined, color: AppColors.getTextSecondary(context)),
+                                const SizedBox(width: 8),
+                                Text('Subscription Cancelled', style: TextStyle(color: AppColors.getTextSecondary(context), fontWeight: FontWeight.w600)),
+                              ],
+                            ),
+                          )
+                        ],
                       ],
                     ),
-                  ).animate().fadeIn(duration: 300.ms, delay: 250.ms),
+                  ).animate().moveY(begin: 20, end: 0, duration: 400.ms, curve: Curves.easeOut),
 
-                  const SizedBox(height: AppSpacing.md),
+                  const SizedBox(height: 20),
 
-                  // Details Section
+                  // --- BİLGİ KUTULARI (Bento Grid) ---
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildInfoCard(
+                          context,
+                          title: 'Yearly Cost',
+                          value: CurrencyFormatter.format(subscription.yearlyCost, currencyCode),
+                          icon: Icons.savings_rounded,
+                          color: Colors.blueAccent,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _buildInfoCard(
+                          context,
+                          title: 'Category',
+                          value: subscription.category.name,
+                          icon: Icons.category_rounded,
+                          color: Colors.orangeAccent,
+                          isCapitalize: true,
+                        ),
+                      ),
+                    ],
+                  ).animate().fadeIn(delay: 200.ms),
+
+                  const SizedBox(height: 24),
+
+                  // --- DETAYLAR LİSTESİ ---
                   Text(
                     'Details',
                     style: theme.textTheme.titleMedium?.copyWith(
@@ -284,141 +287,88 @@ class SubscriptionDetailScreen extends ConsumerWidget {
                       color: AppColors.getTextPrimary(context),
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.sm),
-
+                  const SizedBox(height: 12),
                   Container(
-                    padding: const EdgeInsets.all(AppSpacing.md),
                     decoration: BoxDecoration(
                       color: AppColors.getCardBackground(context),
-                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                      borderRadius: BorderRadius.circular(20),
                       boxShadow: AppColors.getCardShadow(context),
                     ),
                     child: Column(
                       children: [
-                        _buildDetailRow('Category', subscription.category.name.toUpperCase(), subscription.categoryEmoji),
-                        const Divider(height: 24),
-                        _buildDetailRow('Currency', subscription.currency, '💵'),
-                        const Divider(height: 24),
-                        _buildDetailRow(
-                          'Auto-Renewal',
-                          subscription.autoRenew ? 'On' : 'Off',
-                          '♻️',
-                          valueColor: subscription.autoRenew ? AppColors.success : AppColors.error,
+                        _buildListTile(
+                          context,
+                          icon: Icons.calendar_today_rounded,
+                          title: 'Start Date',
+                          value: subscription.startDate != null
+                              ? dateFormat.format(subscription.startDate!)
+                              : 'Unknown',
                         ),
-                        if (subscription.startDate != null) ...[
-                          const Divider(height: 24),
-                          _buildDetailRow('Started', dateFormat.format(subscription.startDate!), '📅'),
-                        ],
-                        if (subscription.reminderEnabled) ...[
-                          const Divider(height: 24),
-                          _buildDetailRow('Reminder', '${subscription.reminderDaysBefore} days before', '🔔'),
-                        ],
+                        _buildDivider(context),
+                        _buildListTile(
+                          context,
+                          icon: Icons.autorenew_rounded,
+                          title: 'Auto-Renewal',
+                          value: subscription.autoRenew ? 'On' : 'Off',
+                          valueColor: subscription.autoRenew ? AppColors.success : AppColors.getTextSecondary(context),
+                          trailing: Switch.adaptive(
+                            value: subscription.autoRenew,
+                            activeColor: AppColors.primaryPink,
+                            onChanged: (val) => _toggleAutoRenew(context, ref, val),
+                          ),
+                        ),
+                        _buildDivider(context),
+                        _buildListTile(
+                          context,
+                          icon: Icons.notifications_active_rounded,
+                          title: 'Reminders',
+                          value: subscription.reminderEnabled
+                              ? '${subscription.reminderDaysBefore} days before'
+                              : 'Disabled',
+                        ),
                       ],
                     ),
-                  ).animate().fadeIn(duration: 300.ms, delay: 300.ms),
+                  ).animate().fadeIn(delay: 300.ms),
 
-                  const SizedBox(height: AppSpacing.lg),
+                  const SizedBox(height: 32),
 
-                  // Auto-renew info near billing
-                  _buildActionInfoRow(
-                    context,
-                    icon: Icons.autorenew_rounded,
-                    label: 'Auto-Renewal',
-                    value: subscription.autoRenew ? 'On' : 'Off',
-                    valueColor: subscription.autoRenew ? AppColors.success : AppColors.error,
-                  ).animate().fadeIn(duration: 300.ms, delay: 320.ms),
-                  const SizedBox(height: AppSpacing.sm),
-                  _buildActionInfoRow(
-                    context,
-                    icon: Icons.calendar_today_rounded,
-                    label: 'Next Billing',
-                    value: '${DateFormat('MMM d, y').format(subscription.nextBillingDate)}${subscription.autoRenew ? '' : ' (Ends)'}',
-                    valueColor: AppColors.getTextPrimary(context),
-                  ).animate().fadeIn(duration: 300.ms, delay: 330.ms),
-
-                  const SizedBox(height: AppSpacing.lg),
-
-                  // Quick Actions
-                  Text(
-                    'Quick Actions',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.getTextPrimary(context),
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-
+                  // --- AKSİYON BUTONLARI (TAŞMA VE PAUSE GİDERİLDİ) ---
                   Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
+                      // 1. Cancel / Resume
                       Expanded(
                         child: _buildActionButton(
                           context,
-                          icon: Icons.edit_rounded,
-                          label: 'Edit',
-                          onTap: () => _handleMenuAction(context, ref, 'edit'),
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.sm),
-                      Expanded(
-                        child: _buildActionButton(
-                          context,
-                          icon: subscription.status == SubscriptionStatus.active
-                              ? Icons.pause_rounded
-                              : Icons.play_arrow_rounded,
-                          label: subscription.status == SubscriptionStatus.active
-                              ? 'Pause'
-                              : 'Resume',
+                          label: isActive ? 'Cancel Subscription' : 'Resume',
+                          icon: isActive ? Icons.cancel_outlined : Icons.play_arrow_rounded,
+                          color: isActive ? Colors.orange : AppColors.success,
                           onTap: () => _handleMenuAction(
-                            context,
-                            ref,
-                            subscription.status == SubscriptionStatus.active ? 'pause' : 'resume',
+                              context,
+                              ref,
+                              isActive ? 'cancel' : 'resume'
                           ),
                         ),
                       ),
-                      const SizedBox(width: AppSpacing.sm),
+
+                      const SizedBox(width: 16),
+
+                      // 2. Delete
                       Expanded(
                         child: _buildActionButton(
                           context,
-                          icon: Icons.cancel_outlined,
-                          label: 'Cancel',
+                          label: 'Delete',
+                          icon: Icons.delete_outline_rounded,
                           color: AppColors.error,
-                          onTap: () => _handleMenuAction(context, ref, 'cancel'),
+                          isDestructive: true,
+                          onTap: () => _handleMenuAction(context, ref, 'delete'),
                         ),
                       ),
                     ],
-                  ).animate().fadeIn(duration: 300.ms, delay: 350.ms),
+                  ).animate().fadeIn(delay: 400.ms, duration: 400.ms),
 
-                  const SizedBox(height: AppSpacing.lg),
-
-                  // AutoRenew toggle action
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
-                    child: PaydayButton(
-                      text: subscription.autoRenew ? 'Cancel Subscription' : 'Resume Subscription',
-                      icon: subscription.autoRenew ? Icons.cancel_outlined : Icons.play_arrow_rounded,
-                      backgroundColor: subscription.autoRenew ? AppColors.error : AppColors.success,
-                      onPressed: () async {
-                        final updatedSub = subscription.copyWith(
-                          autoRenew: !subscription.autoRenew,
-                          updatedAt: DateTime.now(),
-                        );
-
-                        await ref.read(subscriptionNotifierProvider.notifier).updateSubscription(updatedSub);
-
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(updatedSub.autoRenew
-                                  ? 'Subscription resumed'
-                                  : 'Subscription will end after this period'),
-                            ),
-                          );
-                        }
-                      },
-                    ),
-                  ).animate().fadeIn(duration: 300.ms, delay: 360.ms),
-
-                  const SizedBox(height: 100),
+                  // Alt boşluk (Güvenli alan + ekstra)
+                  SizedBox(height: MediaQuery.of(context).padding.bottom + 20),
                 ],
               ),
             ),
@@ -428,66 +378,214 @@ class SubscriptionDetailScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildDetailRow(String label, String value, String emoji, {Color? valueColor}) {
-    return Builder(
-      builder: (context) => Row(
+  // --- WIDGET BUILDERS ---
+
+  Widget _buildGlassIconButton(BuildContext context, {required IconData icon, required VoidCallback onTap}) {
+    return Container(
+      margin: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: IconButton(
+        icon: Icon(icon, color: Colors.white),
+        onPressed: onTap,
+        padding: EdgeInsets.zero,
+        constraints: const BoxConstraints(),
+      ),
+    );
+  }
+
+  Widget _buildStatusBadge(SubscriptionStatus status) {
+    Color color;
+    switch (status) {
+      case SubscriptionStatus.active: color = const Color(0xFF4ADE80); break; // Green
+      case SubscriptionStatus.cancelled: color = const Color(0xFF9CA3AF); break; // Grey
+      default: color = const Color(0xFF9CA3AF); // Default Grey
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.5)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Text(emoji, style: const TextStyle(fontSize: 18)),
-          const SizedBox(width: AppSpacing.sm),
+          Container(width: 6, height: 6, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+          const SizedBox(width: 6),
           Text(
-            label,
+            status.name.toUpperCase(),
+            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11),
+          ),
+        ],
+      ),
+    ).animate().fadeIn(delay: 150.ms);
+  }
+
+  Widget _buildInfoCard(BuildContext context, {
+    required String title,
+    required String value,
+    required IconData icon,
+    required Color color,
+    bool isCapitalize = false,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.getCardBackground(context),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: AppColors.getCardShadow(context),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: color, size: 20),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            title,
             style: TextStyle(
               color: AppColors.getTextSecondary(context),
+              fontSize: 12,
               fontWeight: FontWeight.w500,
             ),
           ),
-          const Spacer(),
+          const SizedBox(height: 4),
           Text(
-            value,
+            isCapitalize ? value[0].toUpperCase() + value.substring(1) : value,
             style: TextStyle(
-              color: valueColor ?? AppColors.getTextPrimary(context),
-              fontWeight: FontWeight.w600,
+              color: AppColors.getTextPrimary(context),
+              fontWeight: FontWeight.w700,
+              fontSize: 16,
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildActionInfoRow(
-    BuildContext context, {
+  Widget _buildListTile(BuildContext context, {
     required IconData icon,
-    required String label,
+    required String title,
     required String value,
     Color? valueColor,
+    Widget? trailing,
   }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-      decoration: BoxDecoration(
-        color: AppColors.getCardBackground(context),
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        boxShadow: AppColors.getCardShadow(context),
-        border: Border.all(color: AppColors.getBorder(context)),
-      ),
+    return Padding(
+      padding: const EdgeInsets.all(16),
       child: Row(
         children: [
-          const SizedBox(width: AppSpacing.md),
-          Icon(icon, color: AppColors.primaryPink),
-          const SizedBox(width: AppSpacing.sm),
-          Text(
-            label,
-            style: TextStyle(
-              color: AppColors.getTextSecondary(context),
-              fontWeight: FontWeight.w500,
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.primaryPink.withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: AppColors.primaryPink, size: 20),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    color: AppColors.getTextPrimary(context),
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                ),
+                if (trailing == null)
+                  Text(
+                    value,
+                    style: TextStyle(
+                      color: valueColor ?? AppColors.getTextSecondary(context),
+                      fontWeight: FontWeight.w500,
+                      fontSize: 13,
+                    ),
+                  ),
+              ],
             ),
           ),
-          const Spacer(),
-          Padding(
-            padding: const EdgeInsets.only(right: AppSpacing.md),
-            child: Text(
+          if (trailing != null)
+            trailing
+          else
+            Text(
               value,
               style: TextStyle(
                 color: valueColor ?? AppColors.getTextPrimary(context),
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDivider(BuildContext context) {
+    return Divider(
+      height: 1,
+      thickness: 1,
+      indent: 60,
+      color: AppColors.getBorder(context).withValues(alpha: 0.5),
+    );
+  }
+
+  // ESNEK BUTON YAPISI (TAŞMAYI ÖNLER)
+  Widget _buildActionButton(BuildContext context, {
+    required String label,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+    bool isDestructive = false,
+  }) {
+    final bgColor = isDestructive ? Colors.transparent : color.withValues(alpha: 0.1);
+    final fgColor = color;
+    final borderSide = isDestructive ? BorderSide(color: color.withValues(alpha: 0.5)) : BorderSide.none;
+
+    return FilledButton.tonal(
+      onPressed: () {
+        HapticFeedback.lightImpact();
+        onTap();
+      },
+      style: FilledButton.styleFrom(
+        backgroundColor: bgColor,
+        foregroundColor: fgColor,
+        elevation: 0,
+        side: borderSide,
+        // Sabit yükseklik yerine esnek padding
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min, // İçeriği sıkıştır
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 24),
+          const SizedBox(height: 6),
+          // Yazı sığmazsa otomatik küçülür, overflow hatası vermez
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              label,
+              maxLines: 1,
+              style: const TextStyle(
+                fontSize: 12,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -497,45 +595,30 @@ class SubscriptionDetailScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildActionButton(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-    Color? color,
-  }) {
-    final buttonColor = color ?? AppColors.primaryPink;
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        onTap();
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
-        decoration: BoxDecoration(
-          color: buttonColor.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-        ),
-        child: Column(
-          children: [
-            Icon(icon, color: buttonColor),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                color: buttonColor,
-                fontWeight: FontWeight.w600,
-                fontSize: 12,
-              ),
-            ),
-          ],
-        ),
-      ),
+  // --- ACTIONS ---
+
+  Future<void> _toggleAutoRenew(BuildContext context, WidgetRef ref, bool value) async {
+    HapticFeedback.selectionClick();
+    final updatedSub = subscription.copyWith(
+      autoRenew: value,
+      updatedAt: DateTime.now(),
     );
+
+    await ref.read(subscriptionNotifierProvider.notifier).updateSubscription(updatedSub);
+
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(value ? 'Auto-renewal enabled' : 'Auto-renewal disabled'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: AppColors.darkCharcoal,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
   }
 
   void _handleMenuAction(BuildContext context, WidgetRef ref, String action) async {
-    // userId'yi abonelik nesnesinden alıyoruz
     final userId = subscription.userId;
 
     switch (action) {
@@ -549,48 +632,20 @@ class SubscriptionDetailScreen extends ConsumerWidget {
         );
         break;
 
-      case 'pause':
-        // userId parametresini ekledik
-        await ref.read(subscriptionNotifierProvider.notifier).pauseSubscription(subscription.id, userId);
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('${subscription.name} paused'),
-              backgroundColor: AppColors.warning,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-          Navigator.of(context).pop();
-        }
-        break;
-
       case 'resume':
-        // userId parametresini ekledik
         await ref.read(subscriptionNotifierProvider.notifier).resumeSubscription(subscription.id, userId);
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('${subscription.name} resumed'),
-              backgroundColor: AppColors.success,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-          Navigator.of(context).pop();
-        }
+        if (context.mounted) _showSnack(context, 'Subscription resumed', isSuccess: true);
         break;
 
       case 'cancel':
         final confirmed = await _showConfirmDialog(
           context,
           title: 'Cancel Subscription?',
-          message: 'This will mark ${subscription.name} as cancelled. You can resume it later.',
+          message: 'This will prevent future billing cycles but keep history.',
         );
         if (confirmed == true) {
-          // userId parametresini ekledik
           await ref.read(subscriptionNotifierProvider.notifier).cancelSubscription(subscription.id, userId);
-          if (context.mounted) {
-            Navigator.of(context).pop();
-          }
+          // İptal edince pop yapmıyoruz, ekranda kalıp durumun değiştiğini görüyor
         }
         break;
 
@@ -598,43 +653,52 @@ class SubscriptionDetailScreen extends ConsumerWidget {
         final confirmed = await _showConfirmDialog(
           context,
           title: 'Delete Subscription?',
-          message: 'This will permanently delete ${subscription.name}. This action cannot be undone.',
+          message: 'This will permanently delete this subscription. This action cannot be undone.',
           isDestructive: true,
         );
         if (confirmed == true) {
-          // userId parametresini ekledik
           await ref.read(subscriptionNotifierProvider.notifier).deleteSubscription(subscription.id, userId);
-          if (context.mounted) {
-            Navigator.of(context).pop();
-          }
+          if (context.mounted) Navigator.of(context).pop();
         }
         break;
     }
   }
 
+  void _showSnack(BuildContext context, String msg, {bool isSuccess = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg),
+        backgroundColor: isSuccess ? AppColors.success : AppColors.warning,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
   Future<bool?> _showConfirmDialog(
-    BuildContext context, {
-    required String title,
-    required String message,
-    bool isDestructive = false,
-  }) {
+      BuildContext context, {
+        required String title,
+        required String message,
+        bool isDestructive = false,
+      }) {
     return showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(title),
+        backgroundColor: AppColors.getCardBackground(context),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
         content: Text(message),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-        ),
+        actionsPadding: const EdgeInsets.all(16),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
+            child: Text('Keep', style: TextStyle(color: AppColors.getTextSecondary(context))),
           ),
-          TextButton(
+          ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: TextButton.styleFrom(
-              foregroundColor: isDestructive ? AppColors.error : AppColors.primaryPink,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: isDestructive ? AppColors.error : AppColors.primaryPink,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
             child: Text(isDestructive ? 'Delete' : 'Confirm'),
           ),
