@@ -29,6 +29,22 @@ class MockTransactionRepository implements TransactionRepository {
   }
 
   @override
+  Future<List<Transaction>> getTransactionsByDateRange(
+    String userId,
+    DateTime startDate,
+    DateTime endDate,
+  ) async {
+    await Future.delayed(const Duration(milliseconds: 300));
+    return _transactions
+        .where((t) =>
+            t.userId == userId &&
+            (t.date.isAfter(startDate) || t.date.isAtSameMomentAs(startDate)) &&
+            (t.date.isBefore(endDate) || t.date.isAtSameMomentAs(endDate)))
+        .toList()
+      ..sort((a, b) => b.date.compareTo(a.date));
+  }
+
+  @override
   Future<void> addTransaction(Transaction transaction) async {
     await Future.delayed(const Duration(milliseconds: 200));
     _transactions.add(transaction);

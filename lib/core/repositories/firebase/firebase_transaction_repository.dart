@@ -42,6 +42,27 @@ class FirebaseTransactionRepository implements TransactionRepository {
   }
 
   @override
+  Future<List<model.Transaction>> getTransactionsByDateRange(
+    String userId,
+    DateTime startDate,
+    DateTime endDate,
+  ) async {
+    final snapshot = await _getCollection(userId)
+        .where('date', isGreaterThanOrEqualTo: startDate.toIso8601String())
+        .where('date', isLessThanOrEqualTo: endDate.toIso8601String())
+        .get();
+
+    final transactions = snapshot.docs
+        .map((doc) => model.Transaction.fromJson(doc.data()))
+        .toList();
+
+    // Sort by date descending
+    transactions.sort((a, b) => b.date.compareTo(a.date));
+
+    return transactions;
+  }
+
+  @override
   Future<void> addTransaction(model.Transaction transaction) async {
     await _getCollection(transaction.userId)
         .doc(transaction.id)

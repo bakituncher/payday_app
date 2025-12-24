@@ -11,6 +11,13 @@ abstract class TransactionRepository {
     DateTime payCycleStart,
   );
 
+  /// Get transactions within a date range
+  Future<List<Transaction>> getTransactionsByDateRange(
+    String userId,
+    DateTime startDate,
+    DateTime endDate,
+  );
+
   /// Add a new transaction
   Future<void> addTransaction(Transaction transaction);
 

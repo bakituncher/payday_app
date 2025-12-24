@@ -86,6 +86,22 @@ class LocalTransactionRepository implements TransactionRepository {
   }
 
   @override
+  Future<List<Transaction>> getTransactionsByDateRange(
+      String userId,
+      DateTime startDate,
+      DateTime endDate,
+      ) async {
+    final transactions = await _loadTransactions();
+    return transactions
+        .where((t) =>
+    t.userId == userId &&
+        (t.date.isAfter(startDate) || t.date.isAtSameMomentAs(startDate)) &&
+        (t.date.isBefore(endDate) || t.date.isAtSameMomentAs(endDate)))
+        .toList()
+      ..sort((a, b) => b.date.compareTo(a.date));
+  }
+
+  @override
   Future<void> addTransaction(Transaction transaction) async {
     await _loadTransactions();
     _cachedTransactions!.add(transaction);

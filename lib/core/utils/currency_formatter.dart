@@ -122,4 +122,31 @@ class CurrencyFormatter {
     const noDecimalCurrencies = ['JPY', 'KRW', 'VND', 'CLP', 'ISK', 'HUF'];
     return noDecimalCurrencies.contains(currencyCode.toUpperCase()) ? 0 : 2;
   }
+
+  /// Compact format for charts: 1000 -> 1K, 1000000 -> 1M
+  static String formatCompact(double amount, String currencyCode, {bool showSymbol = false}) {
+    String suffix = '';
+    double displayAmount = amount;
+
+    if (amount >= 1000000) {
+      displayAmount = amount / 1000000;
+      suffix = 'M';
+    } else if (amount >= 1000) {
+      displayAmount = amount / 1000;
+      suffix = 'K';
+    }
+
+    final formattedNumber = displayAmount >= 100
+        ? displayAmount.toStringAsFixed(0)
+        : displayAmount.toStringAsFixed(1);
+
+    if (showSymbol) {
+      final symbol = getSymbol(currencyCode);
+      return isSymbolOnRight(currencyCode)
+          ? '$formattedNumber$suffix $symbol'
+          : '$symbol$formattedNumber$suffix';
+    }
+
+    return '$formattedNumber$suffix';
+  }
 }

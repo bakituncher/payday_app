@@ -18,7 +18,6 @@ import 'package:payday/features/settings/screens/settings_screen.dart';
 import 'package:payday/shared/widgets/payday_button.dart';
 import 'package:payday/shared/widgets/payday_banner_ad.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:payday/features/home/providers/period_balance_providers.dart';
 import 'package:payday/features/premium/providers/premium_providers.dart';
 import 'package:payday/core/providers/repository_providers.dart';
 
@@ -31,6 +30,8 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
+  bool _showPayday = true;
+  late final _timer = Stream.periodic(const Duration(seconds: 4), (count) => count % 2 == 0);
 
   @override
   void initState() {
@@ -72,6 +73,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     // Wait a bit for visual feedback
     await Future.delayed(const Duration(milliseconds: 500));
+  }
+
+  ({String text, String emoji}) _getGreeting() {
+    final now = DateTime.now();
+    final hour = now.hour;
+
+    // 24 saatlik ve 12 saatlik sistemler için uyumlu
+    if (hour >= 5 && hour < 12) {
+      return (text: 'Good Morning', emoji: '☀️');
+    } else if (hour >= 12 && hour < 18) {
+      return (text: 'Good Afternoon', emoji: '👋');
+    } else if (hour >= 18 && hour < 22) {
+      return (text: 'Good Evening', emoji: '🌆');
+    } else {
+      return (text: 'Good Night', emoji: '🌙');
+    }
   }
 
   @override
@@ -146,37 +163,44 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         elevation: 0,
                         surfaceTintColor: Colors.transparent,
                         toolbarHeight: 56, // Daha düşük toolbar
-                        title: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(6),
-                              decoration: BoxDecoration(
-                                gradient: AppColors.pinkGradient,
-                                borderRadius: BorderRadius.circular(AppRadius.sm),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: AppColors.primaryPink.withValues(alpha: 0.2),
-                                    blurRadius: 6,
-                                    offset: const Offset(0, 1),
+                        titleSpacing: 16, // Sol tarafa yapışık
+                        title: StreamBuilder<bool>(
+                          stream: _timer,
+                          initialData: true,
+                          builder: (context, snapshot) {
+                            final showPayday = snapshot.data ?? true;
+                            final greeting = _getGreeting();
+
+                            return AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 500),
+                              switchInCurve: Curves.easeInOut,
+                              switchOutCurve: Curves.easeInOut,
+                              transitionBuilder: (child, animation) {
+                                return FadeTransition(
+                                  opacity: animation,
+                                  child: SlideTransition(
+                                    position: Tween<Offset>(
+                                      begin: const Offset(0, 0.3),
+                                      end: Offset.zero,
+                                    ).animate(animation),
+                                    child: child,
                                   ),
-                                ],
+                                );
+                              },
+                              child: Align(
+                                key: ValueKey(showPayday),
+                                alignment: Alignment.centerLeft,
+                                child: Text(
+                                  showPayday ? 'Payday' : greeting.text,
+                                  style: theme.textTheme.titleLarge?.copyWith(
+                                    fontWeight: FontWeight.w800,
+                                    color: AppColors.getTextPrimary(context),
+                                    letterSpacing: -0.5,
+                                  ),
+                                ),
                               ),
-                              child: const Icon(
-                                Icons.account_balance_wallet_rounded,
-                                color: Colors.white,
-                                size: 18,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Payday',
-                              style: theme.textTheme.titleLarge?.copyWith(
-                                fontWeight: FontWeight.w800,
-                                color: AppColors.getTextPrimary(context),
-                                letterSpacing: -0.5,
-                              ),
-                            ),
-                          ],
+                            );
+                          },
                         ),
                         actions: [
                           IconButton(
@@ -210,18 +234,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
                       // Content - Kompakt Layout
                       SliverPadding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
                         sliver: SliverList(
                           delegate: SliverChildListDelegate([
-                            const SizedBox(height: 6),
-
-                            // Greeting - Daha küçük
-                            _GreetingSection()
-                                .animate()
-                                .fadeIn(duration: 400.ms)
-                                .slideY(begin: -0.1, end: 0),
-
-                            const SizedBox(height: 10),
+                            const SizedBox(height: 16),
 
                             // Countdown Card - THE HERO
                             CountdownCard(
@@ -237,7 +253,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               curve: Curves.easeOutBack,
                             ),
 
-                            const SizedBox(height: 8),
+                            const SizedBox(height: 12),
 
                             // Daily Allowable Spend Card
                             const DailySpendCard()
@@ -245,7 +261,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 .fadeIn(duration: 500.ms, delay: 200.ms)
                                 .slideX(begin: -0.1, end: 0),
 
-                            const SizedBox(height: 8),
+                            const SizedBox(height: 12),
 
                             // Quick Actions Row - Daha kompakt
                             Row(
@@ -258,7 +274,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                     onTap: () => _showAddFundsSheet(context),
                                   ),
                                 ),
-                                const SizedBox(width: 8),
+                                const SizedBox(width: 12),
                                 Expanded(
                                   child: _QuickActionButton(
                                     icon: Icons.remove_circle_outline_rounded,
@@ -273,7 +289,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 .fadeIn(duration: 500.ms, delay: 250.ms)
                                 .slideY(begin: 0.1, end: 0),
 
-                            const SizedBox(height: 8),
+                            const SizedBox(height: 12),
 
                             // Budget Progress Card
                             // ✅ DÜZELTME: PeriodBalance yerine doğrudan UserSettings.currentBalance kullanılıyor.
@@ -286,7 +302,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 .fadeIn(duration: 500.ms, delay: 300.ms)
                                 .slideX(begin: 0.1, end: 0),
 
-                            const SizedBox(height: 8),
+                            const SizedBox(height: 12),
 
                             // Savings Card
                             const SavingsCard()
@@ -294,7 +310,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 .fadeIn(duration: 500.ms, delay: 325.ms)
                                 .slideX(begin: -0.1, end: 0),
 
-                            const SizedBox(height: 8),
+                            const SizedBox(height: 12),
 
                             // Active Subscriptions Card
                             const ActiveSubscriptionsCard()
@@ -302,7 +318,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 .fadeIn(duration: 500.ms, delay: 350.ms)
                                 .slideY(begin: 0.1, end: 0),
 
-                            const SizedBox(height: 8),
+                            const SizedBox(height: 12),
 
                             // Monthly Summary Card
                             const MonthlySummaryCard()
@@ -310,7 +326,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 .fadeIn(duration: 500.ms, delay: 375.ms)
                                 .slideY(begin: 0.1, end: 0),
 
-                            const SizedBox(height: 8),
+                            const SizedBox(height: 12),
 
                             // Recent Transactions
                             RecentTransactionsCard(
@@ -320,7 +336,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 .fadeIn(duration: 500.ms, delay: 400.ms)
                                 .slideY(begin: 0.1, end: 0),
 
-                            const SizedBox(height: 8),
+                            const SizedBox(height: 12),
 
                             // ✅ REKLAM ALANI
                             const PaydayBannerAd()
@@ -526,57 +542,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 }
 
-class _GreetingSection extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final greeting = _getGreeting();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Text(
-              greeting.emoji,
-              style: const TextStyle(fontSize: 18),
-            ),
-            const SizedBox(width: 6),
-            Text(
-              greeting.text,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-                color: AppColors.getTextPrimary(context),
-                fontSize: 16,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 2),
-        Text(
-          'Here\'s your financial overview',
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: AppColors.getTextSecondary(context),
-            fontSize: 11,
-          ),
-        ),
-      ],
-    );
-  }
-
-  ({String text, String emoji}) _getGreeting() {
-    final hour = DateTime.now().hour;
-    if (hour >= 0 && hour < 6) {
-      return (text: 'Good Night', emoji: '🌙');
-    } else if (hour >= 6 && hour < 12) {
-      return (text: 'Good Morning', emoji: '☀️');
-    } else if (hour >= 12 && hour < 17) {
-      return (text: 'Good Afternoon', emoji: '👋');
-    } else {
-      return (text: 'Good Evening', emoji: '🌆');
-    }
-  }
-}
 
 class _QuickActionButton extends StatelessWidget {
   final IconData icon;
@@ -600,43 +565,48 @@ class _QuickActionButton extends StatelessWidget {
         onTap();
       },
       child: Container(
-        height: 50, // Daha düşük yükseklik
+        height: 56,
         padding: const EdgeInsets.symmetric(
-          horizontal: 10,
-          vertical: 8,
+          horizontal: 12,
+          vertical: 10,
         ),
         decoration: BoxDecoration(
           color: AppColors.getCardBackground(context),
           borderRadius: BorderRadius.circular(AppRadius.lg),
-          boxShadow: AppColors.getCardShadow(context),
+          boxShadow: [
+            BoxShadow(
+              color: color.withValues(alpha: 0.15),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
           border: Border.all(
-            color: color.withValues(alpha: 0.2),
-            width: 1,
+            color: color.withValues(alpha: 0.3),
+            width: 1.5,
           ),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              padding: const EdgeInsets.all(5),
+              padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.1),
+                color: color.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
-              child: Icon(icon, color: color, size: 16),
+              child: Icon(icon, color: color, size: 18),
             ),
-            const SizedBox(width: 6),
+            const SizedBox(width: 8),
             Flexible(
               child: Text(
                 label,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
                 style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w700,
                   color: AppColors.getTextPrimary(context),
-                  fontSize: 13,
+                  fontSize: 14,
+                  letterSpacing: -0.3,
                 ),
               ),
             ),
@@ -676,17 +646,17 @@ class _PremiumFABState extends State<_PremiumFAB> {
             : Matrix4.identity(),
         child: Container(
           padding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 12,
+            horizontal: 20,
+            vertical: 14,
           ),
           decoration: BoxDecoration(
             gradient: AppColors.premiumGradient,
             borderRadius: BorderRadius.circular(AppRadius.round),
             boxShadow: [
               BoxShadow(
-                color: AppColors.primaryPink.withValues(alpha: _isPressed ? 0.3 : 0.5),
-                blurRadius: _isPressed ? 15 : 25,
-                offset: Offset(0, _isPressed ? 4 : 8),
+                color: AppColors.primaryPink.withValues(alpha: _isPressed ? 0.4 : 0.6),
+                blurRadius: _isPressed ? 12 : 20,
+                offset: Offset(0, _isPressed ? 3 : 6),
               ),
             ],
           ),
@@ -694,24 +664,25 @@ class _PremiumFABState extends State<_PremiumFAB> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                padding: const EdgeInsets.all(3),
+                padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(5),
+                  color: Colors.white.withValues(alpha: 0.25),
+                  borderRadius: BorderRadius.circular(6),
                 ),
                 child: const Icon(
                   Icons.add_rounded,
                   color: Colors.white,
-                  size: 16,
+                  size: 18,
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 10),
               const Text(
                 'Add Expense',
                 style: TextStyle(
                   color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 15,
+                  letterSpacing: -0.3,
                 ),
               ),
             ],
