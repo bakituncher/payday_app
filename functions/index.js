@@ -4,71 +4,77 @@ const { logger } = require("firebase-functions");
 
 admin.initializeApp();
 
-// 🌍 GLOBAL ZAMANLAYICI: Her saat başı çalışır (Cron: Dakika 0)
+// 🌍 SEKTÖR STANDARDI: GLOBAL HATIRLATMA SERVİSİ
+// Bu fonksiyon her saat başı çalışır ve dünya üzerinde saati 10:00 olan herkese bakar.
 exports.checkSubscriptionReminders = onSchedule(
   {
-    schedule: "0 * * * *",
-    region: "us-central1", // Veya tercih ettiğin bölge
-    timeoutSeconds: 540,   // Uzun süren işlemler için süre (9 dk)
+    schedule: "0 * * * *",  // Her saatin 0. dakikası (00:00, 01:00...)
+    region: "us-central1",
+    timeoutSeconds: 540,
+    memory: "256MiB",
   },
   async (event) => {
     const db = admin.firestore();
     const messaging = admin.messaging();
 
-    // 1. --- HANGİ SAAT DİLİMİNİ KONTROL EDECEĞİZ? ---
+    // 1. --- HEDEF KİTLE TESPİTİ ---
     const now = new Date();
     const currentUtcHour = now.getUTCHours();
 
-    // HEDEF: Yerel saati 10:00 olan kullanıcıları bulmak.
-    // Formül: (UTC Saati + Kullanıcı Offseti) = 10
-    // Buradan Kullanıcı Offseti'ni çekiyoruz:
+    // Formül: Yerel saati 10:00 olan offseti bul.
+    // Offset = HedefSaat(10) - UTC_Saati
     let targetOffset = 10 - currentUtcHour;
 
-    // Offset döngüsü düzeltmesi (-12 ile +14 arası standarttır)
-    // Örn: UTC 23:00 ise (10-23 = -13) -> +11 (Yeni günün sabahı)
+    // Matematiksel döngü düzeltmesi (-12 ile +14 arası)
     if (targetOffset <= -12) targetOffset += 24;
     if (targetOffset > 14) targetOffset -= 24;
 
-    logger.info(`🌍 Global Kontrol (UTC: ${currentUtcHour}:00) -> Hedef Offset: ${targetOffset} (Bu bölgedeki kullanıcılara günaydın deme vakti ☀️)`);
+    logger.info(`🌍 Global Saat Kontrolü: UTC ${currentUtcHour}:00 | Hedeflenen Offset: ${targetOffset}`);
 
     try {
-      // 2. --- KULLANICILARI BUL ---
-      // 'utcOffset' alanı hesapladığımız değere eşit olan kullanıcıları getir
+      // 2. --- KULLANICILARI GETİR ---
       const usersSnapshot = await db.collection("users")
         .where("utcOffset", "==", targetOffset)
         .get();
 
       if (usersSnapshot.empty) {
-        logger.info(`ℹ️ Offseti ${targetOffset} olan kullanıcı bulunamadı, bu saat dilimi boş.`);
+        logger.info(`ℹ️ Offset ${targetOffset} bölgesinde kullanıcı yok.`);
         return;
       }
-
-      logger.info(`👥 Bu saat diliminde ${usersSnapshot.size} kullanıcı bulundu. Kontroller başlıyor...`);
 
       const promises = [];
       let sentCount = 0;
 
-      // 3. --- KULLANICILARI TARA ---
+      // 3. --- TARİH NORMALİZASYONU İÇİN YARDIMCI ---
+      // Verilen tarihi, "YYYY-MM-DD" stringine çevirip, sonra UTC 12:00 olarak geri döndürür.
+      // Bu, saat farklarından doğan hataları YOK EDER.
+      const normalizeToUtcNoon = (dateObj, offsetHours = 0) => {
+        // Tarihi kullanıcının yerel saatine kaydır (Milisaniye cinsinden)
+        const localMs = dateObj.getTime() + (offsetHours * 3600000);
+        const localDate = new Date(localMs);
+
+        // YYYY-MM-DD formatını al
+        const year = localDate.getUTCFullYear();
+        const month = localDate.getUTCMonth(); // 0-11
+        const day = localDate.getUTCDate();
+
+        // Temiz bir UTC tarihi oluştur (Saat 12:00:00)
+        return new Date(Date.UTC(year, month, day, 12, 0, 0));
+      };
+
+      // Kullanıcının "Bugünü" (UTC 12:00'ye normalize edilmiş)
+      const userTodayNormalized = normalizeToUtcNoon(now, targetOffset);
+
+      logger.info(`📅 Bu bölge için 'Bugün' kabul edilen tarih: ${userTodayNormalized.toISOString().split('T')[0]}`);
+
+      // 4. --- KULLANICILARI TARA ---
       for (const userDoc of usersSnapshot.docs) {
         const userId = userDoc.id;
         const userData = userDoc.data();
         const fcmToken = userData.fcmToken;
 
-        // Token yoksa bildirimi atla
         if (!fcmToken) continue;
 
-        // Kullanıcının "Bugünü"nü hesapla (Saat 00:00:00 olarak)
-        // Kullanıcının yerel saati şu an 10:00 olduğu için, UTC zamanına offset ekleyerek yerel zamanı buluyoruz.
-        const localNowMs = now.getTime() + (targetOffset * 3600000); // 1 saat = 3600000 ms
-        const localDateObj = new Date(localNowMs);
-
-        // Sadece Tarih kısmını alıp (YYYY-MM-DD), saatini sıfırlıyoruz.
-        // Bu işlem milisaniye karşılaştırmasında hatayı önler.
-        const todayString = localDateObj.toISOString().split('T')[0]; // "2025-12-25" gibi
-        const todayDate = new Date(todayString); // UTC 00:00 olarak parse eder
-
-        // --- ABONELİKLERİ ÇEK ---
-        // Collection Group yerine kullanıcının alt koleksiyonuna gidiyoruz (Daha hızlı ve güvenli)
         const subsSnapshot = await db.collection(`users/${userId}/subscriptions`)
             .where("reminderEnabled", "==", true)
             .where("status", "==", "active")
@@ -78,40 +84,44 @@ exports.checkSubscriptionReminders = onSchedule(
 
         for (const subDoc of subsSnapshot.docs) {
             const sub = subDoc.data();
-
             if (!sub.nextBillingDate) continue;
 
             // Fatura Tarihini JS Date Objesine Çevir
-            let billingDate;
+            let rawBillingDate;
             try {
-                if (typeof sub.nextBillingDate.toDate === 'function') {
-                    billingDate = sub.nextBillingDate.toDate();
-                } else {
-                    billingDate = new Date(sub.nextBillingDate);
-                }
+                rawBillingDate = sub.nextBillingDate.toDate ? sub.nextBillingDate.toDate() : new Date(sub.nextBillingDate);
             } catch (e) { continue; }
 
-            // Fatura tarihini de "YYYY-MM-DD" stringine çevirip tekrar Date yaparak saatini sıfırlıyoruz.
-            // Bu sayede "25 Aralık 21:00" ile "25 Aralık 00:00" karmaşasını çözüyoruz.
-            const billString = billingDate.toISOString().split('T')[0];
-            const cleanBillDate = new Date(billString);
+            // 🔥 KRİTİK ADIM: Faturayı Normalize Et
+            // Fatura tarihini UTC 12:00'ye sabitliyoruz.
+            // +12 Saat ekleme mantığını (data skew fix) burada uyguluyoruz.
+            // Bu, gece yarısı (00:00) kaydedilen verilerin batı ülkelerinde bir önceki güne düşmesini engeller.
+            const billDateAdjusted = new Date(rawBillingDate.getTime() + (12 * 3600000));
+            const billDateNormalized = normalizeToUtcNoon(billDateAdjusted, targetOffset);
 
-            // --- GÜN SAYISI (String/Number hatası çözümü) ---
+            // GÜN FARKINI HESAPLA (Milisaniye farkı / Bir gün)
+            const diffTime = billDateNormalized.getTime() - userTodayNormalized.getTime();
+            const daysDiff = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+            // Hatırlatma ayarını al (Yoksa 1 gün)
             let reminderDays = 1;
             if (sub.reminderDaysBefore !== undefined && sub.reminderDaysBefore !== null) {
                  const parsed = parseInt(sub.reminderDaysBefore, 10);
                  if (!isNaN(parsed)) reminderDays = parsed;
             }
 
-            // HEDEF TARİH = Fatura Tarihi - Gün Sayısı
-            // JS Date objelerinde gün çıkarmak için setDate kullanılır
-            const targetReminderDate = new Date(cleanBillDate);
-            targetReminderDate.setDate(cleanBillDate.getDate() - reminderDays);
+            // --- DEBUG LOGU (Sadece yakın tarihleri gör) ---
+            if (Math.abs(daysDiff) <= reminderDays + 1) {
+                logger.info(`🔍 DEBUG: ${sub.name} (User: ${userId})
+                | User Today: ${userTodayNormalized.toISOString().split('T')[0]}
+                | Bill Date : ${billDateNormalized.toISOString().split('T')[0]}
+                | Kalan Gün : ${daysDiff}
+                | Ayarlı    : ${reminderDays}`);
+            }
 
-            // --- KARŞILAŞTIRMA ---
-            // Bugün o gün mü?
-            if (targetReminderDate.getTime() === todayDate.getTime()) {
-                 logger.info(`🔔 EŞLEŞTİ! User: ${userId} | Sub: ${sub.name} | Fatura: ${billString}`);
+            // EŞLEŞTİRME
+            if (daysDiff === reminderDays) {
+                 logger.info(`🚀 BİLDİRİM GÖNDERİLİYOR: ${sub.name}`);
                  promises.push(sendNotification(messaging, fcmToken, sub));
                  sentCount++;
             }
@@ -121,16 +131,14 @@ exports.checkSubscriptionReminders = onSchedule(
       if (promises.length > 0) {
         await Promise.all(promises);
       }
-
-      logger.info(`✅ Döngü bitti. Toplam ${sentCount} bildirim gönderildi.`);
+      logger.info(`✅ Döngü Bitti. Gönderilen: ${sentCount}`);
 
     } catch (error) {
-      logger.error("🔥 Global Fonksiyon Hatası:", error);
+      logger.error("🔥 Kritik Hata:", error);
     }
   }
 );
 
-// Bildirim Gönderme Yardımcı Fonksiyonu
 async function sendNotification(messaging, token, sub) {
     try {
         const message = {
@@ -147,6 +155,6 @@ async function sendNotification(messaging, token, sub) {
         };
         await messaging.send(message);
     } catch (e) {
-        logger.error(`❌ Bildirim gönderilemedi (${sub.name}):`, e.message);
+        logger.error(`❌ Gönderim Hatası:`, e.message);
     }
 }
