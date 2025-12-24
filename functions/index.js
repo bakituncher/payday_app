@@ -4,95 +4,117 @@ const { logger } = require("firebase-functions");
 
 admin.initializeApp();
 
-// ⏰ ZAMAN AYARI: Her gün 10:00 (Türkiye Saati)
+// 🌍 GLOBAL ZAMANLAYICI: Her saat başı çalışır (Cron: Dakika 0)
 exports.checkSubscriptionReminders = onSchedule(
   {
-    schedule: "every day 10:00",
-    timeZone: "Europe/Istanbul",
-    region: "us-central1",
+    schedule: "0 * * * *",
+    region: "us-central1", // Veya tercih ettiğin bölge
+    timeoutSeconds: 540,   // Uzun süren işlemler için süre (9 dk)
   },
   async (event) => {
     const db = admin.firestore();
     const messaging = admin.messaging();
 
-    // 1. --- BUGÜNÜN TARİHİNİ BELİRLE (TÜRKİYE SAATİYLE) ---
+    // 1. --- HANGİ SAAT DİLİMİNİ KONTROL EDECEĞİZ? ---
     const now = new Date();
-    // Türkiye saatine göre tarihi string'e çevir (Örn: "12/24/2025")
-    const turkeyDateString = now.toLocaleDateString("en-US", {
-        timeZone: "Europe/Istanbul"
-    });
-    // O string'den temiz bir tarih objesi oluştur (Saat 00:00:00 olur)
-    const today = new Date(turkeyDateString);
+    const currentUtcHour = now.getUTCHours();
 
-    logger.info(`📅 Kontrol Tarihi (TR): ${today.toDateString()}`);
+    // HEDEF: Yerel saati 10:00 olan kullanıcıları bulmak.
+    // Formül: (UTC Saati + Kullanıcı Offseti) = 10
+    // Buradan Kullanıcı Offseti'ni çekiyoruz:
+    let targetOffset = 10 - currentUtcHour;
+
+    // Offset döngüsü düzeltmesi (-12 ile +14 arası standarttır)
+    // Örn: UTC 23:00 ise (10-23 = -13) -> +11 (Yeni günün sabahı)
+    if (targetOffset <= -12) targetOffset += 24;
+    if (targetOffset > 14) targetOffset -= 24;
+
+    logger.info(`🌍 Global Kontrol (UTC: ${currentUtcHour}:00) -> Hedef Offset: ${targetOffset} (Bu bölgedeki kullanıcılara günaydın deme vakti ☀️)`);
 
     try {
-      const snapshot = await db.collectionGroup("subscriptions")
-        .where("reminderEnabled", "==", true)
-        .where("status", "==", "active")
+      // 2. --- KULLANICILARI BUL ---
+      // 'utcOffset' alanı hesapladığımız değere eşit olan kullanıcıları getir
+      const usersSnapshot = await db.collection("users")
+        .where("utcOffset", "==", targetOffset)
         .get();
 
-      if (snapshot.empty) {
-        logger.info("📭 Hatırlatılacak aktif abonelik yok.");
+      if (usersSnapshot.empty) {
+        logger.info(`ℹ️ Offseti ${targetOffset} olan kullanıcı bulunamadı, bu saat dilimi boş.`);
         return;
       }
+
+      logger.info(`👥 Bu saat diliminde ${usersSnapshot.size} kullanıcı bulundu. Kontroller başlıyor...`);
 
       const promises = [];
       let sentCount = 0;
 
-      for (const doc of snapshot.docs) {
-        const sub = doc.data();
+      // 3. --- KULLANICILARI TARA ---
+      for (const userDoc of usersSnapshot.docs) {
+        const userId = userDoc.id;
+        const userData = userDoc.data();
+        const fcmToken = userData.fcmToken;
 
-        // nextBillingDate yoksa veya userId yoksa atla
-        if (!sub.nextBillingDate || !sub.userId) continue;
+        // Token yoksa bildirimi atla
+        if (!fcmToken) continue;
 
-        // 2. --- TIMESTAMP VERİSİNİ İŞLEME VE SAAT DİLİMİ DÜZELTMESİ ---
-        let billingTimestampAsDate;
+        // Kullanıcının "Bugünü"nü hesapla (Saat 00:00:00 olarak)
+        // Kullanıcının yerel saati şu an 10:00 olduğu için, UTC zamanına offset ekleyerek yerel zamanı buluyoruz.
+        const localNowMs = now.getTime() + (targetOffset * 3600000); // 1 saat = 3600000 ms
+        const localDateObj = new Date(localNowMs);
 
-        try {
-            // Firestore Timestamp kontrolü (.toDate fonksiyonu var mı?)
-            if (typeof sub.nextBillingDate.toDate === 'function') {
-                billingTimestampAsDate = sub.nextBillingDate.toDate();
-            } else {
-                // String veya JS Date geldiyse (Eski veri veya farklı format)
-                billingTimestampAsDate = new Date(sub.nextBillingDate);
+        // Sadece Tarih kısmını alıp (YYYY-MM-DD), saatini sıfırlıyoruz.
+        // Bu işlem milisaniye karşılaştırmasında hatayı önler.
+        const todayString = localDateObj.toISOString().split('T')[0]; // "2025-12-25" gibi
+        const todayDate = new Date(todayString); // UTC 00:00 olarak parse eder
+
+        // --- ABONELİKLERİ ÇEK ---
+        // Collection Group yerine kullanıcının alt koleksiyonuna gidiyoruz (Daha hızlı ve güvenli)
+        const subsSnapshot = await db.collection(`users/${userId}/subscriptions`)
+            .where("reminderEnabled", "==", true)
+            .where("status", "==", "active")
+            .get();
+
+        if (subsSnapshot.empty) continue;
+
+        for (const subDoc of subsSnapshot.docs) {
+            const sub = subDoc.data();
+
+            if (!sub.nextBillingDate) continue;
+
+            // Fatura Tarihini JS Date Objesine Çevir
+            let billingDate;
+            try {
+                if (typeof sub.nextBillingDate.toDate === 'function') {
+                    billingDate = sub.nextBillingDate.toDate();
+                } else {
+                    billingDate = new Date(sub.nextBillingDate);
+                }
+            } catch (e) { continue; }
+
+            // Fatura tarihini de "YYYY-MM-DD" stringine çevirip tekrar Date yaparak saatini sıfırlıyoruz.
+            // Bu sayede "25 Aralık 21:00" ile "25 Aralık 00:00" karmaşasını çözüyoruz.
+            const billString = billingDate.toISOString().split('T')[0];
+            const cleanBillDate = new Date(billString);
+
+            // --- GÜN SAYISI (String/Number hatası çözümü) ---
+            let reminderDays = 1;
+            if (sub.reminderDaysBefore !== undefined && sub.reminderDaysBefore !== null) {
+                 const parsed = parseInt(sub.reminderDaysBefore, 10);
+                 if (!isNaN(parsed)) reminderDays = parsed;
             }
-        } catch (e) {
-            logger.warn(`⚠️ Tarih format hatası (Doc ID: ${doc.id}):`, e);
-            continue;
-        }
 
-        // ÖNEMLİ: Timestamp UTC gelir (Örn: 23 Aralık 21:00).
-        // Bunu doğrudan setHours(0) yaparsan sunucu UTC ise 23 Aralık olarak kalır.
-        // Oysa Türkiye'de o an 24 Aralık'tır.
-        // Çözüm: Fatura tarihini de Türkiye saatine göre String'e çevirip, tekrar Date yapıyoruz.
+            // HEDEF TARİH = Fatura Tarihi - Gün Sayısı
+            // JS Date objelerinde gün çıkarmak için setDate kullanılır
+            const targetReminderDate = new Date(cleanBillDate);
+            targetReminderDate.setDate(cleanBillDate.getDate() - reminderDays);
 
-        const billDateTurkeyString = billingTimestampAsDate.toLocaleDateString("en-US", {
-            timeZone: "Europe/Istanbul"
-        });
-
-        // Artık elimizde faturanın Türkiye'deki tam GÜNÜ var (Saat 00:00:00)
-        const nextBillDateTR = new Date(billDateTurkeyString);
-
-        // 3. --- HATIRLATMA GÜNÜNÜ HESAPLA ---
-        const daysBefore = sub.reminderDaysBefore || 1;
-
-        // Fatura tarihinden gün sayısını çıkar
-        const reminderDate = new Date(nextBillDateTR);
-        reminderDate.setDate(reminderDate.getDate() - daysBefore);
-
-        // Debug Log (Sadece yakın tarihleri logla)
-        if (Math.abs(reminderDate.getTime() - today.getTime()) < 86400000) {
-             logger.info(`🔍 İnceleme: ${sub.name} -> Hedef: ${reminderDate.toDateString()} | Bugün: ${today.toDateString()}`);
-        }
-
-        // 4. --- EŞLEŞTİRME ---
-        // Artık iki tarih de string dönüşümüyle oluşturulduğu için saatleri 00:00:00'dır.
-        // Güvenle milisaniye karşılaştırması yapabiliriz.
-        if (reminderDate.getTime() === today.getTime()) {
-           logger.info(`🔔 EŞLEŞTİ! ${sub.name} bildirimi gönderiliyor.`);
-           promises.push(sendNotification(db, messaging, sub.userId, sub));
-           sentCount++;
+            // --- KARŞILAŞTIRMA ---
+            // Bugün o gün mü?
+            if (targetReminderDate.getTime() === todayDate.getTime()) {
+                 logger.info(`🔔 EŞLEŞTİ! User: ${userId} | Sub: ${sub.name} | Fatura: ${billString}`);
+                 promises.push(sendNotification(messaging, fcmToken, sub));
+                 sentCount++;
+            }
         }
       }
 
@@ -100,44 +122,31 @@ exports.checkSubscriptionReminders = onSchedule(
         await Promise.all(promises);
       }
 
-      logger.info(`✅ İşlem tamamlandı. Bugün ${sentCount} kişiye bildirim gönderildi.`);
+      logger.info(`✅ Döngü bitti. Toplam ${sentCount} bildirim gönderildi.`);
 
     } catch (error) {
-      logger.error("🔥 Kritik Hata:", error);
+      logger.error("🔥 Global Fonksiyon Hatası:", error);
     }
   }
 );
 
-async function sendNotification(db, messaging, userId, sub) {
-  try {
-    const userDoc = await db.collection("users").doc(userId).get();
-    if (!userDoc.exists) return;
-
-    const userData = userDoc.data();
-    const token = userData.fcmToken;
-
-    if (!token) {
-        logger.warn(`🚫 Token yok: ${userId}`);
-        return;
+// Bildirim Gönderme Yardımcı Fonksiyonu
+async function sendNotification(messaging, token, sub) {
+    try {
+        const message = {
+          token: token,
+          notification: {
+            title: "Ödemeniz Yaklaşıyor! 🔔",
+            body: `${sub.name} ödemeniz ${sub.reminderDaysBefore} gün içinde yapılacak. Tutar: ${sub.amount} ${sub.currency || ''}`,
+          },
+          data: {
+            route: "/subscriptions",
+            subscriptionId: sub.id ? sub.id.toString() : "",
+            click_action: "FLUTTER_NOTIFICATION_CLICK"
+          },
+        };
+        await messaging.send(message);
+    } catch (e) {
+        logger.error(`❌ Bildirim gönderilemedi (${sub.name}):`, e.message);
     }
-
-    const message = {
-      token: token,
-      notification: {
-        title: "Ödemeniz Yaklaşıyor! 🔔",
-        body: `${sub.name} ödemeniz ${sub.reminderDaysBefore} gün içinde yapılacak. Tutar: ${sub.amount} ${sub.currency || ''}`,
-      },
-      data: {
-        route: "/subscriptions",
-        subscriptionId: sub.id ? sub.id.toString() : "", // ID string olmalı
-        click_action: "FLUTTER_NOTIFICATION_CLICK"
-      },
-    };
-
-    await messaging.send(message);
-    logger.info(`🚀 Gönderildi -> ${sub.name}`);
-
-  } catch (error) {
-    logger.error(`❌ Bildirim hatası (User: ${userId}):`, error.message);
-  }
 }

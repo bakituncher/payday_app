@@ -88,6 +88,29 @@ class _PaydayAppState extends ConsumerState<PaydayApp> {
     _setupNotifications();
   }
 
+  /// ✅ YENİ EKLENEN FONKSİYON
+  /// Uygulama her açıldığında kullanıcının güncel saat dilimini kaydeder.
+  Future<void> _updateTimezone() async {
+    // Auth provider'dan mevcut kullanıcıyı al (Async değil, cache'den okur)
+    final user = ref.read(currentUserProvider).asData?.value;
+
+    if (user != null) {
+      try {
+        final int offsetHours = DateTime.now().timeZoneOffset.inHours;
+
+        // Firestore'a saat dilimini ve son görülmeyi yaz
+        await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+          'utcOffset': offsetHours,
+          'lastLoginAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+
+        debugPrint("🌍 Başlangıç Kontrolü: Saat dilimi güncellendi (UTC $offsetHours)");
+      } catch (e) {
+        debugPrint("❌ Başlangıç Kontrolü: Saat dilimi hatası: $e");
+      }
+    }
+  }
+
   Future<void> _setupNotifications() async {
     final notificationService = NotificationService();
 
@@ -95,11 +118,11 @@ class _PaydayAppState extends ConsumerState<PaydayApp> {
     await notificationService.initialize(
       navigatorKey: navigatorKey,
       onTokenRefresh: (token) async {
-        // Burada token'ı ve saat dilimini Firestore'a kaydediyoruz
+        // Burada token'ı ve saat dilimini Firestore'a kaydediyoruz (Token değişirse çalışır)
         final user = ref.read(currentUserProvider).asData?.value;
         if (user != null) {
           try {
-            // ✅ YENİ: Saat dilimi farkını (Offset) alıyoruz (Örn: Türkiye için 3, NY için -5)
+            // ✅ Saat dilimi farkını (Offset) alıyoruz
             final int offsetHours = DateTime.now().timeZoneOffset.inHours;
 
             // Kullanıcının dokümanına fcmToken ve utcOffset alanını ekle/güncelle
@@ -109,10 +132,10 @@ class _PaydayAppState extends ConsumerState<PaydayApp> {
                 .set({
               'fcmToken': token,
               'utcOffset': offsetHours, // 🌍 Saat dilimi eklendi
-              'lastLoginAt': FieldValue.serverTimestamp(), // Son görülme zamanı (opsiyonel ama faydalı)
+              'lastLoginAt': FieldValue.serverTimestamp(),
             }, SetOptions(merge: true));
 
-            debugPrint("💾 Token ve UTC Offset ($offsetHours) başarıyla kaydedildi: $token");
+            debugPrint("💾 Token Refresh: Token ve UTC Offset ($offsetHours) başarıyla kaydedildi: $token");
           } catch (e) {
             debugPrint("❌ Token ve Offset kaydetme hatası: $e");
           }
@@ -131,6 +154,13 @@ class _PaydayAppState extends ConsumerState<PaydayApp> {
         final authService = ref.read(authServiceProvider);
         await authService.signInAnonymously();
       }
+
+      // ✅ KRİTİK EKLEME: Kullanıcı oturumu doğrulandıktan sonra
+      // uygulama her açıldığında timezone'u güncelle.
+      if (mounted) {
+        await _updateTimezone();
+      }
+
     } catch (e, stack) {
       debugPrint('Error signing in anonymously: $e');
       FirebaseCrashlytics.instance.recordError(e, stack, reason: 'Anonymous Auth Failed');
@@ -143,7 +173,7 @@ class _PaydayAppState extends ConsumerState<PaydayApp> {
 
     return MaterialApp(
       title: 'Payday',
-      navigatorKey: navigatorKey, // ✅ EKLENDİ: Global key'i buraya bağlıyoruz
+      navigatorKey: navigatorKey, // ✅ Global key
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
