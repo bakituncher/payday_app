@@ -15,22 +15,16 @@ exports.checkSubscriptionReminders = onSchedule(
     const db = admin.firestore();
     const messaging = admin.messaging();
 
-    // --- SAAT DİLİMİ DÜZELTMESİ ---
-    // Sunucu saati (UTC) yerine Türkiye saatini (UTC+3) baz alıyoruz.
+    // 1. --- BUGÜNÜN TARİHİNİ BELİRLE (TÜRKİYE SAATİYLE) ---
     const now = new Date();
-
-    // Türkiye'deki günün tarihini string olarak al (Örn: "12/24/2025")
+    // Türkiye saatine göre tarihi string'e çevir (Örn: "12/24/2025")
     const turkeyDateString = now.toLocaleDateString("en-US", {
         timeZone: "Europe/Istanbul"
     });
-
-    // O string'den yeni bir tarih objesi oluştur (Otomatik olarak 00:00 olur)
+    // O string'den temiz bir tarih objesi oluştur (Saat 00:00:00 olur)
     const today = new Date(turkeyDateString);
 
-    // Emin olmak için saati sıfırla
-    today.setHours(0, 0, 0, 0);
-
-    logger.info(`📅 Türkiye Tarihi Baz Alındı: ${today.toDateString()} (Sunucu saati: ${now.toISOString()})`);
+    logger.info(`📅 Kontrol Tarihi (TR): ${today.toDateString()}`);
 
     try {
       const snapshot = await db.collectionGroup("subscriptions")
@@ -48,40 +42,53 @@ exports.checkSubscriptionReminders = onSchedule(
 
       for (const doc of snapshot.docs) {
         const sub = doc.data();
-        const docId = doc.id;
 
+        // nextBillingDate yoksa veya userId yoksa atla
         if (!sub.nextBillingDate || !sub.userId) continue;
 
-        // --- TARİH DÖNÜŞTÜRME (Timestamp veya String) ---
-        let nextBillDate;
+        // 2. --- TIMESTAMP VERİSİNİ İŞLEME VE SAAT DİLİMİ DÜZELTMESİ ---
+        let billingTimestampAsDate;
+
         try {
+            // Firestore Timestamp kontrolü (.toDate fonksiyonu var mı?)
             if (typeof sub.nextBillingDate.toDate === 'function') {
-                nextBillDate = sub.nextBillingDate.toDate();
+                billingTimestampAsDate = sub.nextBillingDate.toDate();
             } else {
-                nextBillDate = new Date(sub.nextBillingDate);
+                // String veya JS Date geldiyse (Eski veri veya farklı format)
+                billingTimestampAsDate = new Date(sub.nextBillingDate);
             }
         } catch (e) {
-            logger.warn(`⚠️ Tarih hatası: ${docId}`);
+            logger.warn(`⚠️ Tarih format hatası (Doc ID: ${doc.id}):`, e);
             continue;
         }
 
-        // Fatura Tarihini al ve saatini sıfırla
-        nextBillDate.setHours(0, 0, 0, 0);
+        // ÖNEMLİ: Timestamp UTC gelir (Örn: 23 Aralık 21:00).
+        // Bunu doğrudan setHours(0) yaparsan sunucu UTC ise 23 Aralık olarak kalır.
+        // Oysa Türkiye'de o an 24 Aralık'tır.
+        // Çözüm: Fatura tarihini de Türkiye saatine göre String'e çevirip, tekrar Date yapıyoruz.
 
-        // Kaç gün önce?
+        const billDateTurkeyString = billingTimestampAsDate.toLocaleDateString("en-US", {
+            timeZone: "Europe/Istanbul"
+        });
+
+        // Artık elimizde faturanın Türkiye'deki tam GÜNÜ var (Saat 00:00:00)
+        const nextBillDateTR = new Date(billDateTurkeyString);
+
+        // 3. --- HATIRLATMA GÜNÜNÜ HESAPLA ---
         const daysBefore = sub.reminderDaysBefore || 1;
 
-        // Hatırlatma Tarihi = Fatura - Gün Sayısı
-        const reminderDate = new Date(nextBillDate);
+        // Fatura tarihinden gün sayısını çıkar
+        const reminderDate = new Date(nextBillDateTR);
         reminderDate.setDate(reminderDate.getDate() - daysBefore);
 
-        // --- DETAYLI LOG (Hata ayıklamak için) ---
-        // Sadece beklediğimiz tarihse log basalım ki ortalık karışmasın
-        if (Math.abs(reminderDate.getTime() - today.getTime()) < 86400000) { // 1 gün fark varsa logla
+        // Debug Log (Sadece yakın tarihleri logla)
+        if (Math.abs(reminderDate.getTime() - today.getTime()) < 86400000) {
              logger.info(`🔍 İnceleme: ${sub.name} -> Hedef: ${reminderDate.toDateString()} | Bugün: ${today.toDateString()}`);
         }
 
-        // KONTROL: Eşit mi?
+        // 4. --- EŞLEŞTİRME ---
+        // Artık iki tarih de string dönüşümüyle oluşturulduğu için saatleri 00:00:00'dır.
+        // Güvenle milisaniye karşılaştırması yapabiliriz.
         if (reminderDate.getTime() === today.getTime()) {
            logger.info(`🔔 EŞLEŞTİ! ${sub.name} bildirimi gönderiliyor.`);
            promises.push(sendNotification(db, messaging, sub.userId, sub));
@@ -109,7 +116,10 @@ async function sendNotification(db, messaging, userId, sub) {
     const userData = userDoc.data();
     const token = userData.fcmToken;
 
-    if (!token) return;
+    if (!token) {
+        logger.warn(`🚫 Token yok: ${userId}`);
+        return;
+    }
 
     const message = {
       token: token,
@@ -119,7 +129,7 @@ async function sendNotification(db, messaging, userId, sub) {
       },
       data: {
         route: "/subscriptions",
-        subscriptionId: sub.id,
+        subscriptionId: sub.id ? sub.id.toString() : "", // ID string olmalı
         click_action: "FLUTTER_NOTIFICATION_CLICK"
       },
     };
