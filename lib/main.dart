@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart'; // Token ve Offset kaydı için
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
@@ -23,6 +24,9 @@ import 'package:payday/features/premium/providers/premium_providers.dart';
 import 'package:payday/core/services/data_migration_service.dart';
 import 'package:payday/core/repositories/local/local_user_settings_repository.dart';
 import 'package:payday/features/home/providers/home_providers.dart';
+
+// Navigasyon işlemleri için Global Key (RouterContext olmadan yönlendirme için)
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -86,10 +90,37 @@ class _PaydayAppState extends ConsumerState<PaydayApp> {
 
   Future<void> _setupNotifications() async {
     final notificationService = NotificationService();
-    await notificationService.initialize();
-    await notificationService.requestPermissions();
-    await notificationService.scheduleDailyEngagementReminders();
-    debugPrint("🔔 Bildirim sistemi hazır ve günlük planlar kuruldu.");
+
+    // Initialize metoduna navigatorKey ve token kaydetme fonksiyonunu veriyoruz
+    await notificationService.initialize(
+      navigatorKey: navigatorKey,
+      onTokenRefresh: (token) async {
+        // Burada token'ı ve saat dilimini Firestore'a kaydediyoruz
+        final user = ref.read(currentUserProvider).asData?.value;
+        if (user != null) {
+          try {
+            // ✅ YENİ: Saat dilimi farkını (Offset) alıyoruz (Örn: Türkiye için 3, NY için -5)
+            final int offsetHours = DateTime.now().timeZoneOffset.inHours;
+
+            // Kullanıcının dokümanına fcmToken ve utcOffset alanını ekle/güncelle
+            await FirebaseFirestore.instance
+                .collection('users')
+                .doc(user.uid)
+                .set({
+              'fcmToken': token,
+              'utcOffset': offsetHours, // 🌍 Saat dilimi eklendi
+              'lastLoginAt': FieldValue.serverTimestamp(), // Son görülme zamanı (opsiyonel ama faydalı)
+            }, SetOptions(merge: true));
+
+            debugPrint("💾 Token ve UTC Offset ($offsetHours) başarıyla kaydedildi: $token");
+          } catch (e) {
+            debugPrint("❌ Token ve Offset kaydetme hatası: $e");
+          }
+        } else {
+          debugPrint("⚠️ Kullanıcı oturumu açık değil, token kaydedilemedi (daha sonra tekrar denenebilir).");
+        }
+      },
+    );
   }
 
   Future<void> _initializeAuth() async {
@@ -112,6 +143,7 @@ class _PaydayAppState extends ConsumerState<PaydayApp> {
 
     return MaterialApp(
       title: 'Payday',
+      navigatorKey: navigatorKey, // ✅ EKLENDİ: Global key'i buraya bağlıyoruz
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
@@ -179,44 +211,36 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     bool hasCompletedOnboarding = false;
 
     try {
-      // Önce mevcut repoyu (Firebase) kontrol et.
-      // EĞER VERİ VARSA (X), burası TRUE döner ve migration HİÇ çalışmaz.
       hasCompletedOnboarding = await repository.hasCompletedOnboarding();
       debugPrint("Splash: Has Completed Onboarding (Initial Check) -> $hasCompletedOnboarding");
 
-      // Eğer Firebase boşsa veya hata verdiyse, LOCAL'i kontrol et
       if (!hasCompletedOnboarding) {
         final user = ref.read(currentUserProvider).asData?.value;
 
-        // Sadece giriş yapmış kullanıcılar için migration yaparız
         if (user != null && !user.isAnonymous) {
           debugPrint("Splash: Authenticated user but no Firebase data found via Onboarding check. Checking Local...");
 
           final localRepo = LocalUserSettingsRepository();
-          final localHasData = await localRepo.hasCompletedOnboarding();
+          final localSettings = await localRepo.getUserSettings('check_local');
+          final localHasData = localSettings != null && await localRepo.hasCompletedOnboarding();
 
-          if (localHasData) {
+          if (localHasData && localSettings != null) {
             debugPrint("Splash: ✅ Local data found! Attempting migration...");
 
             try {
               final migrationService = ref.read(dataMigrationServiceProvider);
-              // Migration servisi artık içinde "Hedef Dolu mu?" kontrolü yapıyor.
-              // Eğer doluysa ABORT ediyor ve veri ezilmiyor.
-              await migrationService.migrateLocalToFirebase(user.uid, 'local_user');
-
-              // Provider'ı yenile
+              await migrationService.migrateLocalToFirebase(user.uid, localSettings.userId);
               ref.invalidate(userSettingsProvider);
-              debugPrint("Splash: Migration process finished (Success or Aborted safely).");
+              debugPrint("Splash: Migration process finished (Success or Aborted safely). Rechecking onboarding...");
+              hasCompletedOnboarding = await repository.hasCompletedOnboarding();
 
-              // Veri artık Firebase'de (veya zaten oradaydı), tekrar kontrol edelim mi?
-              // Gerek yok, Local verimiz olduğu veya Firebase dolu olduğu için
-              // kullanıcıyı Home'a alabiliriz.
-              hasCompletedOnboarding = true;
-
+              // Eğer hala görünmüyorsa, en azından local veri var diye true'ya çekelim
+              if (!hasCompletedOnboarding) {
+                hasCompletedOnboarding = true;
+              }
             } catch (e) {
               debugPrint("Splash: Migration Failed with error: $e");
-              // Hata olsa bile kullanıcıyı içeri al, çünkü local verisi var.
-              hasCompletedOnboarding = true;
+              hasCompletedOnboarding = localHasData;
             }
           }
         }
@@ -248,7 +272,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     final isDark = theme.brightness == Brightness.dark;
     return Scaffold(
       backgroundColor: AppColors.getBackground(context),
-      body: Center(child: CircularProgressIndicator()), // Kısaltıldı, UI aynı
+      body: Center(child: CircularProgressIndicator()),
     );
   }
 }

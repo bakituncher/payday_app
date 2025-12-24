@@ -1,6 +1,7 @@
 /// Monthly Summary model for end-of-month financial overview
 /// Tracks spending, savings, and provides actionable insights
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'converters/timestamp_converter.dart';
 
 part 'monthly_summary.freezed.dart';
 part 'monthly_summary.g.dart';
@@ -65,8 +66,8 @@ class MonthlySummary with _$MonthlySummary {
     @Default([]) List<LeftoverSuggestion> leftoverSuggestions,
     @Default(0) double savingsGoalProgress,
     @Default(0) double emergencyFundProgress,
-    DateTime? createdAt,
-    DateTime? finalizedAt,
+    @TimestampDateTimeConverter() DateTime? createdAt,
+    @TimestampDateTimeConverter() DateTime? finalizedAt,
   }) = _MonthlySummary;
 
   factory MonthlySummary.fromJson(Map<String, dynamic> json) =>
@@ -199,11 +200,10 @@ class LeftoverAllocation with _$LeftoverAllocation {
     required String summaryId,
     required LeftoverAction action,
     required double amount,
-    required DateTime allocatedAt,
+    @TimestampDateTimeConverter() required DateTime allocatedAt,
     @Default('') String note,
   }) = _LeftoverAllocation;
 
   factory LeftoverAllocation.fromJson(Map<String, dynamic> json) =>
       _$LeftoverAllocationFromJson(json);
 }
-

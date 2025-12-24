@@ -108,13 +108,7 @@ class SubscriptionNotifier extends StateNotifier<AsyncValue<void>> {
       final repository = _ref.read(subscriptionRepositoryProvider);
       await repository.addSubscription(subscription);
 
-      try {
-        final notificationService = _ref.read(notificationServiceProvider);
-        await notificationService.scheduleSubscriptionReminder(subscription);
-      } catch (notificationError) {
-        // Keep silent for notification scheduling issues
-        print('Warning: Failed to schedule notification: $notificationError');
-      }
+      // Bildirim planlama kodu SİLİNDİ. (Sunucu/Backend tarafından yönetilecek)
 
       _invalidateProviders();
       state = const AsyncValue.data(null);
@@ -131,7 +125,9 @@ class SubscriptionNotifier extends StateNotifier<AsyncValue<void>> {
     try {
       final repository = _ref.read(subscriptionRepositoryProvider);
       await repository.updateSubscription(updatedSub.copyWith(updatedAt: DateTime.now()));
-      await _rescheduleNotification(updatedSub);
+
+      // Yeniden planlama kodu SİLİNDİ.
+
       _invalidateProviders();
       state = const AsyncValue.data(null);
     } catch (e, st) {
@@ -144,7 +140,9 @@ class SubscriptionNotifier extends StateNotifier<AsyncValue<void>> {
     try {
       final repository = _ref.read(subscriptionRepositoryProvider);
       await repository.updateSubscription(subscription);
-      await _rescheduleNotification(subscription);
+
+      // Yeniden planlama kodu SİLİNDİ.
+
       _invalidateProviders();
       state = const AsyncValue.data(null);
     } catch (e, st) {
@@ -158,8 +156,7 @@ class SubscriptionNotifier extends StateNotifier<AsyncValue<void>> {
       final repository = _ref.read(subscriptionRepositoryProvider);
       await repository.deleteSubscription(subscriptionId, userId);
 
-      final notificationService = _ref.read(notificationServiceProvider);
-      await notificationService.cancelSubscriptionNotification(subscriptionId);
+      // Bildirim iptal kodu SİLİNDİ. (Veri silinince sunucu zaten bildirim göndermez)
 
       _invalidateProviders();
       state = const AsyncValue.data(null);
@@ -182,8 +179,7 @@ class SubscriptionNotifier extends StateNotifier<AsyncValue<void>> {
       );
       await repository.updateSubscription(updated);
 
-      final notificationService = _ref.read(notificationServiceProvider);
-      await notificationService.cancelSubscriptionNotification(subscriptionId);
+      // Bildirim iptal kodu SİLİNDİ.
 
       _invalidateProviders();
       state = const AsyncValue.data(null);
@@ -210,7 +206,9 @@ class SubscriptionNotifier extends StateNotifier<AsyncValue<void>> {
       );
 
       await repository.updateSubscription(updatedSub);
-      await _rescheduleNotification(updatedSub);
+
+      // Yeniden planlama kodu SİLİNDİ.
+
       _invalidateProviders();
       state = const AsyncValue.data(null);
     } catch (e, st) {
@@ -243,7 +241,9 @@ class SubscriptionNotifier extends StateNotifier<AsyncValue<void>> {
       );
 
       await repository.updateSubscription(updatedSub);
-      await _rescheduleNotification(updatedSub);
+
+      // Yeniden planlama kodu SİLİNDİ.
+
       _invalidateProviders();
       state = const AsyncValue.data(null);
     } catch (e, st) {
@@ -308,15 +308,7 @@ class SubscriptionNotifier extends StateNotifier<AsyncValue<void>> {
     _ref.invalidate(currentMonthlySummaryProvider);
   }
 
-  Future<void> _rescheduleNotification(Subscription subscription) async {
-    try {
-      final notificationService = _ref.read(notificationServiceProvider);
-      await notificationService.cancelSubscriptionNotification(subscription.id);
-      await notificationService.scheduleSubscriptionReminder(subscription);
-    } catch (e) {
-      print('Warning: Failed to reschedule notification: $e');
-    }
-  }
+// _rescheduleNotification fonksiyonu TAMAMEN SİLİNDİ.
 }
 
 /// Subscription notifier provider

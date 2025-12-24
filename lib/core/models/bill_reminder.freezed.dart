@@ -27,15 +27,21 @@ mixin _$BillReminder {
   String get subscriptionName => throw _privateConstructorUsedError;
   double get amount => throw _privateConstructorUsedError;
   String get currency => throw _privateConstructorUsedError;
+  @TimestampDateTimeConverter()
   DateTime get dueDate => throw _privateConstructorUsedError;
+  @TimestampDateTimeConverter()
   DateTime get reminderDate => throw _privateConstructorUsedError;
   ReminderStatus get status => throw _privateConstructorUsedError;
   ReminderPriority get priority => throw _privateConstructorUsedError;
   String get note => throw _privateConstructorUsedError;
   String get emoji => throw _privateConstructorUsedError;
+  @TimestampDateTimeConverter()
   DateTime? get sentAt => throw _privateConstructorUsedError;
+  @TimestampDateTimeConverter()
   DateTime? get dismissedAt => throw _privateConstructorUsedError;
+  @TimestampDateTimeConverter()
   DateTime? get snoozeUntil => throw _privateConstructorUsedError;
+  @TimestampDateTimeConverter()
   DateTime? get createdAt => throw _privateConstructorUsedError;
 
   /// Serializes this BillReminder to a JSON map.
@@ -62,16 +68,16 @@ abstract class $BillReminderCopyWith<$Res> {
     String subscriptionName,
     double amount,
     String currency,
-    DateTime dueDate,
-    DateTime reminderDate,
+    @TimestampDateTimeConverter() DateTime dueDate,
+    @TimestampDateTimeConverter() DateTime reminderDate,
     ReminderStatus status,
     ReminderPriority priority,
     String note,
     String emoji,
-    DateTime? sentAt,
-    DateTime? dismissedAt,
-    DateTime? snoozeUntil,
-    DateTime? createdAt,
+    @TimestampDateTimeConverter() DateTime? sentAt,
+    @TimestampDateTimeConverter() DateTime? dismissedAt,
+    @TimestampDateTimeConverter() DateTime? snoozeUntil,
+    @TimestampDateTimeConverter() DateTime? createdAt,
   });
 }
 
@@ -195,16 +201,16 @@ abstract class _$$BillReminderImplCopyWith<$Res>
     String subscriptionName,
     double amount,
     String currency,
-    DateTime dueDate,
-    DateTime reminderDate,
+    @TimestampDateTimeConverter() DateTime dueDate,
+    @TimestampDateTimeConverter() DateTime reminderDate,
     ReminderStatus status,
     ReminderPriority priority,
     String note,
     String emoji,
-    DateTime? sentAt,
-    DateTime? dismissedAt,
-    DateTime? snoozeUntil,
-    DateTime? createdAt,
+    @TimestampDateTimeConverter() DateTime? sentAt,
+    @TimestampDateTimeConverter() DateTime? dismissedAt,
+    @TimestampDateTimeConverter() DateTime? snoozeUntil,
+    @TimestampDateTimeConverter() DateTime? createdAt,
   });
 }
 
@@ -320,16 +326,16 @@ class _$BillReminderImpl extends _BillReminder {
     required this.subscriptionName,
     required this.amount,
     this.currency = 'USD',
-    required this.dueDate,
-    required this.reminderDate,
+    @TimestampDateTimeConverter() required this.dueDate,
+    @TimestampDateTimeConverter() required this.reminderDate,
     this.status = ReminderStatus.pending,
     this.priority = ReminderPriority.medium,
     this.note = '',
     this.emoji = '💳',
-    this.sentAt,
-    this.dismissedAt,
-    this.snoozeUntil,
-    this.createdAt,
+    @TimestampDateTimeConverter() this.sentAt,
+    @TimestampDateTimeConverter() this.dismissedAt,
+    @TimestampDateTimeConverter() this.snoozeUntil,
+    @TimestampDateTimeConverter() this.createdAt,
   }) : super._();
 
   factory _$BillReminderImpl.fromJson(Map<String, dynamic> json) =>
@@ -349,8 +355,10 @@ class _$BillReminderImpl extends _BillReminder {
   @JsonKey()
   final String currency;
   @override
+  @TimestampDateTimeConverter()
   final DateTime dueDate;
   @override
+  @TimestampDateTimeConverter()
   final DateTime reminderDate;
   @override
   @JsonKey()
@@ -365,12 +373,16 @@ class _$BillReminderImpl extends _BillReminder {
   @JsonKey()
   final String emoji;
   @override
+  @TimestampDateTimeConverter()
   final DateTime? sentAt;
   @override
+  @TimestampDateTimeConverter()
   final DateTime? dismissedAt;
   @override
+  @TimestampDateTimeConverter()
   final DateTime? snoozeUntil;
   @override
+  @TimestampDateTimeConverter()
   final DateTime? createdAt;
 
   @override
@@ -453,16 +465,16 @@ abstract class _BillReminder extends BillReminder {
     required final String subscriptionName,
     required final double amount,
     final String currency,
-    required final DateTime dueDate,
-    required final DateTime reminderDate,
+    @TimestampDateTimeConverter() required final DateTime dueDate,
+    @TimestampDateTimeConverter() required final DateTime reminderDate,
     final ReminderStatus status,
     final ReminderPriority priority,
     final String note,
     final String emoji,
-    final DateTime? sentAt,
-    final DateTime? dismissedAt,
-    final DateTime? snoozeUntil,
-    final DateTime? createdAt,
+    @TimestampDateTimeConverter() final DateTime? sentAt,
+    @TimestampDateTimeConverter() final DateTime? dismissedAt,
+    @TimestampDateTimeConverter() final DateTime? snoozeUntil,
+    @TimestampDateTimeConverter() final DateTime? createdAt,
   }) = _$BillReminderImpl;
   const _BillReminder._() : super._();
 
@@ -482,8 +494,10 @@ abstract class _BillReminder extends BillReminder {
   @override
   String get currency;
   @override
+  @TimestampDateTimeConverter()
   DateTime get dueDate;
   @override
+  @TimestampDateTimeConverter()
   DateTime get reminderDate;
   @override
   ReminderStatus get status;
@@ -494,12 +508,16 @@ abstract class _BillReminder extends BillReminder {
   @override
   String get emoji;
   @override
+  @TimestampDateTimeConverter()
   DateTime? get sentAt;
   @override
+  @TimestampDateTimeConverter()
   DateTime? get dismissedAt;
   @override
+  @TimestampDateTimeConverter()
   DateTime? get snoozeUntil;
   @override
+  @TimestampDateTimeConverter()
   DateTime? get createdAt;
 
   /// Create a copy of BillReminder

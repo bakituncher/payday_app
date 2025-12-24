@@ -1,38 +1,72 @@
 import 'dart:async';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:timezone/data/latest_all.dart' as tz;
-import 'package:timezone/timezone.dart' as tz;
-import 'package:flutter_timezone/flutter_timezone.dart';
-import 'package:payday/core/models/subscription.dart';
+
+// ⚠️ ÖNEMLİ: Bu fonksiyon sınıfın dışında, en üst seviyede olmalıdır.
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  debugPrint("🌙 Arka plan mesajı alındı: ${message.messageId}");
+}
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
   factory NotificationService() => _instance;
   NotificationService._internal();
 
-  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-      FlutterLocalNotificationsPlugin();
+  final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
+  final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
 
   bool _initialized = false;
+  GlobalKey<NavigatorState>? _navigatorKey;
+  Function(String)? _onTokenRefresh;
 
-  Future<void> initialize() async {
+  /// Servisi başlatır.
+  /// [navigatorKey]: Bildirime tıklandığında sayfa yönlendirmesi yapmak için gereklidir.
+  /// [onTokenRefresh]: Token değiştiğinde (veya ilk açılışta) veritabanına kaydetmek için callback.
+  Future<void> initialize({
+    required GlobalKey<NavigatorState> navigatorKey,
+    Function(String)? onTokenRefresh,
+  }) async {
     if (_initialized) return;
 
-    // 1. Saat Dilimi Ayarları (Çok Önemli)
-    tz.initializeTimeZones();
-    final String timeZoneName = await FlutterTimezone.getLocalTimezone();
-    tz.setLocalLocation(tz.getLocation(timeZoneName));
+    _navigatorKey = navigatorKey;
+    _onTokenRefresh = onTokenRefresh;
 
-    // 2. Android Ayarları
+    // 1. Arka plan handler'ı kaydet
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+    // 2. İzinleri İste
+    await requestPermissions();
+
+    // 3. Yerel Bildirim Kanalı (Android)
+    await _createNotificationChannel();
+
+    // 4. Yerel Bildirim Ayarları
+    await _initLocalNotifications();
+
+    // 5. Firebase Mesaj Dinleyicileri (Foreground, Background, Terminated)
+    _setupMessageListeners();
+
+    // 6. Token İşlemleri (Veritabanı kaydı için)
+    await _setupToken();
+
+    _initialized = true;
+    debugPrint("🔔 NotificationService tamamen başlatıldı.");
+  }
+
+  Future<void> _initLocalNotifications() async {
     const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+    AndroidInitializationSettings('@mipmap/ic_launcher');
 
-    // 3. iOS Ayarları
     const DarwinInitializationSettings initializationSettingsDarwin =
-        DarwinInitializationSettings(
-      requestSoundPermission: false,
-      requestBadgePermission: false,
+    DarwinInitializationSettings(
       requestAlertPermission: false,
+      requestBadgePermission: false,
+      requestSoundPermission: false,
     );
 
     const InitializationSettings initializationSettings = InitializationSettings(
@@ -40,131 +74,131 @@ class NotificationService {
       iOS: initializationSettingsDarwin,
     );
 
-    await flutterLocalNotificationsPlugin.initialize(initializationSettings);
-    _initialized = true;
+    await _localNotifications.initialize(
+      initializationSettings,
+      onDidReceiveNotificationResponse: (details) {
+        // Uygulama açıkken bildirime tıklandığında (Foreground click)
+        if (details.payload != null) {
+          _navigateFromPayload(details.payload!);
+        }
+      },
+    );
+  }
+
+  void _setupMessageListeners() {
+    // A. Uygulama Açıkken (Foreground)
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      debugPrint("☀️ Ön plan mesajı: ${message.notification?.title}");
+      _showForegroundNotification(message);
+    });
+
+    // B. Uygulama Arka Plandan Açıldığında (Background -> Foreground)
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      debugPrint("🚀 Uygulama bildirimle açıldı (Background): ${message.data}");
+      _handleRemoteMessageNavigation(message);
+    });
+
+    // C. Uygulama Tamamen Kapalıyken Açıldığında (Terminated -> Foreground)
+    _firebaseMessaging.getInitialMessage().then((RemoteMessage? message) {
+      if (message != null) {
+        debugPrint("🏁 Uygulama bildirimle başlatıldı (Terminated): ${message.data}");
+        _handleRemoteMessageNavigation(message);
+      }
+    });
+  }
+
+  Future<void> _setupToken() async {
+    // Mevcut token'ı al
+    String? token = await _firebaseMessaging.getToken();
+    if (token != null && _onTokenRefresh != null) {
+      debugPrint("🔥 Mevcut FCM Token: $token");
+      _onTokenRefresh!(token);
+    }
+
+    // Token yenilenirse dinle ve güncelle
+    _firebaseMessaging.onTokenRefresh.listen((newToken) {
+      debugPrint("♻️ FCM Token Yenilendi: $newToken");
+      if (_onTokenRefresh != null) {
+        _onTokenRefresh!(newToken);
+      }
+    });
+  }
+
+  void _handleRemoteMessageNavigation(RemoteMessage message) {
+    // Mesajın data kısmında 'route' anahtarı var mı?
+    // Örnek: { "route": "/subscriptions", "id": "123" }
+    if (message.data.containsKey('route')) {
+      final String route = message.data['route'];
+      // İsteğe bağlı olarak id gibi parametreleri de alabilirsin
+      // final String? id = message.data['id'];
+
+      // Biraz gecikme ekleyerek sayfanın hazır olmasını bekle (özellikle cold start için)
+      Future.delayed(const Duration(milliseconds: 500), () {
+        _navigatorKey?.currentState?.pushNamed(route);
+      });
+    }
+  }
+
+  void _navigateFromPayload(String payload) {
+    // Payload doğrudan bir route ise (örn: "/home")
+    if (payload.startsWith('/')) {
+      _navigatorKey?.currentState?.pushNamed(payload);
+    } else {
+      // Karmaşık bir yapıysa (JSON string) decode edilebilir.
+      debugPrint("Payload işlenemedi veya route değil: $payload");
+    }
   }
 
   Future<void> requestPermissions() async {
-    await flutterLocalNotificationsPlugin
-        .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()
-        ?.requestNotificationsPermission();
-
-    await flutterLocalNotificationsPlugin
-        .resolvePlatformSpecificImplementation<
-            IOSFlutterLocalNotificationsPlugin>()
-        ?.requestPermissions(
-          alert: true,
-          badge: true,
-          sound: true,
-        );
+    NotificationSettings settings = await _firebaseMessaging.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+      provisional: false,
+    );
+    debugPrint('Kullanıcı izin durumu: ${settings.authorizationStatus}');
   }
 
-  // --- GÜNLÜK 3 BİLDİRİM (İngilizce Metinler) ---
-  Future<void> scheduleDailyEngagementReminders() async {
-    // ID: 100 -> Sabah 09:00
-    await _scheduleDaily(
-      100,
-      'Good Morning! \u2600\ufe0f',
-      'Have you planned your budget for today?',
-      9, 0,
+  Future<void> _createNotificationChannel() async {
+    const AndroidNotificationChannel channel = AndroidNotificationChannel(
+      'high_importance_channel',
+      'Yüksek Öncelikli Bildirimler',
+      description: 'Bu kanal önemli bildirimler içindir.',
+      importance: Importance.max,
     );
 
-    // ID: 101 -> Öğlen 14:00
-    await _scheduleDaily(
-      101,
-      'Track Your Spending \ud83d\udcb8',
-      "Don't forget to log your lunch or coffee expenses.",
-      14, 0,
-    );
-
-    // ID: 102 -> Akşam 20:00
-    await _scheduleDaily(
-      102,
-      'Wrap Up Your Day \ud83c\udf19',
-      'Take a moment to review your daily transactions.',
-      20, 0,
-    );
+    await _localNotifications
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(channel);
   }
 
-  // Yardımcı Fonksiyon (Google Play Dostu - Inexact Mode)
-  Future<void> _scheduleDaily(int id, String title, String body, int hour, int minute) async {
-    await flutterLocalNotificationsPlugin.zonedSchedule(
-      id,
-      title,
-      body,
-      _nextInstanceOfTime(hour, minute),
-      const NotificationDetails(
-        android: AndroidNotificationDetails(
-          'daily_reminders',
-          'Daily Reminders',
-          channelDescription: 'Daily engagement notifications',
-          importance: Importance.defaultImportance,
-          priority: Priority.defaultPriority,
+  Future<void> _showForegroundNotification(RemoteMessage message) async {
+    RemoteNotification? notification = message.notification;
+    AndroidNotification? android = message.notification?.android;
+
+    if (notification != null && android != null) {
+      await _localNotifications.show(
+        notification.hashCode,
+        notification.title,
+        notification.body,
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'high_importance_channel',
+            'Yüksek Öncelikli Bildirimler',
+            channelDescription: 'Bu kanal önemli bildirimler içindir.',
+            icon: '@mipmap/ic_launcher',
+            importance: Importance.max,
+            priority: Priority.high,
+          ),
+          iOS: DarwinNotificationDetails(
+            presentAlert: true,
+            presentBadge: true,
+            presentSound: true,
+          ),
         ),
-        iOS: DarwinNotificationDetails(),
-      ),
-      // Google Play dostu inexact mod
-      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
-      matchDateTimeComponents: DateTimeComponents.time, // Her gün tekrarla
-    );
-  }
-
-  // --- ABONELİK HATIRLATMASI ---
-  Future<void> scheduleSubscriptionReminder(Subscription subscription) async {
-    if (!subscription.reminderEnabled) return;
-
-    // Hatırlatma Tarihi: Fatura tarihinden X gün önce, sabah 10:00'da
-    final billingDate = subscription.nextBillingDate;
-    var scheduledDate = billingDate.subtract(Duration(days: subscription.reminderDaysBefore));
-
-    // Saat 10:00 olarak ayarla
-    final notificationTime = DateTime(
-      scheduledDate.year,
-      scheduledDate.month,
-      scheduledDate.day,
-      10, 0,
-    );
-
-    if (notificationTime.isBefore(DateTime.now())) return;
-
-    // ID üret (String ID'yi Integer'a çeviriyoruz)
-    final notificationId = subscription.id.hashCode;
-
-    await flutterLocalNotificationsPlugin.zonedSchedule(
-      notificationId,
-      'Upcoming Bill: ${subscription.name}',
-      'Your payment of ${subscription.amount} ${subscription.currency} is coming up.',
-      tz.TZDateTime.from(notificationTime, tz.local),
-      const NotificationDetails(
-        android: AndroidNotificationDetails(
-          'subscription_reminders',
-          'Subscription Alerts',
-          importance: Importance.max,
-          priority: Priority.high,
-        ),
-        iOS: DarwinNotificationDetails(),
-      ),
-      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
-    );
-  }
-
-  // Abonelik silinirse bildirimi de sil
-  Future<void> cancelSubscriptionNotification(String subscriptionId) async {
-    await flutterLocalNotificationsPlugin.cancel(subscriptionId.hashCode);
-  }
-
-  tz.TZDateTime _nextInstanceOfTime(int hour, int minute) {
-    final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
-    tz.TZDateTime scheduledDate =
-        tz.TZDateTime(tz.local, now.year, now.month, now.day, hour, minute);
-    if (scheduledDate.isBefore(now)) {
-      scheduledDate = scheduledDate.add(const Duration(days: 1));
+        // Payload olarak gidilecek rotayı veriyoruz (varsa)
+        payload: message.data['route'] ?? '/home',
+      );
     }
-    return scheduledDate;
   }
 }

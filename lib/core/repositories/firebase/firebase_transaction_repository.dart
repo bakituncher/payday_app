@@ -28,7 +28,7 @@ class FirebaseTransactionRepository implements TransactionRepository {
     DateTime payCycleStart,
   ) async {
     final snapshot = await _getCollection(userId)
-        .where('date', isGreaterThanOrEqualTo: payCycleStart.toIso8601String())
+        .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(payCycleStart))
         .get();
 
     final transactions = snapshot.docs
@@ -45,14 +45,25 @@ class FirebaseTransactionRepository implements TransactionRepository {
   Future<void> addTransaction(model.Transaction transaction) async {
     await _getCollection(transaction.userId)
         .doc(transaction.id)
-        .set(transaction.toJson());
+        .set({
+          ...transaction.toJson(),
+          'date': Timestamp.fromDate(transaction.date),
+          'createdAt': transaction.createdAt != null
+              ? Timestamp.fromDate(transaction.createdAt!)
+              : FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
   }
 
   @override
   Future<void> updateTransaction(model.Transaction transaction) async {
     await _getCollection(transaction.userId)
         .doc(transaction.id)
-        .update(transaction.toJson());
+        .update({
+          ...transaction.toJson(),
+          'date': Timestamp.fromDate(transaction.date),
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
   }
 
   @override
@@ -77,7 +88,7 @@ class FirebaseTransactionRepository implements TransactionRepository {
   @override
   Future<int> deleteTransactionsOlderThan(String userId, DateTime date) async {
     final snapshot = await _getCollection(userId)
-        .where('date', isLessThan: date.toIso8601String())
+        .where('date', isLessThan: Timestamp.fromDate(date))
         .get();
 
     int deletedCount = 0;

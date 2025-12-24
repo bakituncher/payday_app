@@ -32,7 +32,9 @@ mixin _$BudgetGoal {
   bool get isActive => throw _privateConstructorUsedError;
   bool get notifyOnWarning => throw _privateConstructorUsedError;
   int get warningThreshold => throw _privateConstructorUsedError; // Percentage
+  @TimestampDateTimeConverter()
   DateTime? get createdAt => throw _privateConstructorUsedError;
+  @TimestampDateTimeConverter()
   DateTime? get updatedAt => throw _privateConstructorUsedError;
 
   /// Serializes this BudgetGoal to a JSON map.
@@ -64,8 +66,8 @@ abstract class $BudgetGoalCopyWith<$Res> {
     bool isActive,
     bool notifyOnWarning,
     int warningThreshold,
-    DateTime? createdAt,
-    DateTime? updatedAt,
+    @TimestampDateTimeConverter() DateTime? createdAt,
+    @TimestampDateTimeConverter() DateTime? updatedAt,
   });
 }
 
@@ -179,8 +181,8 @@ abstract class _$$BudgetGoalImplCopyWith<$Res>
     bool isActive,
     bool notifyOnWarning,
     int warningThreshold,
-    DateTime? createdAt,
-    DateTime? updatedAt,
+    @TimestampDateTimeConverter() DateTime? createdAt,
+    @TimestampDateTimeConverter() DateTime? updatedAt,
   });
 }
 
@@ -286,8 +288,8 @@ class _$BudgetGoalImpl extends _BudgetGoal {
     this.isActive = true,
     this.notifyOnWarning = true,
     this.warningThreshold = 80,
-    this.createdAt,
-    this.updatedAt,
+    @TimestampDateTimeConverter() this.createdAt,
+    @TimestampDateTimeConverter() this.updatedAt,
   }) : super._();
 
   factory _$BudgetGoalImpl.fromJson(Map<String, dynamic> json) =>
@@ -320,8 +322,10 @@ class _$BudgetGoalImpl extends _BudgetGoal {
   final int warningThreshold;
   // Percentage
   @override
+  @TimestampDateTimeConverter()
   final DateTime? createdAt;
   @override
+  @TimestampDateTimeConverter()
   final DateTime? updatedAt;
 
   @override
@@ -405,8 +409,8 @@ abstract class _BudgetGoal extends BudgetGoal {
     final bool isActive,
     final bool notifyOnWarning,
     final int warningThreshold,
-    final DateTime? createdAt,
-    final DateTime? updatedAt,
+    @TimestampDateTimeConverter() final DateTime? createdAt,
+    @TimestampDateTimeConverter() final DateTime? updatedAt,
   }) = _$BudgetGoalImpl;
   const _BudgetGoal._() : super._();
 
@@ -436,8 +440,10 @@ abstract class _BudgetGoal extends BudgetGoal {
   @override
   int get warningThreshold; // Percentage
   @override
+  @TimestampDateTimeConverter()
   DateTime? get createdAt;
   @override
+  @TimestampDateTimeConverter()
   DateTime? get updatedAt;
 
   /// Create a copy of BudgetGoal

@@ -1,6 +1,7 @@
 /// Subscription Analysis model for cancellation recommendations
 /// Industry-grade implementation following US/EU market standards
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'converters/timestamp_converter.dart';
 
 part 'subscription_analysis.freezed.dart';
 part 'subscription_analysis.g.dart';
@@ -48,8 +49,8 @@ class SubscriptionAnalysis with _$SubscriptionAnalysis {
     @Default([]) List<String> reasons,
     @Default([]) List<String> alternatives,
     @Default(0) int usageScore, // 0-100
-    DateTime? lastUsedDate,
-    DateTime? analyzedAt,
+    @TimestampDateTimeConverter() DateTime? lastUsedDate,
+    @TimestampDateTimeConverter() DateTime? analyzedAt,
   }) = _SubscriptionAnalysis;
 
   factory SubscriptionAnalysis.fromJson(Map<String, dynamic> json) =>
@@ -116,10 +117,9 @@ class SubscriptionSummary with _$SubscriptionSummary {
     required int subscriptionsToCancel,
     @Default({}) Map<String, double> spendByCategory,
     @Default([]) List<SubscriptionAnalysis> analyses,
-    DateTime? lastAnalyzedAt,
+    @TimestampDateTimeConverter() DateTime? lastAnalyzedAt,
   }) = _SubscriptionSummary;
 
   factory SubscriptionSummary.fromJson(Map<String, dynamic> json) =>
       _$SubscriptionSummaryFromJson(json);
 }
-

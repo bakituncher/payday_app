@@ -30,12 +30,10 @@ _$SubscriptionAnalysisImpl _$$SubscriptionAnalysisImplFromJson(
           .toList() ??
       const [],
   usageScore: (json['usageScore'] as num?)?.toInt() ?? 0,
-  lastUsedDate: json['lastUsedDate'] == null
-      ? null
-      : DateTime.parse(json['lastUsedDate'] as String),
-  analyzedAt: json['analyzedAt'] == null
-      ? null
-      : DateTime.parse(json['analyzedAt'] as String),
+  lastUsedDate: const TimestampDateTimeConverter().fromJson(
+    json['lastUsedDate'],
+  ),
+  analyzedAt: const TimestampDateTimeConverter().fromJson(json['analyzedAt']),
 );
 
 Map<String, dynamic> _$$SubscriptionAnalysisImplToJson(
@@ -53,8 +51,10 @@ Map<String, dynamic> _$$SubscriptionAnalysisImplToJson(
   'reasons': instance.reasons,
   'alternatives': instance.alternatives,
   'usageScore': instance.usageScore,
-  'lastUsedDate': instance.lastUsedDate?.toIso8601String(),
-  'analyzedAt': instance.analyzedAt?.toIso8601String(),
+  'lastUsedDate': const TimestampDateTimeConverter().toJson(
+    instance.lastUsedDate,
+  ),
+  'analyzedAt': const TimestampDateTimeConverter().toJson(instance.analyzedAt),
 };
 
 const _$UsageLevelEnumMap = {
@@ -93,9 +93,9 @@ _$SubscriptionSummaryImpl _$$SubscriptionSummaryImplFromJson(
           ?.map((e) => SubscriptionAnalysis.fromJson(e as Map<String, dynamic>))
           .toList() ??
       const [],
-  lastAnalyzedAt: json['lastAnalyzedAt'] == null
-      ? null
-      : DateTime.parse(json['lastAnalyzedAt'] as String),
+  lastAnalyzedAt: const TimestampDateTimeConverter().fromJson(
+    json['lastAnalyzedAt'],
+  ),
 );
 
 Map<String, dynamic> _$$SubscriptionSummaryImplToJson(
@@ -111,5 +111,7 @@ Map<String, dynamic> _$$SubscriptionSummaryImplToJson(
   'subscriptionsToCancel': instance.subscriptionsToCancel,
   'spendByCategory': instance.spendByCategory,
   'analyses': instance.analyses,
-  'lastAnalyzedAt': instance.lastAnalyzedAt?.toIso8601String(),
+  'lastAnalyzedAt': const TimestampDateTimeConverter().toJson(
+    instance.lastAnalyzedAt,
+  ),
 };

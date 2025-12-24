@@ -33,7 +33,9 @@ mixin _$SubscriptionAnalysis {
   List<String> get reasons => throw _privateConstructorUsedError;
   List<String> get alternatives => throw _privateConstructorUsedError;
   int get usageScore => throw _privateConstructorUsedError; // 0-100
+  @TimestampDateTimeConverter()
   DateTime? get lastUsedDate => throw _privateConstructorUsedError;
+  @TimestampDateTimeConverter()
   DateTime? get analyzedAt => throw _privateConstructorUsedError;
 
   /// Serializes this SubscriptionAnalysis to a JSON map.
@@ -66,8 +68,8 @@ abstract class $SubscriptionAnalysisCopyWith<$Res> {
     List<String> reasons,
     List<String> alternatives,
     int usageScore,
-    DateTime? lastUsedDate,
-    DateTime? analyzedAt,
+    @TimestampDateTimeConverter() DateTime? lastUsedDate,
+    @TimestampDateTimeConverter() DateTime? analyzedAt,
   });
 }
 
@@ -190,8 +192,8 @@ abstract class _$$SubscriptionAnalysisImplCopyWith<$Res>
     List<String> reasons,
     List<String> alternatives,
     int usageScore,
-    DateTime? lastUsedDate,
-    DateTime? analyzedAt,
+    @TimestampDateTimeConverter() DateTime? lastUsedDate,
+    @TimestampDateTimeConverter() DateTime? analyzedAt,
   });
 }
 
@@ -303,8 +305,8 @@ class _$SubscriptionAnalysisImpl extends _SubscriptionAnalysis {
     final List<String> reasons = const [],
     final List<String> alternatives = const [],
     this.usageScore = 0,
-    this.lastUsedDate,
-    this.analyzedAt,
+    @TimestampDateTimeConverter() this.lastUsedDate,
+    @TimestampDateTimeConverter() this.analyzedAt,
   }) : _reasons = reasons,
        _alternatives = alternatives,
        super._();
@@ -355,8 +357,10 @@ class _$SubscriptionAnalysisImpl extends _SubscriptionAnalysis {
   final int usageScore;
   // 0-100
   @override
+  @TimestampDateTimeConverter()
   final DateTime? lastUsedDate;
   @override
+  @TimestampDateTimeConverter()
   final DateTime? analyzedAt;
 
   @override
@@ -450,8 +454,8 @@ abstract class _SubscriptionAnalysis extends SubscriptionAnalysis {
     final List<String> reasons,
     final List<String> alternatives,
     final int usageScore,
-    final DateTime? lastUsedDate,
-    final DateTime? analyzedAt,
+    @TimestampDateTimeConverter() final DateTime? lastUsedDate,
+    @TimestampDateTimeConverter() final DateTime? analyzedAt,
   }) = _$SubscriptionAnalysisImpl;
   const _SubscriptionAnalysis._() : super._();
 
@@ -483,8 +487,10 @@ abstract class _SubscriptionAnalysis extends SubscriptionAnalysis {
   @override
   int get usageScore; // 0-100
   @override
+  @TimestampDateTimeConverter()
   DateTime? get lastUsedDate;
   @override
+  @TimestampDateTimeConverter()
   DateTime? get analyzedAt;
 
   /// Create a copy of SubscriptionAnalysis
@@ -511,6 +517,7 @@ mixin _$SubscriptionSummary {
   int get subscriptionsToCancel => throw _privateConstructorUsedError;
   Map<String, double> get spendByCategory => throw _privateConstructorUsedError;
   List<SubscriptionAnalysis> get analyses => throw _privateConstructorUsedError;
+  @TimestampDateTimeConverter()
   DateTime? get lastAnalyzedAt => throw _privateConstructorUsedError;
 
   /// Serializes this SubscriptionSummary to a JSON map.
@@ -541,7 +548,7 @@ abstract class $SubscriptionSummaryCopyWith<$Res> {
     int subscriptionsToCancel,
     Map<String, double> spendByCategory,
     List<SubscriptionAnalysis> analyses,
-    DateTime? lastAnalyzedAt,
+    @TimestampDateTimeConverter() DateTime? lastAnalyzedAt,
   });
 }
 
@@ -644,7 +651,7 @@ abstract class _$$SubscriptionSummaryImplCopyWith<$Res>
     int subscriptionsToCancel,
     Map<String, double> spendByCategory,
     List<SubscriptionAnalysis> analyses,
-    DateTime? lastAnalyzedAt,
+    @TimestampDateTimeConverter() DateTime? lastAnalyzedAt,
   });
 }
 
@@ -739,7 +746,7 @@ class _$SubscriptionSummaryImpl implements _SubscriptionSummary {
     required this.subscriptionsToCancel,
     final Map<String, double> spendByCategory = const {},
     final List<SubscriptionAnalysis> analyses = const [],
-    this.lastAnalyzedAt,
+    @TimestampDateTimeConverter() this.lastAnalyzedAt,
   }) : _spendByCategory = spendByCategory,
        _analyses = analyses;
 
@@ -781,6 +788,7 @@ class _$SubscriptionSummaryImpl implements _SubscriptionSummary {
   }
 
   @override
+  @TimestampDateTimeConverter()
   final DateTime? lastAnalyzedAt;
 
   @override
@@ -866,7 +874,7 @@ abstract class _SubscriptionSummary implements SubscriptionSummary {
     required final int subscriptionsToCancel,
     final Map<String, double> spendByCategory,
     final List<SubscriptionAnalysis> analyses,
-    final DateTime? lastAnalyzedAt,
+    @TimestampDateTimeConverter() final DateTime? lastAnalyzedAt,
   }) = _$SubscriptionSummaryImpl;
 
   factory _SubscriptionSummary.fromJson(Map<String, dynamic> json) =
@@ -893,6 +901,7 @@ abstract class _SubscriptionSummary implements SubscriptionSummary {
   @override
   List<SubscriptionAnalysis> get analyses;
   @override
+  @TimestampDateTimeConverter()
   DateTime? get lastAnalyzedAt;
 
   /// Create a copy of SubscriptionSummary

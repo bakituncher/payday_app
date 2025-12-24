@@ -1,6 +1,7 @@
 /// Budget Goal model for managing spending limits by category
 /// Helps users set and track monthly spending goals
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'converters/timestamp_converter.dart';
 
 part 'budget_goal.freezed.dart';
 part 'budget_goal.g.dart';
@@ -41,8 +42,8 @@ class BudgetGoal with _$BudgetGoal {
     @Default(true) bool isActive,
     @Default(true) bool notifyOnWarning,
     @Default(80) int warningThreshold, // Percentage
-    DateTime? createdAt,
-    DateTime? updatedAt,
+    @TimestampDateTimeConverter() DateTime? createdAt,
+    @TimestampDateTimeConverter() DateTime? updatedAt,
   }) = _BudgetGoal;
 
   factory BudgetGoal.fromJson(Map<String, dynamic> json) =>
@@ -135,4 +136,3 @@ class BudgetTemplates {
     },
   ];
 }
-

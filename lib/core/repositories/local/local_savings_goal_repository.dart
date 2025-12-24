@@ -35,11 +35,22 @@ class LocalSavingsGoalRepository implements SavingsGoalRepository {
     return _cachedGoals!;
   }
 
+  Map<String, dynamic> _toEncodable(Map<String, dynamic> goalJson) {
+    // Ensure date fields are stored as epoch millis for SharedPreferences
+    final createdAt = goalJson['createdAt'];
+    final targetDate = goalJson['targetDate'];
+    return {
+      ...goalJson,
+      'createdAt': createdAt is DateTime ? createdAt.millisecondsSinceEpoch : createdAt,
+      'targetDate': targetDate is DateTime ? targetDate.millisecondsSinceEpoch : targetDate,
+    };
+  }
+
   Future<void> _saveGoals() async {
     if (_cachedGoals == null) return;
 
     final prefs = await SharedPreferences.getInstance();
-    final jsonList = _cachedGoals!.map((g) => g.toJson()).toList();
+    final jsonList = _cachedGoals!.map((g) => _toEncodable(g.toJson())).toList();
     await prefs.setString(_storageKey, json.encode(jsonList));
 
     // Notify stream listeners
@@ -126,4 +137,3 @@ class LocalSavingsGoalRepository implements SavingsGoalRepository {
     _streamController.close();
   }
 }
-
