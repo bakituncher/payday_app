@@ -61,15 +61,23 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Future<void> _loadCurrentSettings() async {
-    final settings = await ref.read(userSettingsProvider.future);
-    if (settings != null && mounted) {
-      setState(() {
-        _incomeController.text = settings.incomeAmount.toStringAsFixed(2);
-        _currentBalanceController.text = settings.currentBalance.toStringAsFixed(2);
-        _selectedCurrency = settings.currency;
-        _selectedPayCycle = settings.payCycle;
-        _nextPayday = settings.nextPayday;
-      });
+    try {
+      final settings = await ref.read(userSettingsProvider.future);
+      if (settings != null && mounted) {
+        setState(() {
+          _incomeController.text = settings.incomeAmount.toStringAsFixed(2);
+          _currentBalanceController.text = settings.currentBalance.toStringAsFixed(2);
+          _selectedCurrency = settings.currency;
+          _selectedPayCycle = settings.payCycle;
+          _nextPayday = settings.nextPayday;
+        });
+        print('✅ Settings loaded successfully: ${settings.currency}, ${settings.incomeAmount}');
+      } else {
+        print('⚠️ Settings is null, skipping UI update');
+      }
+    } catch (e) {
+      print('❌ Error loading settings: $e');
+      // Hata durumunda da UI'ı kilitlemeden devam et
     }
   }
 
@@ -221,13 +229,27 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           }
         }
 
-        // Firebase'den verileri yükle
+        // Provider'ları invalidate et
         ref.invalidate(userSettingsProvider);
         ref.invalidate(currentCycleTransactionsProvider);
         ref.invalidate(totalExpensesProvider);
         ref.invalidate(dailyAllowableSpendProvider);
         ref.invalidate(budgetHealthProvider);
         ref.invalidate(currentMonthlySummaryProvider);
+        ref.invalidate(selectedPayPeriodProvider);
+        ref.invalidate(selectedPeriodBalanceProvider);
+
+        // ✅ KRİTİK: Provider'ın yeniden yüklenmesini bekle
+        // Migration tamamlandı ve provider invalidate edildi.
+        // Şimdi Firebase'den güncel veriyi çekmesini bekleyelim.
+        await Future.delayed(const Duration(milliseconds: 500));
+
+        // Provider'dan veri çekmeyi zorla (userSettingsProvider migration'ı da yapsın)
+        try {
+          await ref.read(userSettingsProvider.future);
+        } catch (e) {
+          print("Settings reload error: $e");
+        }
 
         // Sayfa ayarlarını yeniden yükle
         await _loadCurrentSettings();
@@ -296,13 +318,25 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           }
         }
 
-        // Firebase'den verileri yükle
+        // Provider'ları invalidate et
         ref.invalidate(userSettingsProvider);
         ref.invalidate(currentCycleTransactionsProvider);
         ref.invalidate(totalExpensesProvider);
         ref.invalidate(dailyAllowableSpendProvider);
         ref.invalidate(budgetHealthProvider);
         ref.invalidate(currentMonthlySummaryProvider);
+        ref.invalidate(selectedPayPeriodProvider);
+        ref.invalidate(selectedPeriodBalanceProvider);
+
+        // ✅ KRİTİK: Provider'ın yeniden yüklenmesini bekle
+        await Future.delayed(const Duration(milliseconds: 500));
+
+        // Provider'dan veri çekmeyi zorla
+        try {
+          await ref.read(userSettingsProvider.future);
+        } catch (e) {
+          print("Settings reload error: $e");
+        }
 
         // Sayfa ayarlarını yeniden yükle
         await _loadCurrentSettings();
