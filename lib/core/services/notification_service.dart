@@ -1,15 +1,15 @@
 import 'dart:async';
+import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
-// ⚠️ ÖNEMLİ: Bu fonksiyon sınıfın dışında, en üst seviyede olmalıdır.
+// ⚠️ BU FONKSİYON SINIFIN DIŞINDA KALMALI (Firebase Arka Plan Handler)
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
-  debugPrint("🌙 Arka plan mesajı alındı: ${message.messageId}");
+  debugPrint("🌙 Arka plan FCM mesajı: ${message.messageId}");
 }
 
 class NotificationService {
@@ -18,15 +18,12 @@ class NotificationService {
   NotificationService._internal();
 
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
-  final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
 
   bool _initialized = false;
   GlobalKey<NavigatorState>? _navigatorKey;
   Function(String)? _onTokenRefresh;
 
-  /// Servisi başlatır.
-  /// [navigatorKey]: Bildirime tıklandığında sayfa yönlendirmesi yapmak için gereklidir.
-  /// [onTokenRefresh]: Token değiştiğinde (veya ilk açılışta) veritabanına kaydetmek için callback.
+  /// Servisi başlatır ve gerekli ayarları yapar.
   Future<void> initialize({
     required GlobalKey<NavigatorState> navigatorKey,
     Function(String)? onTokenRefresh,
@@ -36,169 +33,226 @@ class NotificationService {
     _navigatorKey = navigatorKey;
     _onTokenRefresh = onTokenRefresh;
 
-    // 1. Arka plan handler'ı kaydet
+    // 1. Awesome Notifications'ı Başlat
+    await _initializeAwesomeNotifications();
+
+    // 2. Firebase Arka Plan Handler
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-    // 2. İzinleri İste
+    // 3. Firebase İzinleri İste
     await requestPermissions();
 
-    // 3. Yerel Bildirim Kanalı (Android)
-    await _createNotificationChannel();
-
-    // 4. Yerel Bildirim Ayarları
-    await _initLocalNotifications();
-
-    // 5. Firebase Mesaj Dinleyicileri (Foreground, Background, Terminated)
+    // 4. Firebase Mesaj Dinleyicileri
     _setupMessageListeners();
 
-    // 6. Token İşlemleri (Veritabanı kaydı için)
+    // 5. Token İşlemleri
     await _setupToken();
 
     _initialized = true;
-    debugPrint("🔔 NotificationService tamamen başlatıldı.");
+    debugPrint("🔔 NotificationService: Hazır (Awesome Notifications kullanılıyor)");
   }
 
-  Future<void> _initLocalNotifications() async {
-    const AndroidInitializationSettings initializationSettingsAndroid =
-    AndroidInitializationSettings('@mipmap/ic_launcher');
-
-    const DarwinInitializationSettings initializationSettingsDarwin =
-    DarwinInitializationSettings(
-      requestAlertPermission: false,
-      requestBadgePermission: false,
-      requestSoundPermission: false,
+  /// Awesome Notifications'ı başlatır ve kanalları oluşturur
+  Future<void> _initializeAwesomeNotifications() async {
+    await AwesomeNotifications().initialize(
+      null, // App icon (null = varsayılan)
+      [
+        // 1. Günlük Hatırlatıcılar Kanalı
+        NotificationChannel(
+          channelKey: 'daily_reminders',
+          channelName: 'Günlük Hatırlatıcılar',
+          channelDescription: 'Rutin bütçe hatırlatmaları',
+          defaultColor: const Color(0xFF9D50DD),
+          ledColor: Colors.white,
+          importance: NotificationImportance.Default,
+          playSound: true,
+          enableVibration: true,
+        ),
+        // 2. Firebase Kanalı (FCM mesajları için)
+        NotificationChannel(
+          channelKey: 'high_importance_channel',
+          channelName: 'Önemli Bildirimler',
+          channelDescription: 'Sunucudan gelen önemli bildirimler',
+          defaultColor: const Color(0xFF9D50DD),
+          ledColor: Colors.white,
+          importance: NotificationImportance.High,
+          playSound: true,
+          enableVibration: true,
+        ),
+      ],
+      debug: kDebugMode,
     );
 
-    const InitializationSettings initializationSettings = InitializationSettings(
-      android: initializationSettingsAndroid,
-      iOS: initializationSettingsDarwin,
+    // Action (tıklama) dinleyicisini ayarla
+    AwesomeNotifications().setListeners(
+      onActionReceivedMethod: _onNotificationActionReceived,
+    );
+  }
+
+  /// Bildirime tıklandığında çalışır
+  @pragma("vm:entry-point")
+  static Future<void> _onNotificationActionReceived(
+      ReceivedAction receivedAction) async {
+    // Payload varsa navigasyon yap
+    if (receivedAction.payload != null &&
+        receivedAction.payload!.containsKey('route')) {
+      final String route = receivedAction.payload!['route']!;
+      // Navigator key'i kullanarak yönlendirme yapılabilir
+      // (Bu kısım ana initialize'da ayarlanıyor)
+      debugPrint("🔔 Bildirim tıklandı, route: $route");
+    }
+  }
+
+  /// ⏰ GÜNLÜK RUTİN VE REKLAM PLANLAYICI
+  /// [isPremium]: True ise reklam bildirimi atlanacak.
+  Future<void> scheduleDailyNotifications(bool isPremium) async {
+    // Çakışmayı önlemek için önce eskileri temizle
+    await AwesomeNotifications().cancelAll();
+
+    debugPrint("📅 Günlük bildirimler planlanıyor... (Premium: $isPremium)");
+
+    // 1. SABAH (09:00)
+    await _scheduleOne(
+      id: 100,
+      title: "☀️ Günaydın!",
+      body: "Güne başlarken bütçeni gözden geçirmeyi unutma.",
+      hour: 9,
+      minute: 0,
+      route: '/home',
     );
 
-    await _localNotifications.initialize(
-      initializationSettings,
-      onDidReceiveNotificationResponse: (details) {
-        // Uygulama açıkken bildirime tıklandığında (Foreground click)
-        if (details.payload != null) {
-          _navigateFromPayload(details.payload!);
-        }
-      },
+    // 2. ÖĞLEN (13:00)
+    await _scheduleOne(
+      id: 101,
+      title: "🍽️ Öğle Arası Hatırlatması",
+      body: "Bugün yaptığın harcamaları ekledin mi?",
+      hour: 13,
+      minute: 0,
+      route: '/add-transaction',
     );
+
+    // 3. AKŞAM (23:50)
+    await _scheduleOne(
+      id: 102,
+      title: "🌙YUNUSBABA BAKİBABA KERİMBABA",
+      body: "Baki baba başaracağız Allah'ın izniyle!",
+      hour: 00,
+      minute: 04,
+      route: '/monthly-summary',
+    );
+
+    // 4. PREMIUM PROPAGANDASI (Sadece Premium Değilse - 18:00)
+    if (!isPremium) {
+      await _scheduleOne(
+        id: 200,
+        title: "💎 Reklamsız Payday Deneyimi",
+        body: "Premium'a geç, sınırları kaldır ve reklamlardan kurtul!",
+        hour: 18,
+        minute: 0,
+        route: '/premium-paywall',
+      );
+    }
+  }
+
+  /// Tekil bildirim kurma fonksiyonu (Her gün aynı saatte tekrarlanır)
+  Future<void> _scheduleOne({
+    required int id,
+    required String title,
+    required String body,
+    required int hour,
+    required int minute,
+    required String route,
+  }) async {
+    await AwesomeNotifications().createNotification(
+      content: NotificationContent(
+        id: id,
+        channelKey: 'daily_reminders',
+        title: title,
+        body: body,
+        payload: {'route': route},
+        notificationLayout: NotificationLayout.Default,
+        wakeUpScreen: true,
+      ),
+      schedule: NotificationCalendar(
+        hour: hour,
+        minute: minute,
+        second: 0,
+        millisecond: 0,
+        repeats: true, // Her gün tekrarla
+      ),
+    );
+
+    debugPrint("📅 Bildirim planlandı: $title ($hour:${minute.toString().padLeft(2, '0')})");
+  }
+
+  /// İzin isteme (Firebase + Awesome Notifications)
+  Future<void> requestPermissions() async {
+    // 1. Firebase (Remote) İzni
+    await _firebaseMessaging.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+
+    // 2. Awesome Notifications İzni (Yerel bildirimler için)
+    await AwesomeNotifications().requestPermissionToSendNotifications();
   }
 
   void _setupMessageListeners() {
-    // A. Uygulama Açıkken (Foreground)
+    // Foreground (Uygulama Açık)
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      debugPrint("☀️ Ön plan mesajı: ${message.notification?.title}");
       _showForegroundNotification(message);
     });
 
-    // B. Uygulama Arka Plandan Açıldığında (Background -> Foreground)
+    // Background -> Foreground (Uygulamaya tıklandı)
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      debugPrint("🚀 Uygulama bildirimle açıldı (Background): ${message.data}");
       _handleRemoteMessageNavigation(message);
     });
 
-    // C. Uygulama Tamamen Kapalıyken Açıldığında (Terminated -> Foreground)
+    // Terminated -> Foreground (Uygulama kapalıyken açıldı)
     _firebaseMessaging.getInitialMessage().then((RemoteMessage? message) {
       if (message != null) {
-        debugPrint("🏁 Uygulama bildirimle başlatıldı (Terminated): ${message.data}");
         _handleRemoteMessageNavigation(message);
       }
     });
   }
 
-  Future<void> _setupToken() async {
-    // Mevcut token'ı al
-    String? token = await _firebaseMessaging.getToken();
-    if (token != null && _onTokenRefresh != null) {
-      debugPrint("🔥 Mevcut FCM Token: $token");
-      _onTokenRefresh!(token);
-    }
+  /// Foreground bildirimi göster (FCM için)
+  Future<void> _showForegroundNotification(RemoteMessage message) async {
+    RemoteNotification? notification = message.notification;
 
-    // Token yenilenirse dinle ve güncelle
-    _firebaseMessaging.onTokenRefresh.listen((newToken) {
-      debugPrint("♻️ FCM Token Yenilendi: $newToken");
-      if (_onTokenRefresh != null) {
-        _onTokenRefresh!(newToken);
-      }
-    });
+    if (notification != null) {
+      await AwesomeNotifications().createNotification(
+        content: NotificationContent(
+          id: notification.hashCode,
+          channelKey: 'high_importance_channel',
+          title: notification.title,
+          body: notification.body,
+          payload: message.data.containsKey('route')
+              ? {'route': message.data['route']}
+              : null,
+          notificationLayout: NotificationLayout.Default,
+        ),
+      );
+    }
   }
 
   void _handleRemoteMessageNavigation(RemoteMessage message) {
-    // Mesajın data kısmında 'route' anahtarı var mı?
-    // Örnek: { "route": "/subscriptions", "id": "123" }
     if (message.data.containsKey('route')) {
       final String route = message.data['route'];
-      // İsteğe bağlı olarak id gibi parametreleri de alabilirsin
-      // final String? id = message.data['id'];
-
-      // Biraz gecikme ekleyerek sayfanın hazır olmasını bekle (özellikle cold start için)
+      // Sayfanın yüklenmesi için ufak gecikme
       Future.delayed(const Duration(milliseconds: 500), () {
         _navigatorKey?.currentState?.pushNamed(route);
       });
     }
   }
 
-  void _navigateFromPayload(String payload) {
-    // Payload doğrudan bir route ise (örn: "/home")
-    if (payload.startsWith('/')) {
-      _navigatorKey?.currentState?.pushNamed(payload);
-    } else {
-      // Karmaşık bir yapıysa (JSON string) decode edilebilir.
-      debugPrint("Payload işlenemedi veya route değil: $payload");
-    }
-  }
 
-  Future<void> requestPermissions() async {
-    NotificationSettings settings = await _firebaseMessaging.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
-      provisional: false,
-    );
-    debugPrint('Kullanıcı izin durumu: ${settings.authorizationStatus}');
-  }
-
-  Future<void> _createNotificationChannel() async {
-    const AndroidNotificationChannel channel = AndroidNotificationChannel(
-      'high_importance_channel',
-      'Yüksek Öncelikli Bildirimler',
-      description: 'Bu kanal önemli bildirimler içindir.',
-      importance: Importance.max,
-    );
-
-    await _localNotifications
-        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
-        ?.createNotificationChannel(channel);
-  }
-
-  Future<void> _showForegroundNotification(RemoteMessage message) async {
-    RemoteNotification? notification = message.notification;
-    AndroidNotification? android = message.notification?.android;
-
-    if (notification != null && android != null) {
-      await _localNotifications.show(
-        notification.hashCode,
-        notification.title,
-        notification.body,
-        const NotificationDetails(
-          android: AndroidNotificationDetails(
-            'high_importance_channel',
-            'Yüksek Öncelikli Bildirimler',
-            channelDescription: 'Bu kanal önemli bildirimler içindir.',
-            icon: '@mipmap/ic_launcher',
-            importance: Importance.max,
-            priority: Priority.high,
-          ),
-          iOS: DarwinNotificationDetails(
-            presentAlert: true,
-            presentBadge: true,
-            presentSound: true,
-          ),
-        ),
-        // Payload olarak gidilecek rotayı veriyoruz (varsa)
-        payload: message.data['route'] ?? '/home',
-      );
-    }
+  Future<void> _setupToken() async {
+    String? token = await _firebaseMessaging.getToken();
+    if (token != null && _onTokenRefresh != null) _onTokenRefresh!(token);
+    _firebaseMessaging.onTokenRefresh.listen((newToken) {
+      if (_onTokenRefresh != null) _onTokenRefresh!(newToken);
+    });
   }
 }
