@@ -114,7 +114,7 @@ class _PaydayAppState extends ConsumerState<PaydayApp> {
   Future<void> _setupNotifications() async {
     final notificationService = NotificationService();
 
-    // 1. Servisi başlat (FCM Token ve Timezone ayarlanır)
+    // Initialize metoduna navigatorKey ve token kaydetme fonksiyonunu veriyoruz
     await notificationService.initialize(
       navigatorKey: navigatorKey,
       onTokenRefresh: (token) async {
@@ -144,29 +144,6 @@ class _PaydayAppState extends ConsumerState<PaydayApp> {
         }
       },
     );
-
-    // 2. ✅ YENİ EKLENEN KISIM: Günlük Yerel Bildirimleri Planla
-    // Kullanıcı giriş yapmışsa Premium durumuna göre bildirimleri kur
-    final user = ref.read(currentUserProvider).asData?.value;
-
-    if (user != null) {
-      try {
-        // Önce RevenueCat'ten en güncel premium bilgisini al ve provider'ı güncelle
-        await refreshPremiumStatus(ref);
-
-        // Güncellenmiş durumu provider'dan oku
-        final isPremium = ref.read(isPremiumProvider);
-
-        // Bildirim servisine planlama emrini ver
-        await notificationService.scheduleDailyNotifications(isPremium);
-
-        debugPrint("📅 Günlük bildirimler başarıyla planlandı. Premium Durumu: $isPremium");
-      } catch (e) {
-        debugPrint("⚠️ Bildirim planlanırken hata veya premium kontrol sorunu: $e");
-        // Hata durumunda varsayılan olarak reklamlı planlama yap (güvenli mod)
-        await notificationService.scheduleDailyNotifications(false);
-      }
-    }
   }
 
   Future<void> _initializeAuth() async {
@@ -211,8 +188,6 @@ class _PaydayAppState extends ConsumerState<PaydayApp> {
         '/home': (context) => const HomeScreen(),
         '/subscriptions': (context) => const SubscriptionsScreen(),
         '/monthly-summary': (context) => const MonthlySummaryScreen(),
-        // Bildirim tıklamaları için gerekli olabilecek ek rotalar buraya eklenebilir
-        // Örnek: '/add-transaction': (context) => const AddTransactionScreen(),
       },
     );
   }

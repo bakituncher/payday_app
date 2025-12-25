@@ -61,7 +61,7 @@ dependencies:
   json_annotation: ^4.9.0
   currency_picker: ^2.0.21
   firebase_app_check: ^0.3.2+10
-  awesome_notifications: ^0.10.1
+  flutter_local_notifications: ^19.5.0
 
 dev_dependencies:
   flutter_test:
