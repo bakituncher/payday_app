@@ -390,6 +390,9 @@ class MonthlySummaryCard extends ConsumerWidget {
       case 'biweekly':
       case 'fortnightly':
         return _convertToBiWeeklyCost(sub);
+      case 'semi-monthly':
+      case 'semimonthly':
+        return _convertToSemiMonthlyCost(sub);
       case 'monthly':
         return sub.monthlyCost;
       default:
@@ -428,6 +431,24 @@ class MonthlySummaryCard extends ConsumerWidget {
         return sub.amount / 6.5;
       case RecurrenceFrequency.yearly:
         return sub.amount / 26;
+    }
+  }
+
+  double _convertToSemiMonthlyCost(Subscription sub) {
+    // Semi-monthly = twice per month (24 periods per year)
+    switch (sub.frequency) {
+      case RecurrenceFrequency.daily:
+        return sub.amount * 15; // Approximate days per semi-monthly period
+      case RecurrenceFrequency.weekly:
+        return sub.amount * 2.17; // ~2.17 weeks per semi-monthly period
+      case RecurrenceFrequency.biweekly:
+        return sub.amount * 1.08; // 26 biweekly periods / 24 semi-monthly periods
+      case RecurrenceFrequency.monthly:
+        return sub.amount / 2; // Half of monthly cost
+      case RecurrenceFrequency.quarterly:
+        return sub.amount / 6; // 3 months / 6 semi-monthly periods
+      case RecurrenceFrequency.yearly:
+        return sub.amount / 24; // 24 semi-monthly periods per year
     }
   }
 }
