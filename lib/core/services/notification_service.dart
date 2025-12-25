@@ -126,11 +126,13 @@ class NotificationService {
 
   void _handleRemoteMessageNavigation(RemoteMessage message) {
     // Mesajın data kısmında 'route' anahtarı var mı?
-    // Örnek: { "route": "/subscriptions", "id": "123" }
+    // Örnek: { "route": "/subscriptions", "itemId": "123", "type": "bill" }
     if (message.data.containsKey('route')) {
       final String route = message.data['route'];
-      // İsteğe bağlı olarak id gibi parametreleri de alabilirsin
-      // final String? id = message.data['id'];
+
+      // NOT: Eğer ileride detay sayfalarına argüman (arguments) göndermek isterseniz
+      // message.data['itemId'] gibi değerleri buradan alıp pushNamed arguments parametresine ekleyebilirsiniz.
+      // Şimdilik genel rotalara yönlendirme yapıyoruz.
 
       // Biraz gecikme ekleyerek sayfanın hazır olmasını bekle (özellikle cold start için)
       Future.delayed(const Duration(milliseconds: 500), () {
@@ -140,7 +142,7 @@ class NotificationService {
   }
 
   void _navigateFromPayload(String payload) {
-    // Payload doğrudan bir route ise (örn: "/home")
+    // Payload doğrudan bir route ise (örn: "/home" veya "/premium")
     if (payload.startsWith('/')) {
       _navigatorKey?.currentState?.pushNamed(payload);
     } else {
@@ -196,7 +198,8 @@ class NotificationService {
             presentSound: true,
           ),
         ),
-        // Payload olarak gidilecek rotayı veriyoruz (varsa)
+        // Payload olarak Cloud Function'dan gelen 'route' bilgisini kullanıyoruz.
+        // Eğer route gelmezse varsayılan olarak '/home' rotasına git.
         payload: message.data['route'] ?? '/home',
       );
     }

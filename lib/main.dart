@@ -1,4 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart'; // Token ve Offset kaydı için
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
@@ -13,10 +13,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:payday/core/theme/app_theme.dart';
-import 'package:payday/features/home/screens/home_screen.dart';
-import 'package:payday/features/onboarding/screens/onboarding_screen.dart';
-import 'package:payday/features/subscriptions/screens/subscriptions_screen.dart';
-import 'package:payday/features/insights/screens/monthly_summary_screen.dart';
 import 'package:payday/core/providers/repository_providers.dart';
 import 'package:payday/core/providers/theme_providers.dart';
 import 'package:payday/core/providers/auth_providers.dart';
@@ -24,6 +20,15 @@ import 'package:payday/features/premium/providers/premium_providers.dart';
 import 'package:payday/core/services/data_migration_service.dart';
 import 'package:payday/core/repositories/local/local_user_settings_repository.dart';
 import 'package:payday/features/home/providers/home_providers.dart';
+
+// --- EKRAN IMPORTLARI ---
+import 'package:payday/features/home/screens/home_screen.dart';
+import 'package:payday/features/onboarding/screens/onboarding_screen.dart';
+import 'package:payday/features/subscriptions/screens/subscriptions_screen.dart';
+import 'package:payday/features/insights/screens/monthly_summary_screen.dart';
+// Bildirimlerden gelen rotalar için gerekli importlar:
+import 'package:payday/features/premium/screens/premium_paywall_screen.dart';
+import 'package:payday/features/transactions/screens/add_transaction_screen.dart';
 
 // Navigasyon işlemleri için Global Key (RouterContext olmadan yönlendirme için)
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -90,6 +95,7 @@ class _PaydayAppState extends ConsumerState<PaydayApp> {
 
   /// ✅ YENİ EKLENEN FONKSİYON
   /// Uygulama her açıldığında kullanıcının güncel saat dilimini kaydeder.
+  /// Cloud Function bu offset değerine göre bildirim gönderir.
   Future<void> _updateTimezone() async {
     // Auth provider'dan mevcut kullanıcıyı al (Async değil, cache'den okur)
     final user = ref.read(currentUserProvider).asData?.value;
@@ -182,12 +188,15 @@ class _PaydayAppState extends ConsumerState<PaydayApp> {
         FirebaseAnalyticsObserver(analytics: FirebaseAnalytics.instance),
       ],
       initialRoute: '/',
+      // 🚀 BİLDİRİM ROTALARI GÜNCELLENDİ
       routes: {
         '/': (context) => const SplashScreen(),
         '/onboarding': (context) => const OnboardingScreen(),
         '/home': (context) => const HomeScreen(),
         '/subscriptions': (context) => const SubscriptionsScreen(),
         '/monthly-summary': (context) => const MonthlySummaryScreen(),
+        '/premium': (context) => const PremiumPaywallScreen(), // Pazarlama bildirimi için
+        '/add-transaction': (context) => const AddTransactionScreen(), // Harcama girişi bildirimi için
       },
     );
   }
@@ -299,7 +308,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    // final isDark = theme.brightness == Brightness.dark; // Kullanılmıyorsa kaldırılabilir
     return Scaffold(
       backgroundColor: AppColors.getBackground(context),
       body: Center(child: CircularProgressIndicator()),
