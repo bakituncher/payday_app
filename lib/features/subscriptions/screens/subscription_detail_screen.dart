@@ -129,63 +129,55 @@ class SubscriptionDetailScreen extends ConsumerWidget {
                 children: [
                   // Cost Section
                   Container(
-                    padding: const EdgeInsets.all(AppSpacing.lg),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.lg,
+                      vertical: AppSpacing.md,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.getCardBackground(context),
                       borderRadius: BorderRadius.circular(AppRadius.lg),
                       boxShadow: AppColors.getCardShadow(context),
+                      border: Border.all(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? AppColors.getSubtle(context).withValues(alpha: 0.4)
+                            : AppColors.getSubtle(context).withValues(alpha: 0.15),
+                        width: 1,
+                      ),
                     ),
-                    child: Column(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  CurrencyFormatter.format(subscription.amount, currencyCode),
-                                  style: theme.textTheme.headlineMedium?.copyWith(
-                                    fontWeight: FontWeight.w800,
-                                    color: AppColors.getTextPrimary(context),
-                                  ),
-                                ),
-                                Text(
-                                  subscription.frequencyText,
-                                  style: theme.textTheme.bodyMedium?.copyWith(
-                                    color: AppColors.getTextSecondary(context),
-                                  ),
-                                ),
-                              ],
+                            Text(
+                              subscription.frequencyText,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: AppColors.getTextSecondary(context),
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: AppSpacing.md,
-                                vertical: AppSpacing.sm,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.primaryPink.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(AppRadius.md),
-                              ),
-                              child: Column(
-                                children: [
-                                  Text(
-                                    CurrencyFormatter.format(subscription.yearlyCost, currencyCode),
-                                    style: theme.textTheme.titleMedium?.copyWith(
-                                      fontWeight: FontWeight.w700,
-                                      color: AppColors.primaryPink,
-                                    ),
-                                  ),
-                                  Text(
-                                    '/year',
-                                    style: theme.textTheme.bodySmall?.copyWith(
-                                      color: AppColors.primaryPink,
-                                    ),
-                                  ),
-                                ],
+                            const SizedBox(height: 4),
+                            Text(
+                              CurrencyFormatter.format(subscription.amount, currencyCode),
+                              style: theme.textTheme.headlineMedium?.copyWith(
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.getTextPrimary(context),
                               ),
                             ),
                           ],
+                        ),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            gradient: AppColors.premiumGradient,
+                            borderRadius: BorderRadius.circular(AppRadius.md),
+                          ),
+                          child: const Icon(
+                            Icons.payments_rounded,
+                            color: Colors.white,
+                            size: 28,
+                          ),
                         ),
                       ],
                     ),
@@ -284,6 +276,8 @@ class SubscriptionDetailScreen extends ConsumerWidget {
                     child: Column(
                       children: [
                         _buildDetailRow('Category', subscription.category.name.toUpperCase(), subscription.categoryEmoji),
+                        const Divider(height: 24),
+                        _buildDetailRow('Annual Cost', CurrencyFormatter.format(subscription.yearlyCost, currencyCode), '💰', valueColor: AppColors.primaryPink),
                         const Divider(height: 24),
                         _buildDetailRow(
                           'Auto-Renewal',
