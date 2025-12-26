@@ -32,131 +32,129 @@ class _AppInfoScreenState extends ConsumerState<AppInfoScreen> {
       return;
     }
 
+    final TextEditingController confirmController = TextEditingController();
+
     return showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-          ),
-          title: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: AppColors.error.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                ),
-                child: const Icon(
-                  Icons.warning_rounded,
-                  color: AppColors.error,
-                  size: 24,
-                ),
+        bool isConfirmValid = false;
+
+        return StatefulBuilder(
+          builder: (context, setStateDialog) {
+            return AlertDialog(
+              backgroundColor:
+                  isDark ? AppColors.darkSurface : Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppRadius.lg),
               ),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(
-                child: Text(
-                  'Delete Account',
-                  style: TextStyle(
-                    color: isDark ? AppColors.darkTextPrimary : AppColors.darkCharcoal,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'You are about to delete your account. This action cannot be undone!',
+              title: Text(
+                'Delete account?',
                 style: TextStyle(
-                  color: isDark ? AppColors.darkTextPrimary : AppColors.darkCharcoal,
-                  fontSize: 16,
+                  color: isDark
+                      ? AppColors.darkTextPrimary
+                      : AppColors.darkCharcoal,
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              const SizedBox(height: AppSpacing.md),
-              Text(
-                'The following data will be permanently deleted:',
-                style: TextStyle(
-                  color: isDark ? AppColors.darkTextSecondary : AppColors.mediumGray,
-                  fontSize: 14,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              _buildDeleteWarningItem('All transactions and expenses'),
-              _buildDeleteWarningItem('Financial settings and preferences'),
-              _buildDeleteWarningItem('Account information'),
-              _buildDeleteWarningItem('Premium subscription status'),
-              const SizedBox(height: AppSpacing.md),
-              Container(
-                padding: const EdgeInsets.all(AppSpacing.md),
-                decoration: BoxDecoration(
-                  color: AppColors.error.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.info_outline_rounded,
-                      color: AppColors.error,
-                      size: 20,
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Your account and all related data will be permanently deleted. This action cannot be undone.',
+                    style: TextStyle(
+                      color: isDark
+                          ? AppColors.darkTextSecondary
+                          : AppColors.mediumGray,
+                      fontSize: 14,
                     ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Expanded(
-                      child: Text(
-                        'This action cannot be undone!',
-                        style: TextStyle(
-                          color: AppColors.error,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                        ),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  Text(
+                    'Type DELETE to confirm:',
+                    style: TextStyle(
+                      color: isDark
+                          ? AppColors.darkTextPrimary
+                          : AppColors.darkCharcoal,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  TextField(
+                    controller: confirmController,
+                    onChanged: (value) {
+                      setStateDialog(() {
+                        isConfirmValid = value.trim().toUpperCase() == 'DELETE';
+                      });
+                    },
+                    decoration: InputDecoration(
+                      hintText: 'DELETE',
+                      isDense: true,
+                      border: OutlineInputBorder(
+                        borderRadius:
+                            BorderRadius.circular(AppRadius.md),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'This is permanent and cannot be undone.',
+                    style: TextStyle(
+                      color: isDark
+                          ? AppColors.darkTextSecondary
+                          : AppColors.mediumGray,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(
-                'Cancel',
-                style: TextStyle(
-                  color: isDark ? AppColors.darkTextSecondary : AppColors.mediumGray,
-                  fontWeight: FontWeight.w600,
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text(
+                    'Cancel',
+                    style: TextStyle(
+                      color: isDark
+                          ? AppColors.darkTextSecondary
+                          : AppColors.mediumGray,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                _handleDeleteAccount();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.error,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.md),
+                ElevatedButton(
+                  onPressed: isConfirmValid
+                      ? () {
+                          Navigator.of(context).pop();
+                          _handleDeleteAccount();
+                        }
+                      : null,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.error,
+                    foregroundColor: Colors.white,
+                    disabledBackgroundColor:
+                        AppColors.error.withValues(alpha: 0.4),
+                    disabledForegroundColor: Colors.white70,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius:
+                          BorderRadius.circular(AppRadius.md),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.lg,
+                      vertical: AppSpacing.sm,
+                    ),
+                  ),
+                  child: const Text(
+                    'Delete',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.lg,
-                  vertical: AppSpacing.sm,
-                ),
-              ),
-              child: const Text(
-                'Delete Account',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
+              ],
+            );
+          },
         );
       },
     );
@@ -168,7 +166,7 @@ class _AppInfoScreenState extends ConsumerState<AppInfoScreen> {
       padding: const EdgeInsets.only(bottom: 6),
       child: Row(
         children: [
-          Icon(
+          const Icon(
             Icons.close_rounded,
             color: AppColors.error,
             size: 18,
@@ -178,7 +176,9 @@ class _AppInfoScreenState extends ConsumerState<AppInfoScreen> {
             child: Text(
               text,
               style: TextStyle(
-                color: isDark ? AppColors.darkTextSecondary : AppColors.mediumGray,
+                color: isDark
+                    ? AppColors.darkTextSecondary
+                    : AppColors.mediumGray,
                 fontSize: 14,
               ),
             ),
@@ -749,3 +749,4 @@ class AboutScreen extends StatelessWidget {
     );
   }
 }
+
