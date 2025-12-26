@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class RevenueCatService {
   // RevenueCat API Keys (.env dosyasından okunur)
@@ -85,6 +86,45 @@ class RevenueCatService {
       return customerInfo.entitlements.all[premiumEntitlementId]?.isActive ?? false;
     } catch (e) {
       return false;
+    }
+  }
+
+  /// Subscription yönetim ekranını açar (iOS & Android)
+  Future<void> showManagementUI() async {
+    try {
+      if (Platform.isIOS) {
+        // iOS için App Store subscription management
+        final url = Uri.parse('https://apps.apple.com/account/subscriptions');
+        if (await canLaunchUrl(url)) {
+          await launchUrl(url, mode: LaunchMode.externalApplication);
+        } else {
+          throw Exception('Could not open subscription management');
+        }
+      } else if (Platform.isAndroid) {
+        // Android için Play Store subscription management
+        final customerInfo = await Purchases.getCustomerInfo();
+        final managementUrl = customerInfo.managementURL;
+
+        if (managementUrl != null) {
+          final url = Uri.parse(managementUrl);
+          if (await canLaunchUrl(url)) {
+            await launchUrl(url, mode: LaunchMode.externalApplication);
+          } else {
+            throw Exception('Could not open subscription management');
+          }
+        } else {
+          // Fallback: Genel Play Store subscriptions sayfası
+          final url = Uri.parse('https://play.google.com/store/account/subscriptions');
+          if (await canLaunchUrl(url)) {
+            await launchUrl(url, mode: LaunchMode.externalApplication);
+          } else {
+            throw Exception('Could not open subscription management');
+          }
+        }
+      }
+    } catch (e) {
+      print('RC Management UI Error: $e');
+      throw e;
     }
   }
 }
