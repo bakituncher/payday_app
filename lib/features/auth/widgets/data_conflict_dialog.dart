@@ -4,20 +4,17 @@ import 'package:payday/core/theme/app_theme.dart';
 enum DataConflictChoice {
   keepLocal,
   keepRemote,
-  cancel,
 }
 
 class DataConflictDialog extends StatelessWidget {
   final bool hasLocalData;
   final bool hasRemoteData;
-  final VoidCallback onCancel;
   final Function(DataConflictChoice) onChoiceMade;
 
   const DataConflictDialog({
     super.key,
     required this.hasLocalData,
     required this.hasRemoteData,
-    required this.onCancel,
     required this.onChoiceMade,
   });
 
@@ -119,19 +116,6 @@ class DataConflictDialog extends StatelessWidget {
                     color: isDark ? AppColors.darkBorder : AppColors.lightGray,
                   ),
                 ),
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // Cancel
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                onCancel();
-              },
-              child: Text(
-                'Cancel',
-                style: TextStyle(color: subtleColor),
               ),
             ),
           ],

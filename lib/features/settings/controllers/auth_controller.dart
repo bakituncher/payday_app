@@ -32,8 +32,8 @@ class AuthController {
 
       final targetUserId = userCredential.user!.uid;
 
-      // Check for data conflicts
-      if (wasAnonymous && !userCredential.user!.isAnonymous) {
+      // ✅ Critical Fix: Only check conflict if user ID changed AND was anonymous
+      if (wasAnonymous && sourceUserId != targetUserId) {
         final conflictResult = await _conflictService.checkForConflict(
           localUserId: sourceUserId,
           remoteUserId: targetUserId,
@@ -42,18 +42,12 @@ class AuthController {
         debugPrint('📊 Conflict Result: $conflictResult');
 
         if (conflictResult.hasConflict) {
-          // Show conflict resolution dialog
+          // Show conflict resolution dialog (no cancel option - user already signed in)
           final choice = await _showDataConflictDialog(
             hasLocalData: conflictResult.hasLocalData,
             hasRemoteData: conflictResult.hasRemoteData,
           );
 
-          if (choice == DataConflictChoice.cancel) {
-            // User canceled - sign back out and return to anonymous
-            await authService.signOut();
-            await authService.signInAnonymously();
-            return null;
-          }
 
           if (choice == DataConflictChoice.keepLocal) {
             // Delete remote data and migrate local to cloud
@@ -94,8 +88,8 @@ class AuthController {
 
       final targetUserId = userCredential.user!.uid;
 
-      // Check for data conflicts
-      if (wasAnonymous && !userCredential.user!.isAnonymous) {
+      // ✅ Critical Fix: Only check conflict if user ID changed AND was anonymous
+      if (wasAnonymous && sourceUserId != targetUserId) {
         final conflictResult = await _conflictService.checkForConflict(
           localUserId: sourceUserId,
           remoteUserId: targetUserId,
@@ -104,18 +98,12 @@ class AuthController {
         debugPrint('📊 Conflict Result: $conflictResult');
 
         if (conflictResult.hasConflict) {
-          // Show conflict resolution dialog
+          // Show conflict resolution dialog (no cancel option - user already signed in)
           final choice = await _showDataConflictDialog(
             hasLocalData: conflictResult.hasLocalData,
             hasRemoteData: conflictResult.hasRemoteData,
           );
 
-          if (choice == DataConflictChoice.cancel) {
-            // User canceled - sign back out and return to anonymous
-            await authService.signOut();
-            await authService.signInAnonymously();
-            return null;
-          }
 
           if (choice == DataConflictChoice.keepLocal) {
             // Delete remote data and migrate local to cloud
@@ -205,14 +193,11 @@ class AuthController {
 
     await showDialog<void>(
       context: context,
-      barrierDismissible: false,
+      barrierDismissible: false, // ✅ User must make a choice
       builder: (BuildContext dialogContext) {
         return DataConflictDialog(
           hasLocalData: hasLocalData,
           hasRemoteData: hasRemoteData,
-          onCancel: () {
-            choice = DataConflictChoice.cancel;
-          },
           onChoiceMade: (selectedChoice) {
             choice = selectedChoice;
             Navigator.of(dialogContext).pop();
@@ -221,7 +206,8 @@ class AuthController {
       },
     );
 
-    return choice ?? DataConflictChoice.cancel;
+    // Should never be null since dialog is not dismissible
+    return choice ?? DataConflictChoice.keepLocal;
   }
 
   /// Migrate data from anonymous to authenticated user
