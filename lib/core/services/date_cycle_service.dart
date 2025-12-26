@@ -14,6 +14,13 @@ class DateCycleService {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
 
+    // Semi-Monthly özel durumu: Her zaman bugünün tarihine göre hesapla
+    // (15. gün ve ayın son günü sabit olduğu için mevcut payday önemli değil)
+    if (payCycle == 'Semi-Monthly') {
+      final nextDate = _calculateNextSemiMonthlyCalendarDate(today);
+      return _adjustForWeekend(nextDate);
+    }
+
     // Normalize current payday to remove time components for comparison
     DateTime basePayday = DateTime(currentPayday.year, currentPayday.month, currentPayday.day);
 
@@ -33,11 +40,6 @@ class DateCycleService {
       case 'Fortnightly':
         nextDate = _calculateNextPeriodicDate(basePayday, today, 14);
         break;
-      case 'Semi-Monthly':
-        // Deterministic calendar-based semi-monthly:
-        // Periods are [1-15] and [16-lastDay].
-        nextDate = _calculateNextSemiMonthlyCalendarDate(today);
-        break;
       case 'Monthly':
         nextDate = _calculateNextMonthlyDate(basePayday, today);
         break;
@@ -51,32 +53,27 @@ class DateCycleService {
 
   /// Calendar-based semi-monthly next payday.
   ///
-  /// Rule:
-  /// - If today is on/before 15th => next is 15th (or today if it's 15th)
-  /// - If today is after 15th => next is last day of month
-  /// - If today is last day => next becomes 15th of next month
+  /// Rule (Semi-Monthly: 15. gün ve ayın son günü):
+  /// - Bugün 15'ten önceyse => bu ayın 15'i
+  /// - Bugün 15 ile son gün arasındaysa => bu ayın son günü
+  /// - Bugün ayın son günüyse veya sonrasıysa => gelecek ayın 15'i
   ///
   /// This avoids drift in 28/29/30/31 day months.
   static DateTime _calculateNextSemiMonthlyCalendarDate(DateTime today) {
     final t = DateTime(today.year, today.month, today.day);
     final lastDay = DateTime(t.year, t.month + 1, 0).day;
 
-    // If we're before the 15th, next is 15th.
+    // Bugün 15'ten önceyse, bu ayın 15'i
     if (t.day < 15) {
       return DateTime(t.year, t.month, 15);
     }
 
-    // If today is exactly the 15th, it's a valid payday.
-    if (t.day == 15) {
-      return t;
-    }
-
-    // If we're between 16 and (lastDay-1), next is end of month.
+    // Bugün 15 ile son gün arasındaysa, bu ayın son günü
     if (t.day < lastDay) {
       return DateTime(t.year, t.month, lastDay);
     }
 
-    // If today is the last day, move to 15th of next month.
+    // Bugün ayın son günüyse veya sonrasıysa, gelecek ayın 15'i
     final nextMonth = DateTime(t.year, t.month + 1, 1);
     return DateTime(nextMonth.year, nextMonth.month, 15);
   }

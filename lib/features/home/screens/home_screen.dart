@@ -31,7 +31,7 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   bool _showPayday = true;
-  late final _timer = Stream.periodic(const Duration(seconds: 4), (count) => count % 2 == 0);
+  late final _timer = Stream.periodic(const Duration(seconds: 4), (count) => count % 2 == 0).asBroadcastStream();
 
   @override
   void initState() {

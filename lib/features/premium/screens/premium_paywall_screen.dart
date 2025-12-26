@@ -179,12 +179,12 @@ class _PremiumPaywallScreenState extends ConsumerState<PremiumPaywallScreen>
   Widget _buildAlreadyPremiumView(ThemeData theme) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32.0),
+        padding: const EdgeInsets.all(24.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
@@ -199,34 +199,36 @@ class _PremiumPaywallScreenState extends ConsumerState<PremiumPaywallScreen>
               ),
               child: const Icon(
                 FontAwesomeIcons.crown,
-                size: 64,
+                size: 56,
                 color: Color(0xFFFFD700), // Altın rengi
               ),
             ).animate().scale(duration: 800.ms, curve: Curves.elasticOut),
 
-            const SizedBox(height: 32),
+            const SizedBox(height: 24),
 
             Text(
               'You are Premium!',
               style: theme.textTheme.headlineMedium?.copyWith(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
+                fontSize: 26,
               ),
               textAlign: TextAlign.center,
             ).animate().fadeIn().slideY(begin: 0.2, end: 0),
 
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
 
             Text(
               'Thank you for supporting Payday.\nEnjoy your ad-free experience.',
               style: theme.textTheme.bodyLarge?.copyWith(
                 color: Colors.white.withValues(alpha: 0.8),
                 height: 1.5,
+                fontSize: 15,
               ),
               textAlign: TextAlign.center,
             ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.2, end: 0),
 
-            const SizedBox(height: 48),
+            const SizedBox(height: 36),
 
             PaydayButton(
               text: 'Awesome!',
@@ -234,6 +236,53 @@ class _PremiumPaywallScreenState extends ConsumerState<PremiumPaywallScreen>
               onPressed: () => Navigator.pop(context),
               gradient: AppColors.premiumGradient,
             ).animate().fadeIn(delay: 500.ms),
+
+            const SizedBox(height: 16),
+
+            TextButton(
+              onPressed: () async {
+                HapticFeedback.lightImpact();
+                try {
+                  final service = ref.read(revenueCatServiceProvider);
+                  await service.showManagementUI();
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: const Text('Could not open subscription management.'),
+                        backgroundColor: Colors.red,
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    );
+                  }
+                }
+              },
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.settings,
+                    size: 18,
+                    color: Colors.white.withValues(alpha: 0.8),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Manage Subscription',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: Colors.white.withValues(alpha: 0.8),
+                      fontWeight: FontWeight.w600,
+                      fontSize: 15,
+                    ),
+                  ),
+                ],
+              ),
+            ).animate().fadeIn(delay: 600.ms),
           ],
         ),
       ),
@@ -275,7 +324,7 @@ class _PremiumPaywallScreenState extends ConsumerState<PremiumPaywallScreen>
           return SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(24, 48, 24, 24),
+              padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
               child: Column(
                 children: [
                   _buildPremiumBadge()
@@ -283,7 +332,7 @@ class _PremiumPaywallScreenState extends ConsumerState<PremiumPaywallScreen>
                       .fadeIn(delay: 100.ms)
                       .scale(delay: 100.ms, duration: 600.ms, curve: Curves.elasticOut),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 12),
 
                   Text(
                     'Remove Ads',
@@ -291,36 +340,38 @@ class _PremiumPaywallScreenState extends ConsumerState<PremiumPaywallScreen>
                       color: Colors.white,
                       fontWeight: FontWeight.w800,
                       letterSpacing: -0.5,
+                      fontSize: 26,
                     ),
                     textAlign: TextAlign.center,
                   ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.2, end: 0),
 
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 4),
 
                   Text(
                     'Focus on your finances without distractions',
-                    style: theme.textTheme.bodyLarge?.copyWith(
+                    style: theme.textTheme.bodyMedium?.copyWith(
                       color: Colors.white.withValues(alpha: 0.7),
                       fontWeight: FontWeight.w400,
+                      fontSize: 14,
                     ),
                     textAlign: TextAlign.center,
                   ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.2, end: 0),
 
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 16),
 
                   _buildFeaturesList()
                       .animate()
                       .fadeIn(delay: 400.ms)
                       .slideY(begin: 0.3, end: 0),
 
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 16),
 
                   _buildPricingCards(currentOffering)
                       .animate()
                       .fadeIn(delay: 500.ms)
                       .scale(delay: 500.ms),
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
 
                   PaydayButton(
                     text: _isProcessing ? 'Processing...' : 'Subscribe Now',
@@ -332,52 +383,58 @@ class _PremiumPaywallScreenState extends ConsumerState<PremiumPaywallScreen>
                     gradient: AppColors.premiumGradient,
                   ).animate().fadeIn(delay: 600.ms).slideY(begin: 0.2, end: 0),
 
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 8),
 
                   TextButton(
                     onPressed: _isProcessing ? null : _restorePurchases,
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      minimumSize: const Size(0, 0),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
                     child: Text(
                       'Restore Purchases',
-                      style: theme.textTheme.bodyMedium?.copyWith(
+                      style: theme.textTheme.bodySmall?.copyWith(
                         color: Colors.white.withValues(alpha: 0.7),
                         fontWeight: FontWeight.w500,
+                        fontSize: 13,
                       ),
                     ),
                   ).animate().fadeIn(delay: 700.ms),
 
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 4),
 
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
                     child: Text(
                       'Subscription automatically renews unless auto-renew is turned off at least 24-hours before the end of the current period.',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: Colors.white.withValues(alpha: 0.5),
-                        fontSize: 11,
+                        fontSize: 10,
                       ),
                       textAlign: TextAlign.center,
                     ),
                   ).animate().fadeIn(delay: 800.ms),
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),
 
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       _buildLink('Terms of Service'),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 6),
                       Text(
                         '•',
                         style: TextStyle(
                           color: Colors.white.withValues(alpha: 0.5),
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 6),
                       _buildLink('Privacy Policy'),
                     ],
                   ).animate().fadeIn(delay: 900.ms),
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),
                 ],
               ),
             ),
@@ -467,27 +524,27 @@ class _PremiumPaywallScreenState extends ConsumerState<PremiumPaywallScreen>
 
   Widget _buildPremiumBadge() {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         gradient: AppColors.premiumGradient,
         boxShadow: [
           BoxShadow(
             color: AppColors.primaryPink.withValues(alpha: 0.5),
-            blurRadius: 28,
+            blurRadius: 20,
             spreadRadius: 2,
           ),
         ],
       ),
       child: Container(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           color: Colors.white.withValues(alpha: 0.2),
         ),
         child: const FaIcon(
           FontAwesomeIcons.rectangleAd,
-          size: 44,
+          size: 36,
           color: Colors.white,
         ),
       ),
@@ -509,11 +566,11 @@ class _PremiumPaywallScreenState extends ConsumerState<PremiumPaywallScreen>
         final feature = entry.value;
 
         return Container(
-          margin: const EdgeInsets.only(bottom: 16),
-          padding: const EdgeInsets.all(18),
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             color: Colors.white.withValues(alpha: 0.05),
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(14),
             border: Border.all(
               color: Colors.white.withValues(alpha: 0.1),
               width: 1,
@@ -522,14 +579,14 @@ class _PremiumPaywallScreenState extends ConsumerState<PremiumPaywallScreen>
           child: Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(13),
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   gradient: AppColors.premiumGradient,
-                  borderRadius: BorderRadius.circular(13),
+                  borderRadius: BorderRadius.circular(10),
                   boxShadow: [
                     BoxShadow(
                       color: AppColors.primaryPink.withValues(alpha: 0.3),
-                      blurRadius: 12,
+                      blurRadius: 10,
                       spreadRadius: 0,
                     ),
                   ],
@@ -537,10 +594,10 @@ class _PremiumPaywallScreenState extends ConsumerState<PremiumPaywallScreen>
                 child: FaIcon(
                   feature['icon'] as IconData,
                   color: Colors.white,
-                  size: 19,
+                  size: 16,
                 ),
               ),
-              const SizedBox(width: 15),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -632,7 +689,7 @@ class _PremiumPaywallScreenState extends ConsumerState<PremiumPaywallScreen>
               setState(() => _selectedPackage = offering.annual);
             },
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 10),
         ],
 
         if (offering.monthly != null)
@@ -685,10 +742,10 @@ class _PremiumPaywallScreenState extends ConsumerState<PremiumPaywallScreen>
       child: Stack(
         children: [
           Container(
-            padding: const EdgeInsets.all(18),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.05),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(14),
               border: Border.all(
                 color: Colors.white.withValues(alpha: 0.1),
                 width: 2,
@@ -715,7 +772,7 @@ class _PremiumPaywallScreenState extends ConsumerState<PremiumPaywallScreen>
               child: Container(
                 decoration: BoxDecoration(
                   gradient: AppColors.premiumGradient,
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(14),
                   boxShadow: [
                     BoxShadow(
                       color: AppColors.primaryPink.withValues(alpha: 0.3),
@@ -736,7 +793,7 @@ class _PremiumPaywallScreenState extends ConsumerState<PremiumPaywallScreen>
               curve: curve,
               opacity: isSelected ? 1.0 : 0.0,
               child: Padding(
-                padding: const EdgeInsets.all(18),
+                padding: const EdgeInsets.all(16),
                 child: contentWidget,
               ),
             ),

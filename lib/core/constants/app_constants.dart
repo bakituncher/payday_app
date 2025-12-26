@@ -29,12 +29,14 @@ class AppConstants {
   static const String payCycleWeekly = 'Weekly';
   static const String payCycleBiWeekly = 'Bi-Weekly';
   static const String payCycleFortnightly = 'Fortnightly';
+  static const String payCycleSemiMonthly = 'Semi-Monthly';
   static const String payCycleMonthly = 'Monthly';
 
   // Pay Cycle Options for UI
   static const List<String> payCycleOptions = [
     payCycleWeekly,
     payCycleBiWeekly,
+    payCycleSemiMonthly,
     payCycleMonthly,
   ];
 
@@ -43,6 +45,7 @@ class AppConstants {
     payCycleWeekly: 7,
     payCycleBiWeekly: 14,
     payCycleFortnightly: 14,
+    payCycleSemiMonthly: 15, // Approximate, twice per month
     payCycleMonthly: 30, // Approximate, will calculate actual
   };
 

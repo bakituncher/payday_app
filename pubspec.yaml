@@ -49,9 +49,10 @@ dependencies:
   flutter_svg: ^2.0.10+1
 
   # Utilities
-  intl: ^0.19.0
+  intl: ^0.20.0
   uuid: ^4.5.1
   shared_preferences: ^2.3.2
+  url_launcher: ^6.3.1
 
   # Charts
   fl_chart: ^0.69.2
@@ -61,9 +62,7 @@ dependencies:
   json_annotation: ^4.9.0
   currency_picker: ^2.0.21
   firebase_app_check: ^0.3.2+10
-  flutter_local_notifications: ^17.2.2
-  timezone: ^0.9.2
-  flutter_timezone: ^3.0.0
+  flutter_local_notifications: ^19.5.0
 
 dev_dependencies:
   flutter_test:

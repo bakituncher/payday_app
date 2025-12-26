@@ -38,6 +38,18 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   void initState() {
     super.initState();
     _selectedCurrency = CurrencyFormatter.getLocalCurrencyCode();
+
+    // Varsayılan ödeme döngüsü için başlangıç tarihini ayarla
+    if (_selectedPayCycle == AppConstants.payCycleSemiMonthly) {
+      _nextPayday = _calculateNextSemiMonthlyPayday();
+    } else {
+      final daysToAdd = _selectedPayCycle == AppConstants.payCycleWeekly
+          ? 7
+          : _selectedPayCycle == AppConstants.payCycleBiWeekly
+              ? 14
+              : 30;
+      _nextPayday = DateTime.now().add(Duration(days: daysToAdd));
+    }
   }
 
   @override
@@ -46,6 +58,28 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     _incomeController.dispose();
     _initialBalanceController.dispose();
     super.dispose();
+  }
+
+  // Semi-monthly için sonraki maaş gününü hesapla (15. gün veya ayın son günü)
+  DateTime _calculateNextSemiMonthlyPayday() {
+    final now = DateTime.now();
+    final currentDay = now.day;
+
+    // Ayın son gününü bul
+    final lastDayOfMonth = DateTime(now.year, now.month + 1, 0).day;
+
+    // Eğer bugün 15'ten önceyse, bu ayın 15'i
+    if (currentDay < 15) {
+      return DateTime(now.year, now.month, 15);
+    }
+    // Eğer bugün 15 ile son gün arasındaysa, bu ayın son günü
+    else if (currentDay < lastDayOfMonth) {
+      return DateTime(now.year, now.month, lastDayOfMonth);
+    }
+    // Eğer bugün son günse veya sonrasıysa, gelecek ayın 15'i
+    else {
+      return DateTime(now.year, now.month + 1, 15);
+    }
   }
 
   Future<void> _selectDate(BuildContext context) async {
@@ -315,13 +349,26 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           Text("HOW OFTEN?", style: theme.textTheme.labelSmall?.copyWith(fontWeight: FontWeight.bold, letterSpacing: 1.2, color: AppColors.mediumGray)),
           const SizedBox(height: 12),
 
-          Row(
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
             children: [
-              Expanded(child: _buildCompactCycleOption(theme, AppConstants.payCycleWeekly, 'Weekly', '7d')),
-              const SizedBox(width: 12),
-              Expanded(child: _buildCompactCycleOption(theme, AppConstants.payCycleBiWeekly, 'Bi-Weekly', '14d')),
-              const SizedBox(width: 12),
-              Expanded(child: _buildCompactCycleOption(theme, AppConstants.payCycleMonthly, 'Monthly', '30d')),
+              SizedBox(
+                width: (MediaQuery.of(context).size.width - 96) / 2,
+                child: _buildCompactCycleOption(theme, AppConstants.payCycleWeekly, 'Weekly', '7d'),
+              ),
+              SizedBox(
+                width: (MediaQuery.of(context).size.width - 96) / 2,
+                child: _buildCompactCycleOption(theme, AppConstants.payCycleBiWeekly, 'Bi-Weekly', '14d'),
+              ),
+              SizedBox(
+                width: (MediaQuery.of(context).size.width - 96) / 2,
+                child: _buildCompactCycleOption(theme, AppConstants.payCycleSemiMonthly, 'Semi-Monthly', '15d'),
+              ),
+              SizedBox(
+                width: (MediaQuery.of(context).size.width - 96) / 2,
+                child: _buildCompactCycleOption(theme, AppConstants.payCycleMonthly, 'Monthly', '30d'),
+              ),
             ],
           ).animate().fadeIn(delay: 200.ms),
 
@@ -378,7 +425,22 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     return GestureDetector(
       onTap: () {
         HapticFeedback.lightImpact();
-        setState(() => _selectedPayCycle = value);
+        setState(() {
+          _selectedPayCycle = value;
+
+          // Semi-monthly seçildiğinde otomatik maaş gününü ayarla
+          if (value == AppConstants.payCycleSemiMonthly) {
+            _nextPayday = _calculateNextSemiMonthlyPayday();
+          } else {
+            // Diğer döngüler için varsayılan hesaplama
+            final daysToAdd = value == AppConstants.payCycleWeekly
+                ? 7
+                : value == AppConstants.payCycleBiWeekly
+                    ? 14
+                    : 30;
+            _nextPayday = DateTime.now().add(Duration(days: daysToAdd));
+          }
+        });
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),

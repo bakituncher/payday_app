@@ -34,7 +34,7 @@ class SubscriptionDetailScreen extends ConsumerWidget {
         slivers: [
           // App Bar
           SliverAppBar(
-            expandedHeight: 200,
+            expandedHeight: 160,
             pinned: true,
             backgroundColor: AppColors.getBackground(context),
             elevation: 0,
@@ -57,24 +57,10 @@ class SubscriptionDetailScreen extends ConsumerWidget {
                   color: Colors.white.withValues(alpha: 0.9),
                   borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
-                child: PopupMenuButton<String>(
-                  icon: Icon(Icons.more_vert_rounded, color: AppColors.darkCharcoal),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.md),
-                  ),
-                  itemBuilder: (context) => [
-                    const PopupMenuItem(value: 'edit', child: Text('Edit')),
-                    const PopupMenuItem(value: 'pause', child: Text('Pause')),
-                    const PopupMenuItem(
-                      value: 'cancel',
-                      child: Text('Cancel Subscription', style: TextStyle(color: AppColors.error)),
-                    ),
-                    const PopupMenuItem(
-                      value: 'delete',
-                      child: Text('Delete', style: TextStyle(color: AppColors.error)),
-                    ),
-                  ],
-                  onSelected: (value) => _handleMenuAction(context, ref, value),
+                child: IconButton(
+                  icon: const Icon(Icons.edit_rounded),
+                  onPressed: () => _handleMenuAction(context, ref, 'edit'),
+                  color: AppColors.darkCharcoal,
                 ),
               ),
             ],
@@ -84,49 +70,51 @@ class SubscriptionDetailScreen extends ConsumerWidget {
                   gradient: AppColors.premiumGradient,
                 ),
                 child: SafeArea(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const SizedBox(height: 40),
-                      Container(
-                        width: 80,
-                        height: 80,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(AppRadius.lg),
-                        ),
-                        child: Center(
-                          child: Text(
-                            subscription.emoji,
-                            style: const TextStyle(fontSize: 40),
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Container(
+                          width: 60,
+                          height: 60,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(AppRadius.md),
                           ),
-                        ),
-                      ).animate().scale(duration: 400.ms, curve: Curves.elasticOut),
-                      const SizedBox(height: AppSpacing.md),
-                      Text(
-                        subscription.name,
-                        style: theme.textTheme.headlineSmall?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ).animate().fadeIn(delay: 100.ms),
-                      const SizedBox(height: 4),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(AppRadius.round),
-                        ),
-                        child: Text(
-                          subscription.status.name.toUpperCase(),
-                          style: const TextStyle(
+                          child: Center(
+                            child: Text(
+                              subscription.emoji,
+                              style: const TextStyle(fontSize: 32),
+                            ),
+                          ),
+                        ).animate().scale(duration: 400.ms, curve: Curves.elasticOut),
+                        const SizedBox(height: AppSpacing.sm),
+                        Text(
+                          subscription.name,
+                          style: theme.textTheme.titleLarge?.copyWith(
                             color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
                           ),
-                        ),
-                      ).animate().fadeIn(delay: 150.ms),
-                    ],
+                        ).animate().fadeIn(delay: 100.ms),
+                        const SizedBox(height: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(AppRadius.round),
+                          ),
+                          child: Text(
+                            subscription.status.name.toUpperCase(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 10,
+                            ),
+                          ),
+                        ).animate().fadeIn(delay: 150.ms),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -141,63 +129,55 @@ class SubscriptionDetailScreen extends ConsumerWidget {
                 children: [
                   // Cost Section
                   Container(
-                    padding: const EdgeInsets.all(AppSpacing.lg),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.lg,
+                      vertical: AppSpacing.md,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.getCardBackground(context),
                       borderRadius: BorderRadius.circular(AppRadius.lg),
                       boxShadow: AppColors.getCardShadow(context),
+                      border: Border.all(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? AppColors.getSubtle(context).withValues(alpha: 0.4)
+                            : AppColors.getSubtle(context).withValues(alpha: 0.15),
+                        width: 1,
+                      ),
                     ),
-                    child: Column(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  CurrencyFormatter.format(subscription.amount, currencyCode),
-                                  style: theme.textTheme.headlineMedium?.copyWith(
-                                    fontWeight: FontWeight.w800,
-                                    color: AppColors.getTextPrimary(context),
-                                  ),
-                                ),
-                                Text(
-                                  subscription.frequencyText,
-                                  style: theme.textTheme.bodyMedium?.copyWith(
-                                    color: AppColors.getTextSecondary(context),
-                                  ),
-                                ),
-                              ],
+                            Text(
+                              subscription.frequencyText,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: AppColors.getTextSecondary(context),
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: AppSpacing.md,
-                                vertical: AppSpacing.sm,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.primaryPink.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(AppRadius.md),
-                              ),
-                              child: Column(
-                                children: [
-                                  Text(
-                                    CurrencyFormatter.format(subscription.yearlyCost, currencyCode),
-                                    style: theme.textTheme.titleMedium?.copyWith(
-                                      fontWeight: FontWeight.w700,
-                                      color: AppColors.primaryPink,
-                                    ),
-                                  ),
-                                  Text(
-                                    '/year',
-                                    style: theme.textTheme.bodySmall?.copyWith(
-                                      color: AppColors.primaryPink,
-                                    ),
-                                  ),
-                                ],
+                            const SizedBox(height: 4),
+                            Text(
+                              CurrencyFormatter.format(subscription.amount, currencyCode),
+                              style: theme.textTheme.headlineMedium?.copyWith(
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.getTextPrimary(context),
                               ),
                             ),
                           ],
+                        ),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            gradient: AppColors.premiumGradient,
+                            borderRadius: BorderRadius.circular(AppRadius.md),
+                          ),
+                          child: const Icon(
+                            Icons.payments_rounded,
+                            color: Colors.white,
+                            size: 28,
+                          ),
                         ),
                       ],
                     ),
@@ -297,7 +277,7 @@ class SubscriptionDetailScreen extends ConsumerWidget {
                       children: [
                         _buildDetailRow('Category', subscription.category.name.toUpperCase(), subscription.categoryEmoji),
                         const Divider(height: 24),
-                        _buildDetailRow('Currency', subscription.currency, '💵'),
+                        _buildDetailRow('Annual Cost', CurrencyFormatter.format(subscription.yearlyCost, currencyCode), '💰', valueColor: AppColors.primaryPink),
                         const Divider(height: 24),
                         _buildDetailRow(
                           'Auto-Renewal',
@@ -319,106 +299,31 @@ class SubscriptionDetailScreen extends ConsumerWidget {
 
                   const SizedBox(height: AppSpacing.lg),
 
-                  // Auto-renew info near billing
-                  _buildActionInfoRow(
-                    context,
-                    icon: Icons.autorenew_rounded,
-                    label: 'Auto-Renewal',
-                    value: subscription.autoRenew ? 'On' : 'Off',
-                    valueColor: subscription.autoRenew ? AppColors.success : AppColors.error,
-                  ).animate().fadeIn(duration: 300.ms, delay: 320.ms),
-                  const SizedBox(height: AppSpacing.sm),
-                  _buildActionInfoRow(
-                    context,
-                    icon: Icons.calendar_today_rounded,
-                    label: 'Next Billing',
-                    value: '${DateFormat('MMM d, y').format(subscription.nextBillingDate)}${subscription.autoRenew ? '' : ' (Ends)'}',
-                    valueColor: AppColors.getTextPrimary(context),
-                  ).animate().fadeIn(duration: 300.ms, delay: 330.ms),
-
-                  const SizedBox(height: AppSpacing.lg),
-
-                  // Quick Actions
-                  Text(
-                    'Quick Actions',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.getTextPrimary(context),
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-
+                  // Action Buttons
                   Row(
                     children: [
                       Expanded(
-                        child: _buildActionButton(
-                          context,
-                          icon: Icons.edit_rounded,
-                          label: 'Edit',
-                          onTap: () => _handleMenuAction(context, ref, 'edit'),
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.sm),
-                      Expanded(
-                        child: _buildActionButton(
-                          context,
-                          icon: subscription.status == SubscriptionStatus.active
-                              ? Icons.pause_rounded
-                              : Icons.play_arrow_rounded,
-                          label: subscription.status == SubscriptionStatus.active
-                              ? 'Pause'
-                              : 'Resume',
-                          onTap: () => _handleMenuAction(
-                            context,
-                            ref,
-                            subscription.status == SubscriptionStatus.active ? 'pause' : 'resume',
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.sm),
-                      Expanded(
-                        child: _buildActionButton(
-                          context,
+                        child: PaydayButton(
+                          text: 'Cancel',
                           icon: Icons.cancel_outlined,
-                          label: 'Cancel',
-                          color: AppColors.error,
-                          onTap: () => _handleMenuAction(context, ref, 'cancel'),
+                          backgroundColor: AppColors.warning,
+                          onPressed: () => _handleMenuAction(context, ref, 'cancel'),
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.md),
+                      Expanded(
+                        child: PaydayButton(
+                          text: 'Delete',
+                          icon: Icons.delete_outline_rounded,
+                          backgroundColor: AppColors.error,
+                          onPressed: () => _handleMenuAction(context, ref, 'delete'),
                         ),
                       ),
                     ],
                   ).animate().fadeIn(duration: 300.ms, delay: 350.ms),
 
-                  const SizedBox(height: AppSpacing.lg),
 
-                  // AutoRenew toggle action
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
-                    child: PaydayButton(
-                      text: subscription.autoRenew ? 'Cancel Subscription' : 'Resume Subscription',
-                      icon: subscription.autoRenew ? Icons.cancel_outlined : Icons.play_arrow_rounded,
-                      backgroundColor: subscription.autoRenew ? AppColors.error : AppColors.success,
-                      onPressed: () async {
-                        final updatedSub = subscription.copyWith(
-                          autoRenew: !subscription.autoRenew,
-                          updatedAt: DateTime.now(),
-                        );
-
-                        await ref.read(subscriptionNotifierProvider.notifier).updateSubscription(updatedSub);
-
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(updatedSub.autoRenew
-                                  ? 'Subscription resumed'
-                                  : 'Subscription will end after this period'),
-                            ),
-                          );
-                        }
-                      },
-                    ),
-                  ).animate().fadeIn(duration: 300.ms, delay: 360.ms),
-
-                  const SizedBox(height: 100),
+                  const SizedBox(height: 120),
                 ],
               ),
             ),
@@ -454,86 +359,6 @@ class SubscriptionDetailScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildActionInfoRow(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-    required String value,
-    Color? valueColor,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-      decoration: BoxDecoration(
-        color: AppColors.getCardBackground(context),
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        boxShadow: AppColors.getCardShadow(context),
-        border: Border.all(color: AppColors.getBorder(context)),
-      ),
-      child: Row(
-        children: [
-          const SizedBox(width: AppSpacing.md),
-          Icon(icon, color: AppColors.primaryPink),
-          const SizedBox(width: AppSpacing.sm),
-          Text(
-            label,
-            style: TextStyle(
-              color: AppColors.getTextSecondary(context),
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const Spacer(),
-          Padding(
-            padding: const EdgeInsets.only(right: AppSpacing.md),
-            child: Text(
-              value,
-              style: TextStyle(
-                color: valueColor ?? AppColors.getTextPrimary(context),
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActionButton(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-    Color? color,
-  }) {
-    final buttonColor = color ?? AppColors.primaryPink;
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        onTap();
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
-        decoration: BoxDecoration(
-          color: buttonColor.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-        ),
-        child: Column(
-          children: [
-            Icon(icon, color: buttonColor),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                color: buttonColor,
-                fontWeight: FontWeight.w600,
-                fontSize: 12,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   void _handleMenuAction(BuildContext context, WidgetRef ref, String action) async {
     // userId'yi abonelik nesnesinden alıyoruz
     final userId = subscription.userId;
@@ -547,36 +372,6 @@ class SubscriptionDetailScreen extends ConsumerWidget {
             ),
           ),
         );
-        break;
-
-      case 'pause':
-        // userId parametresini ekledik
-        await ref.read(subscriptionNotifierProvider.notifier).pauseSubscription(subscription.id, userId);
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('${subscription.name} paused'),
-              backgroundColor: AppColors.warning,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-          Navigator.of(context).pop();
-        }
-        break;
-
-      case 'resume':
-        // userId parametresini ekledik
-        await ref.read(subscriptionNotifierProvider.notifier).resumeSubscription(subscription.id, userId);
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('${subscription.name} resumed'),
-              backgroundColor: AppColors.success,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-          Navigator.of(context).pop();
-        }
         break;
 
       case 'cancel':
@@ -613,11 +408,11 @@ class SubscriptionDetailScreen extends ConsumerWidget {
   }
 
   Future<bool?> _showConfirmDialog(
-    BuildContext context, {
-    required String title,
-    required String message,
-    bool isDestructive = false,
-  }) {
+      BuildContext context, {
+        required String title,
+        required String message,
+        bool isDestructive = false,
+      }) {
     return showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
