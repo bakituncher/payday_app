@@ -60,10 +60,15 @@ class _PremiumPaywallScreenState extends ConsumerState<PremiumPaywallScreen>
 
           if (isPremium) {
             await refreshPremiumStatus(ref);
-            // Satın alma bitince ekranı kapatmaya gerek yok,
-            // build metodu isPremium true olduğu için otomatik olarak "Already Premium" arayüzüne dönecek.
+
             if (mounted) {
-              _showSuccessSnackBar('Welcome to Premium!');
+              // ✅ UX İYİLEŞTİRMESİ: Kullanıcıya mesaj ver ve otomatik kapat
+              _showSuccessSnackBar('Welcome to Premium! 🎉');
+
+              // 2 saniye bekle ve ekranı kapat
+              Future.delayed(const Duration(seconds: 2), () {
+                if (mounted) Navigator.pop(context);
+              });
             }
           }
         }

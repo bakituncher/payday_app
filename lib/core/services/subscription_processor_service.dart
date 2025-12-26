@@ -61,6 +61,8 @@ class SubscriptionProcessorService {
       double totalAmount = 0.0;
       final processedNames = <String>[];
       final transactions = <Transaction>[];
+      // ✅ YENİ: Güncellenecek abonelikleri hafızada tutmak için liste
+      final subscriptionsToUpdate = <Subscription>[];
 
       // ADIM 2: Her aboneliği kontrol et
       for (final sub in subscriptions) {
@@ -79,8 +81,8 @@ class SubscriptionProcessorService {
             totalAmount += result.totalAmount;
             processedNames.add(sub.name);
 
-            // Aboneliğin sonraki ödeme tarihini güncelle
-            await _subscriptionRepo.updateSubscription(result.updatedSubscription);
+            // ✅ DÜZELTİLDİ: Aboneliği hemen güncellemek yerine listeye ekle
+            subscriptionsToUpdate.add(result.updatedSubscription);
 
             print('💳 SubscriptionProcessor: Processed ${sub.name} - ${result.transactionsCreated.length} payment(s)');
           }
@@ -91,13 +93,36 @@ class SubscriptionProcessorService {
         }
       }
 
-      // ADIM 3: Tüm işlemleri toplu olarak kaydet (Performans optimizasyonu)
+      // ADIM 3: ÖNCE İşlemleri Kaydet (Transaction First - Atomicity garantisi)
       if (transactions.isNotEmpty) {
-        print('💳 SubscriptionProcessor: Recording ${transactions.length} transaction(s)');
-        await _transactionManager.processBatchTransactions(
-          userId: userId,
-          transactions: transactions,
-        );
+        try {
+          print('💳 SubscriptionProcessor: Recording ${transactions.length} transaction(s)');
+
+          // Önce işlemleri kaydetmeyi dene
+          await _transactionManager.processBatchTransactions(
+            userId: userId,
+            transactions: transactions,
+          );
+
+          // ✅ BAŞARILI OLURSA: Şimdi abonelik tarihlerini güncelle
+          print('💳 SubscriptionProcessor: Transactions saved. Updating subscription dates...');
+          for (final sub in subscriptionsToUpdate) {
+            try {
+              await _subscriptionRepo.updateSubscription(sub);
+            } catch (e) {
+              // Buradaki hata kritik değildir, en kötü ihtimalle sonraki açılışta
+              // sistem tekrar dener ve duplicate transaction kontrolü devreye girer.
+              // Ancak transaction oluştuğu için bakiye doğrudur.
+              print('⚠️ SubscriptionProcessor: Error updating subscription date for ${sub.name}: $e');
+            }
+          }
+
+        } catch (e) {
+          // Transaction kaydedilemezse, abonelik tarihleri güncellenmez.
+          // Böylece bir sonraki denemede sistem tekrar dener. Veri kaybı olmaz.
+          print('❌ SubscriptionProcessor: Transaction Batch Failed: $e');
+          rethrow;
+        }
       }
 
       print('✅ SubscriptionProcessor: Complete - Processed: $processedCount, Total: $totalAmount');
