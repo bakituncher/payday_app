@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
+import 'package:firebase_messaging/firebase_messaging.dart'; // ✅ EKLİ
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
@@ -26,11 +27,10 @@ import 'package:payday/features/home/screens/home_screen.dart';
 import 'package:payday/features/onboarding/screens/onboarding_screen.dart';
 import 'package:payday/features/subscriptions/screens/subscriptions_screen.dart';
 import 'package:payday/features/insights/screens/monthly_summary_screen.dart';
-// Bildirimlerden gelen rotalar için gerekli importlar:
 import 'package:payday/features/premium/screens/premium_paywall_screen.dart';
 import 'package:payday/features/transactions/screens/add_transaction_screen.dart';
 
-// Navigasyon işlemleri için Global Key (RouterContext olmadan yönlendirme için)
+// Navigasyon işlemleri için Global Key
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
@@ -89,64 +89,44 @@ class _PaydayAppState extends ConsumerState<PaydayApp> {
   void initState() {
     super.initState();
     Future.microtask(() => _initializeAuth());
-    // Bildirim sistemini başlat
     _setupNotifications();
   }
 
-  /// ✅ YENİ EKLENEN FONKSİYON
-  /// Uygulama her açıldığında kullanıcının güncel saat dilimini kaydeder.
-  /// Cloud Function bu offset değerine göre bildirim gönderir.
   Future<void> _updateTimezone() async {
-    // Auth provider'dan mevcut kullanıcıyı al (Async değil, cache'den okur)
     final user = ref.read(currentUserProvider).asData?.value;
-
     if (user != null) {
       try {
         final int offsetHours = DateTime.now().timeZoneOffset.inHours;
-
-        // Firestore'a saat dilimini ve son görülmeyi yaz
         await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
           'utcOffset': offsetHours,
           'lastLoginAt': FieldValue.serverTimestamp(),
         }, SetOptions(merge: true));
-
-        debugPrint("🌍 Başlangıç Kontrolü: Saat dilimi güncellendi (UTC $offsetHours)");
       } catch (e) {
-        debugPrint("❌ Başlangıç Kontrolü: Saat dilimi hatası: $e");
+        debugPrint("❌ Saat dilimi hatası: $e");
       }
     }
   }
 
   Future<void> _setupNotifications() async {
     final notificationService = NotificationService();
-
-    // Initialize metoduna navigatorKey ve token kaydetme fonksiyonunu veriyoruz
     await notificationService.initialize(
       navigatorKey: navigatorKey,
       onTokenRefresh: (token) async {
-        // Burada token'ı ve saat dilimini Firestore'a kaydediyoruz (Token değişirse çalışır)
         final user = ref.read(currentUserProvider).asData?.value;
         if (user != null) {
           try {
-            // ✅ Saat dilimi farkını (Offset) alıyoruz
             final int offsetHours = DateTime.now().timeZoneOffset.inHours;
-
-            // Kullanıcının dokümanına fcmToken ve utcOffset alanını ekle/güncelle
             await FirebaseFirestore.instance
                 .collection('users')
                 .doc(user.uid)
                 .set({
               'fcmToken': token,
-              'utcOffset': offsetHours, // 🌍 Saat dilimi eklendi
+              'utcOffset': offsetHours,
               'lastLoginAt': FieldValue.serverTimestamp(),
             }, SetOptions(merge: true));
-
-            debugPrint("💾 Token Refresh: Token ve UTC Offset ($offsetHours) başarıyla kaydedildi: $token");
           } catch (e) {
             debugPrint("❌ Token ve Offset kaydetme hatası: $e");
           }
-        } else {
-          debugPrint("⚠️ Kullanıcı oturumu açık değil, token kaydedilemedi (daha sonra tekrar denenebilir).");
         }
       },
     );
@@ -155,29 +135,16 @@ class _PaydayAppState extends ConsumerState<PaydayApp> {
   Future<void> _initializeAuth() async {
     try {
       final user = await ref.read(currentUserProvider.future);
-      final revenueCatService = RevenueCatService(); // Servisi al
-
       if (user == null) {
-        debugPrint('No user signed in. Signing in anonymously...');
         final authService = ref.read(authServiceProvider);
         await authService.signInAnonymously();
-        // Anonim giriş AuthService içinde handle edildiği için burada tekrar çağırmaya gerek yok
-      } else {
-        // ✅ KRİTİK: Kullanıcı zaten giriş yapmışsa RevenueCat'i senkronize et.
-        // Bu, uygulamanın her açılışında kimliğin doğrulanmasını sağlar.
-        debugPrint('User signed in: ${user.uid}. Syncing with RevenueCat...');
-        await revenueCatService.logIn(user.uid);
       }
-
-      // ✅ KRİTİK EKLEME: Kullanıcı oturumu doğrulandıktan sonra
-      // uygulama her açıldığında timezone'u güncelle.
       if (mounted) {
         await _updateTimezone();
       }
-
     } catch (e, stack) {
-      debugPrint('Error initializing auth: $e');
-      FirebaseCrashlytics.instance.recordError(e, stack, reason: 'Auth Init Failed');
+      debugPrint('Error signing in: $e');
+      FirebaseCrashlytics.instance.recordError(e, stack, reason: 'Auth Failed');
     }
   }
 
@@ -187,7 +154,7 @@ class _PaydayAppState extends ConsumerState<PaydayApp> {
 
     return MaterialApp(
       title: 'Payday',
-      navigatorKey: navigatorKey, // ✅ Global key
+      navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
@@ -196,15 +163,14 @@ class _PaydayAppState extends ConsumerState<PaydayApp> {
         FirebaseAnalyticsObserver(analytics: FirebaseAnalytics.instance),
       ],
       initialRoute: '/',
-      // 🚀 BİLDİRİM ROTALARI GÜNCELLENDİ
       routes: {
         '/': (context) => const SplashScreen(),
         '/onboarding': (context) => const OnboardingScreen(),
         '/home': (context) => const HomeScreen(),
         '/subscriptions': (context) => const SubscriptionsScreen(),
         '/monthly-summary': (context) => const MonthlySummaryScreen(),
-        '/premium': (context) => const PremiumPaywallScreen(), // Pazarlama bildirimi için
-        '/add-transaction': (context) => const AddTransactionScreen(), // Harcama girişi bildirimi için
+        '/premium': (context) => const PremiumPaywallScreen(),
+        '/add-transaction': (context) => const AddTransactionScreen(),
       },
     );
   }
@@ -242,11 +208,16 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   }
 
   Future<void> _checkStatusAndNavigate() async {
-    // 1. Beklemeler
-    await Future.wait([
+    // 1. BEKLEMELER
+    // Splash, Firebase'den cevap gelene kadar bekler (Race Condition çözümü)
+    final results = await Future.wait([
       Future.delayed(const Duration(milliseconds: 2000)),
       ref.read(currentUserProvider.future),
+      FirebaseMessaging.instance.getInitialMessage(), // ✅ Bildirim kontrolü
     ]);
+
+    // Bildirimi al
+    final RemoteMessage? initialMessage = results[2] as RemoteMessage?;
 
     if (!mounted) return;
 
@@ -259,48 +230,50 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
     try {
       hasCompletedOnboarding = await repository.hasCompletedOnboarding();
-      debugPrint("Splash: Has Completed Onboarding (Initial Check) -> $hasCompletedOnboarding");
 
       if (!hasCompletedOnboarding) {
         final user = ref.read(currentUserProvider).asData?.value;
-
         if (user != null && !user.isAnonymous) {
-          debugPrint("Splash: Authenticated user but no Firebase data found via Onboarding check. Checking Local...");
-
           final localRepo = LocalUserSettingsRepository();
           final localSettings = await localRepo.getUserSettings('check_local');
           final localHasData = localSettings != null && await localRepo.hasCompletedOnboarding();
 
           if (localHasData && localSettings != null) {
-            debugPrint("Splash: ✅ Local data found! Attempting migration...");
-
             try {
               final migrationService = ref.read(dataMigrationServiceProvider);
               await migrationService.migrateLocalToFirebase(user.uid, localSettings.userId);
               ref.invalidate(userSettingsProvider);
-              debugPrint("Splash: Migration process finished (Success or Aborted safely). Rechecking onboarding...");
               hasCompletedOnboarding = await repository.hasCompletedOnboarding();
-
-              // Eğer hala görünmüyorsa, en azından local veri var diye true'ya çekelim
-              if (!hasCompletedOnboarding) {
-                hasCompletedOnboarding = true;
-              }
+              if (!hasCompletedOnboarding) hasCompletedOnboarding = true;
             } catch (e) {
-              debugPrint("Splash: Migration Failed with error: $e");
               hasCompletedOnboarding = localHasData;
             }
           }
         }
       }
     } catch (e) {
-      debugPrint("Splash: Error checking status: $e");
+      debugPrint("Splash error: $e");
     }
 
     if (!mounted) return;
 
-    // 4. Yönlendirme
+    // 4. YÖNLENDİRME (BURASI DEĞİŞTİ)
     if (hasCompletedOnboarding) {
-      Navigator.of(context).pushReplacementNamed('/home');
+      // ✅ ADIM 1: Geçmişi sil ve Home'u TEK KÖK (Root) yap.
+      // (removeUntil false diyerek önceki tüm sayfaları siliyoruz)
+      Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
+
+      // ✅ ADIM 2: Eğer bildirim varsa Home'un üzerine aç.
+      if (initialMessage != null && initialMessage.data.containsKey('route')) {
+        final String route = initialMessage.data['route'];
+        debugPrint("🔔 Splash: Bildirim rotası tespit edildi: $route");
+
+        // Çift açılmayı önlemek için frame callback içine alıyoruz.
+        // Bu, Home sayfası çizildikten SONRA çalışmasını garanti eder.
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          navigatorKey.currentState?.pushNamed(route);
+        });
+      }
     } else {
       Navigator.of(context).pushReplacementNamed('/onboarding');
     }
@@ -315,8 +288,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    // final isDark = theme.brightness == Brightness.dark; // Kullanılmıyorsa kaldırılabilir
     return Scaffold(
       backgroundColor: AppColors.getBackground(context),
       body: Center(child: CircularProgressIndicator()),
