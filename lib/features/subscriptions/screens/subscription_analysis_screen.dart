@@ -59,6 +59,135 @@ class SubscriptionAnalysisScreen extends ConsumerWidget {
     final currencyCode = ref.watch(currencyCodeProvider);
     final isDark = theme.brightness == Brightness.dark;
 
+    // Check if there are no subscriptions
+    if (summary.totalSubscriptions == 0) {
+      return CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          // App Bar
+          SliverAppBar(
+            expandedHeight: 0,
+            floating: true,
+            pinned: true,
+            backgroundColor: AppColors.getBackground(context).withValues(alpha: 0.8),
+            elevation: 0,
+            surfaceTintColor: Colors.transparent,
+            flexibleSpace: ClipRect(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                child: Container(color: Colors.transparent),
+              ),
+            ),
+            leadingWidth: 48,
+            leading: Padding(
+              padding: const EdgeInsets.only(left: 4),
+              child: IconButton(
+                icon: Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  size: 20,
+                  color: AppColors.getTextPrimary(context),
+                ),
+                onPressed: () {
+                  HapticFeedback.lightImpact();
+                  Navigator.of(context).pop();
+                },
+              ),
+            ),
+            titleSpacing: 8,
+            title: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: AppColors.success.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.analytics_rounded,
+                    color: AppColors.success,
+                    size: 16,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  'Savings Analysis',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.getTextPrimary(context),
+                    letterSpacing: -0.3,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Empty State
+          SliverFillRemaining(
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(32),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        color: AppColors.info.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.subscriptions_outlined,
+                        size: 64,
+                        color: AppColors.info,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      'No Subscriptions Yet',
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        color: AppColors.getTextPrimary(context),
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Add your first subscription to see\npersonalized savings recommendations',
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: AppColors.getTextSecondary(context),
+                        height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        HapticFeedback.lightImpact();
+                        Navigator.of(context).pop();
+                      },
+                      icon: const Icon(Icons.add_rounded, size: 20),
+                      label: const Text('Add Subscription'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryPink,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 14,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 0,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
     return CustomScrollView(
       physics: const BouncingScrollPhysics(),
       slivers: [
