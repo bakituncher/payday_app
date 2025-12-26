@@ -138,10 +138,10 @@ class AuthController {
 
       _invalidateProviders();
 
-      // Navigate to onboarding after sign out
+      // Navigate to login after sign out
       if (context.mounted) {
         Navigator.of(context).pushNamedAndRemoveUntil(
-          '/onboarding',
+          '/login',
           (route) => false,
         );
       }
@@ -171,10 +171,10 @@ class AuthController {
 
       _invalidateProviders();
 
-      // Navigate to onboarding after account deletion
+      // Navigate to login after account deletion
       if (context.mounted) {
         Navigator.of(context).pushNamedAndRemoveUntil(
-          '/onboarding',
+          '/login',
           (route) => false,
         );
       }
