@@ -316,10 +316,63 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    // final isDark = theme.brightness == Brightness.dark; // Kullanılmıyorsa kaldırılabilir
+
     return Scaffold(
       backgroundColor: AppColors.getBackground(context),
-      body: Center(child: CircularProgressIndicator()),
+      body: Center(
+        child: AnimatedBuilder(
+          animation: Listenable.merge([_controller, _pulseController]),
+          builder: (context, child) {
+            return FadeTransition(
+              opacity: _fadeAnimation,
+              child: Transform.scale(
+                scale: _scaleAnimation.value,
+                child: SlideTransition(
+                  position: _slideAnimation,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // Logo Animasyonu (Pulse efekti ile)
+                      ScaleTransition(
+                        scale: _pulseAnimation,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: theme.primaryColor.withOpacity(0.2),
+                                blurRadius: 30,
+                                spreadRadius: 5,
+                              ),
+                            ],
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(20),
+                            child: Image.asset(
+                              'assets/icon.png', // Logo varlığı varsayıldı
+                              width: 100,
+                              height: 100,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      // Uygulama İsmi
+                      Text(
+                        'Payday',
+                        style: theme.textTheme.headlineMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
     );
   }
 }

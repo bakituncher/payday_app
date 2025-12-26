@@ -112,13 +112,13 @@ class FirebaseSubscriptionRepository implements SubscriptionRepository {
   @override
   Future<double> getTotalMonthlyCost(String userId) async {
       final subs = await getActiveSubscriptions(userId);
-      return subs.fold<double>(0.0, (sum, sub) => sum + sub.amount);
+      return subs.fold<double>(0.0, (sum, sub) => sum + sub.monthlyCost);
   }
 
   @override
   Future<double> getTotalYearlyCost(String userId) async {
       final subs = await getActiveSubscriptions(userId);
-      return subs.fold<double>(0.0, (sum, sub) => sum + (sub.amount * 12));
+      return subs.fold<double>(0.0, (sum, sub) => sum + sub.yearlyCost);
   }
 
   @override
@@ -132,7 +132,14 @@ class FirebaseSubscriptionRepository implements SubscriptionRepository {
 
   @override
   Future<Map<SubscriptionCategory, double>> getSpendingByCategory(String userId) async {
-      return {};
+    final subscriptions = await getActiveSubscriptions(userId);
+    final Map<SubscriptionCategory, double> spending = {};
+
+    for (final sub in subscriptions) {
+      spending[sub.category] = (spending[sub.category] ?? 0.0) + sub.monthlyCost;
+    }
+
+    return spending;
   }
 
   @override
@@ -156,19 +163,103 @@ class FirebaseSubscriptionRepository implements SubscriptionRepository {
   @override
   Future<void> generateUpcomingReminders(String userId) async {}
 
-  // Analysis Stubs
+  // Analysis Implementation
   @override
   Future<SubscriptionSummary> analyzeSubscriptions(String userId) async {
-    // Return empty/dummy summary
+    final subscriptions = await getActiveSubscriptions(userId);
+
+    if (subscriptions.isEmpty) {
+      return SubscriptionSummary(
+        userId: userId,
+        totalSubscriptions: 0,
+        totalMonthlySpend: 0,
+        totalYearlySpend: 0,
+        potentialMonthlySavings: 0,
+        potentialYearlySavings: 0,
+        subscriptionsToReview: 0,
+        subscriptionsToCancel: 0,
+        spendByCategory: {},
+        analyses: [],
+        lastAnalyzedAt: DateTime.now(),
+      );
+    }
+
+    final analyses = <SubscriptionAnalysis>[];
+    double potentialMonthlySavings = 0;
+    int toReview = 0;
+    int toCancel = 0;
+
+    final Map<String, double> spendByCategory = {};
+
+    for (final sub in subscriptions) {
+      final categoryName = sub.category.name;
+      spendByCategory[categoryName] = (spendByCategory[categoryName] ?? 0) + sub.monthlyCost;
+
+      UsageLevel usageLevel;
+      RecommendationType recommendation;
+      double savings = 0;
+      List<String> reasons = [];
+      List<String> alternatives = [];
+
+      // Smart analysis based on subscription characteristics
+      if (sub.category == SubscriptionCategory.streaming && sub.monthlyCost > 15) {
+        usageLevel = UsageLevel.medium;
+        recommendation = RecommendationType.review;
+        reasons.add('Higher than average streaming cost');
+        alternatives.add('Consider ad-supported tier');
+        savings = sub.monthlyCost * 0.3;
+        toReview++;
+      } else if (sub.category == SubscriptionCategory.productivity && sub.monthlyCost > 50) {
+        usageLevel = UsageLevel.medium;
+        recommendation = RecommendationType.downgrade;
+        reasons.add('Premium productivity software');
+        reasons.add('Check if all features are being used');
+        alternatives.add('Consider individual app plans');
+        alternatives.add('Look for student/educator discounts');
+        savings = sub.monthlyCost * 0.4;
+        toReview++;
+      } else if (sub.monthlyCost > 30) {
+        usageLevel = UsageLevel.medium;
+        recommendation = RecommendationType.review;
+        reasons.add('Higher cost subscription');
+        savings = sub.monthlyCost * 0.2;
+        toReview++;
+      } else {
+        usageLevel = UsageLevel.high;
+        recommendation = RecommendationType.keep;
+        reasons.add('Good value subscription');
+      }
+
+      potentialMonthlySavings += savings;
+
+      analyses.add(SubscriptionAnalysis(
+        id: 'analysis_${sub.id}',
+        userId: userId,
+        subscriptionId: sub.id,
+        subscriptionName: sub.name,
+        monthlyAmount: sub.monthlyCost,
+        usageLevel: usageLevel,
+        recommendation: recommendation,
+        potentialSavings: savings,
+        reasons: reasons,
+        alternatives: alternatives,
+        usageScore: usageLevel == UsageLevel.high ? 85 : 60,
+        analyzedAt: DateTime.now(),
+      ));
+    }
+
     return SubscriptionSummary(
       userId: userId,
-      totalSubscriptions: 0,
-      totalMonthlySpend: 0.0,
-      totalYearlySpend: 0.0,
-      potentialMonthlySavings: 0.0,
-      potentialYearlySavings: 0.0,
-      subscriptionsToReview: 0,
-      subscriptionsToCancel: 0,
+      totalSubscriptions: subscriptions.length,
+      totalMonthlySpend: subscriptions.fold<double>(0, (sum, s) => sum + s.monthlyCost),
+      totalYearlySpend: subscriptions.fold<double>(0, (sum, s) => sum + s.yearlyCost),
+      potentialMonthlySavings: potentialMonthlySavings,
+      potentialYearlySavings: potentialMonthlySavings * 12,
+      subscriptionsToReview: toReview,
+      subscriptionsToCancel: toCancel,
+      spendByCategory: spendByCategory,
+      analyses: analyses,
+      lastAnalyzedAt: DateTime.now(),
     );
   }
   @override

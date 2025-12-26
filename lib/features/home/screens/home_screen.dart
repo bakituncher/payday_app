@@ -204,16 +204,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         ),
                         actions: [
                           IconButton(
-                            icon: const Icon(Icons.notifications_none_rounded, size: 22),
-                            onPressed: () {
-                              HapticFeedback.lightImpact();
-                              // TODO: Navigate to notifications
-                            },
-                            color: AppColors.getTextPrimary(context),
-                            padding: const EdgeInsets.all(8),
-                            constraints: const BoxConstraints(),
-                          ),
-                          IconButton(
                             icon: const Icon(Icons.settings_outlined, size: 22),
                             onPressed: () {
                               HapticFeedback.lightImpact();
@@ -292,8 +282,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             const SizedBox(height: 12),
 
                             // Budget Progress Card
-                            // ✅ DÜZELTME: PeriodBalance yerine doğrudan UserSettings.currentBalance kullanılıyor.
-                            // PeriodBalance sadece transaction'ları hesapladığı için ilk girişteki pool'u görmezden geliyordu.
                             BudgetProgressCard(
                               currency: settings.currency,
                               currentBalance: settings.currentBalance,
@@ -373,37 +361,148 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
+  /// ✅ GÜNCELLENDİ: Tam Ekran Skeleton (İskelet) Yükleme
+  /// Aşağı kısımların boş kalmaması için tüm kartları simüle eden bloklar eklendi.
   Widget _buildLoadingState(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(AppSpacing.lg),
-            decoration: BoxDecoration(
-              gradient: AppColors.pinkGradient,
-              borderRadius: BorderRadius.circular(AppRadius.xl),
-              boxShadow: AppColors.elevatedShadow,
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    // Arka plan rengine uyumlu hafif bir ton
+    final baseColor = isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05);
+
+    return SingleChildScrollView(
+      // Kaydırma fiziğini kapattık çünkü sadece görsel dolgu istiyoruz,
+      // ama içerik taşarsa da sorun çıkarmaması için scrollview içinde.
+      physics: const NeverScrollableScrollPhysics(),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 16),
+            // Header Skeleton
+            Container(
+              width: 140,
+              height: 32,
+              decoration: BoxDecoration(
+                color: baseColor,
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
-            child: const Icon(
-              Icons.account_balance_wallet_rounded,
-              color: Colors.white,
-              size: 40,
+            const SizedBox(height: 24),
+
+            // Countdown Card Skeleton (Hero Area)
+            Container(
+              height: 180,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: baseColor,
+                borderRadius: BorderRadius.circular(24),
+              ),
             ),
-          )
-              .animate(onPlay: (controller) => controller.repeat(reverse: true))
-              .scale(duration: 800.ms, begin: const Offset(1, 1), end: const Offset(1.1, 1.1)),
-          const SizedBox(height: AppSpacing.lg),
-          Text(
-            'Loading your finances...',
-            style: TextStyle(
-              color: AppColors.getTextSecondary(context),
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
+            const SizedBox(height: 12),
+
+            // Daily Spend Skeleton
+            Container(
+              height: 100,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: baseColor,
+                borderRadius: BorderRadius.circular(20),
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 12),
+
+            // Buttons Skeleton
+            Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    height: 56,
+                    decoration: BoxDecoration(
+                      color: baseColor,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Container(
+                    height: 56,
+                    decoration: BoxDecoration(
+                      color: baseColor,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            // Budget Progress Skeleton
+            Container(
+              height: 140,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: baseColor,
+                borderRadius: BorderRadius.circular(24),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // Savings Card Skeleton
+            Container(
+              height: 100,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: baseColor,
+                borderRadius: BorderRadius.circular(20),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // Subscriptions & Summary Skeleton (Alt alta)
+            Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    height: 120,
+                    decoration: BoxDecoration(
+                      color: baseColor,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Container(
+                    height: 120,
+                    decoration: BoxDecoration(
+                      color: baseColor,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            // Recent Transactions (List style)
+            Container(
+              height: 200, // Ekranın en altına kadar doldurması için biraz uzun
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: baseColor,
+                borderRadius: BorderRadius.circular(24),
+              ),
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
       ),
+    )
+        .animate(onPlay: (controller) => controller.repeat())
+        .shimmer(
+      duration: 1500.ms,
+      color: isDark ? Colors.white10 : Colors.black12, // Shimmer parıltı rengi
     );
   }
 
