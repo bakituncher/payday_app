@@ -112,13 +112,13 @@ class FirebaseSubscriptionRepository implements SubscriptionRepository {
   @override
   Future<double> getTotalMonthlyCost(String userId) async {
       final subs = await getActiveSubscriptions(userId);
-      return subs.fold<double>(0.0, (sum, sub) => sum + sub.amount);
+      return subs.fold<double>(0.0, (sum, sub) => sum + sub.monthlyCost);
   }
 
   @override
   Future<double> getTotalYearlyCost(String userId) async {
       final subs = await getActiveSubscriptions(userId);
-      return subs.fold<double>(0.0, (sum, sub) => sum + (sub.amount * 12));
+      return subs.fold<double>(0.0, (sum, sub) => sum + sub.yearlyCost);
   }
 
   @override
