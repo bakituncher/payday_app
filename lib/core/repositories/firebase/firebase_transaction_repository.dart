@@ -48,8 +48,8 @@ class FirebaseTransactionRepository implements TransactionRepository {
     DateTime endDate,
   ) async {
     final snapshot = await _getCollection(userId)
-        .where('date', isGreaterThanOrEqualTo: startDate.toIso8601String())
-        .where('date', isLessThanOrEqualTo: endDate.toIso8601String())
+        .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(startDate))
+        .where('date', isLessThanOrEqualTo: Timestamp.fromDate(endDate))
         .get();
 
     final transactions = snapshot.docs
