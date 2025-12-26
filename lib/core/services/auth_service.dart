@@ -183,6 +183,9 @@ class AuthService {
         _auth.signOut(),
         _googleSignIn.signOut(),
       ]);
+
+      // ✅ Sign in anonymously after sign out
+      await signInAnonymously();
     } catch (e) {
       print('Error signing out: $e');
       rethrow;
@@ -205,6 +208,9 @@ class AuthService {
 
       // Sign out from Google Sign In if needed
       await _googleSignIn.signOut();
+
+      // ✅ Sign in anonymously after account deletion
+      await signInAnonymously();
     } catch (e) {
       print('Error deleting account: $e');
       rethrow;

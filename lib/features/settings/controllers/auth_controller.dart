@@ -5,13 +5,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:payday/core/providers/auth_providers.dart';
 import 'package:payday/core/providers/repository_providers.dart';
 import 'package:payday/core/services/data_migration_service.dart';
+import 'package:payday/core/services/data_conflict_service.dart';
 import 'package:payday/features/home/providers/home_providers.dart';
 import 'package:payday/features/insights/providers/monthly_summary_providers.dart';
 import 'package:payday/features/home/providers/period_balance_providers.dart';
+import 'package:payday/features/auth/widgets/data_conflict_dialog.dart';
 
 class AuthController {
   final WidgetRef ref;
   final BuildContext context;
+  final DataConflictService _conflictService = DataConflictService();
 
   AuthController(this.ref, this.context);
 
@@ -22,19 +25,55 @@ class AuthController {
       final wasAnonymous = authService.isAnonymous;
       final sourceUserId = ref.read(currentUserIdProvider);
 
+      // First, perform the sign-in to get the target user
       final userCredential = await authService.signInWithGoogle();
 
-      if (userCredential != null) {
-        if (wasAnonymous && !userCredential.user!.isAnonymous) {
-          await _migrateData(userCredential.user!.uid, sourceUserId);
+      if (userCredential == null) return null;
+
+      final targetUserId = userCredential.user!.uid;
+
+      // Check for data conflicts
+      if (wasAnonymous && !userCredential.user!.isAnonymous) {
+        final conflictResult = await _conflictService.checkForConflict(
+          localUserId: sourceUserId,
+          remoteUserId: targetUserId,
+        );
+
+        debugPrint('📊 Conflict Result: $conflictResult');
+
+        if (conflictResult.hasConflict) {
+          // Show conflict resolution dialog
+          final choice = await _showDataConflictDialog(
+            hasLocalData: conflictResult.hasLocalData,
+            hasRemoteData: conflictResult.hasRemoteData,
+          );
+
+          if (choice == DataConflictChoice.cancel) {
+            // User canceled - sign back out and return to anonymous
+            await authService.signOut();
+            await authService.signInAnonymously();
+            return null;
+          }
+
+          if (choice == DataConflictChoice.keepLocal) {
+            // Delete remote data and migrate local to cloud
+            await _conflictService.deleteRemoteData(targetUserId);
+            await _migrateData(targetUserId, sourceUserId);
+          } else if (choice == DataConflictChoice.keepRemote) {
+            // Delete local data and keep remote
+            await _conflictService.deleteLocalData(sourceUserId);
+          }
+        } else if (conflictResult.hasLocalData) {
+          // Only local data exists - migrate it
+          await _migrateData(targetUserId, sourceUserId);
         }
-
-        _invalidateProviders();
-        await _reloadSettings();
-
-        return userCredential.user?.displayName ?? userCredential.user?.email;
+        // If only remote data exists or no data anywhere, do nothing
       }
-      return null;
+
+      _invalidateProviders();
+      await _reloadSettings();
+
+      return userCredential.user?.displayName ?? userCredential.user?.email;
     } catch (e) {
       debugPrint('❌ Error signing in with Google: $e');
       rethrow;
@@ -48,19 +87,55 @@ class AuthController {
       final wasAnonymous = authService.isAnonymous;
       final sourceUserId = ref.read(currentUserIdProvider);
 
+      // First, perform the sign-in to get the target user
       final userCredential = await authService.signInWithApple();
 
-      if (userCredential != null) {
-        if (wasAnonymous && !userCredential.user!.isAnonymous) {
-          await _migrateData(userCredential.user!.uid, sourceUserId);
+      if (userCredential == null) return null;
+
+      final targetUserId = userCredential.user!.uid;
+
+      // Check for data conflicts
+      if (wasAnonymous && !userCredential.user!.isAnonymous) {
+        final conflictResult = await _conflictService.checkForConflict(
+          localUserId: sourceUserId,
+          remoteUserId: targetUserId,
+        );
+
+        debugPrint('📊 Conflict Result: $conflictResult');
+
+        if (conflictResult.hasConflict) {
+          // Show conflict resolution dialog
+          final choice = await _showDataConflictDialog(
+            hasLocalData: conflictResult.hasLocalData,
+            hasRemoteData: conflictResult.hasRemoteData,
+          );
+
+          if (choice == DataConflictChoice.cancel) {
+            // User canceled - sign back out and return to anonymous
+            await authService.signOut();
+            await authService.signInAnonymously();
+            return null;
+          }
+
+          if (choice == DataConflictChoice.keepLocal) {
+            // Delete remote data and migrate local to cloud
+            await _conflictService.deleteRemoteData(targetUserId);
+            await _migrateData(targetUserId, sourceUserId);
+          } else if (choice == DataConflictChoice.keepRemote) {
+            // Delete local data and keep remote
+            await _conflictService.deleteLocalData(sourceUserId);
+          }
+        } else if (conflictResult.hasLocalData) {
+          // Only local data exists - migrate it
+          await _migrateData(targetUserId, sourceUserId);
         }
-
-        _invalidateProviders();
-        await _reloadSettings();
-
-        return userCredential.user?.displayName ?? userCredential.user?.email ?? 'Apple User';
+        // If only remote data exists or no data anywhere, do nothing
       }
-      return null;
+
+      _invalidateProviders();
+      await _reloadSettings();
+
+      return userCredential.user?.displayName ?? userCredential.user?.email ?? 'Apple User';
     } catch (e) {
       debugPrint('❌ Error signing in with Apple: $e');
       rethrow;
@@ -74,6 +149,14 @@ class AuthController {
       await authService.signOut();
 
       _invalidateProviders();
+
+      // Navigate to onboarding after sign out
+      if (context.mounted) {
+        Navigator.of(context).pushNamedAndRemoveUntil(
+          '/onboarding',
+          (route) => false,
+        );
+      }
     } catch (e) {
       debugPrint('❌ Error signing out: $e');
       rethrow;
@@ -99,10 +182,46 @@ class AuthController {
       await authService.deleteAccount();
 
       _invalidateProviders();
+
+      // Navigate to onboarding after account deletion
+      if (context.mounted) {
+        Navigator.of(context).pushNamedAndRemoveUntil(
+          '/onboarding',
+          (route) => false,
+        );
+      }
     } catch (e) {
       debugPrint('❌ Error deleting account: $e');
       rethrow;
     }
+  }
+
+  /// Show data conflict dialog and return user choice
+  Future<DataConflictChoice> _showDataConflictDialog({
+    required bool hasLocalData,
+    required bool hasRemoteData,
+  }) async {
+    DataConflictChoice? choice;
+
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext dialogContext) {
+        return DataConflictDialog(
+          hasLocalData: hasLocalData,
+          hasRemoteData: hasRemoteData,
+          onCancel: () {
+            choice = DataConflictChoice.cancel;
+          },
+          onChoiceMade: (selectedChoice) {
+            choice = selectedChoice;
+            Navigator.of(dialogContext).pop();
+          },
+        );
+      },
+    );
+
+    return choice ?? DataConflictChoice.cancel;
   }
 
   /// Migrate data from anonymous to authenticated user
@@ -121,6 +240,12 @@ class AuthController {
 
   /// Invalidate all providers after auth changes
   void _invalidateProviders() {
+    // ✅ Critical Fix: Refresh user auth state first
+    ref.invalidate(currentUserProvider);
+    ref.invalidate(isFullyAuthenticatedProvider);
+    ref.invalidate(currentUserIdProvider);
+
+    // Invalidate data providers
     ref.invalidate(userSettingsProvider);
     ref.invalidate(currentCycleTransactionsProvider);
     ref.invalidate(totalExpensesProvider);
