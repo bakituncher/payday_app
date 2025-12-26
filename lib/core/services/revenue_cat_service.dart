@@ -41,6 +41,27 @@ class RevenueCatService {
     await Purchases.configure(configuration);
   }
 
+  /// ✅ YENİ: Kullanıcı giriş yaptığında RevenueCat'e bildir
+  /// Bu sayede satın alımlar cihazlar arasında senkronize olur.
+  Future<void> logIn(String appUserId) async {
+    try {
+      await Purchases.logIn(appUserId);
+      print("✅ RevenueCat Login Success: $appUserId");
+    } catch (e) {
+      print("❌ RevenueCat Login Error: $e");
+    }
+  }
+
+  /// ✅ YENİ: Kullanıcı çıkış yaptığında RevenueCat'i sıfırla
+  Future<void> logOut() async {
+    try {
+      await Purchases.logOut();
+      print("✅ RevenueCat Logout Success");
+    } catch (e) {
+      print("❌ RevenueCat Logout Error: $e");
+    }
+  }
+
   /// Mevcut paketleri (Monthly, Yearly) getirir
   Future<Offerings?> getOfferings() async {
     try {

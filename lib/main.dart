@@ -155,10 +155,18 @@ class _PaydayAppState extends ConsumerState<PaydayApp> {
   Future<void> _initializeAuth() async {
     try {
       final user = await ref.read(currentUserProvider.future);
+      final revenueCatService = RevenueCatService(); // Servisi al
+
       if (user == null) {
         debugPrint('No user signed in. Signing in anonymously...');
         final authService = ref.read(authServiceProvider);
         await authService.signInAnonymously();
+        // Anonim giriş AuthService içinde handle edildiği için burada tekrar çağırmaya gerek yok
+      } else {
+        // ✅ KRİTİK: Kullanıcı zaten giriş yapmışsa RevenueCat'i senkronize et.
+        // Bu, uygulamanın her açılışında kimliğin doğrulanmasını sağlar.
+        debugPrint('User signed in: ${user.uid}. Syncing with RevenueCat...');
+        await revenueCatService.logIn(user.uid);
       }
 
       // ✅ KRİTİK EKLEME: Kullanıcı oturumu doğrulandıktan sonra
@@ -168,8 +176,8 @@ class _PaydayAppState extends ConsumerState<PaydayApp> {
       }
 
     } catch (e, stack) {
-      debugPrint('Error signing in anonymously: $e');
-      FirebaseCrashlytics.instance.recordError(e, stack, reason: 'Anonymous Auth Failed');
+      debugPrint('Error initializing auth: $e');
+      FirebaseCrashlytics.instance.recordError(e, stack, reason: 'Auth Init Failed');
     }
   }
 

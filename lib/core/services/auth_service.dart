@@ -4,10 +4,12 @@ import 'dart:io'; // Platform kontrolü için
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+import 'package:payday/core/services/revenue_cat_service.dart'; // ✅ Import Eklendi
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
+  final RevenueCatService _revenueCatService = RevenueCatService(); // ✅ Instance
 
   // Get current user
   User? get currentUser => _auth.currentUser;
@@ -21,7 +23,12 @@ class AuthService {
   // Sign in Anonymously
   Future<UserCredential> signInAnonymously() async {
     try {
-      return await _auth.signInAnonymously();
+      final cred = await _auth.signInAnonymously();
+      // ✅ Anonim kullanıcı ID'si ile RevenueCat'e giriş yap
+      if (cred.user != null) {
+        await _revenueCatService.logIn(cred.user!.uid);
+      }
+      return cred;
     } catch (e) {
       print('Error signing in anonymously: $e');
       rethrow;
@@ -48,10 +55,12 @@ class AuthService {
         idToken: googleAuth.idToken,
       );
 
+      UserCredential userCredential;
+
       // Check if we are anonymous and link instead
       if (currentUser != null && currentUser!.isAnonymous) {
         try {
-          return await currentUser!.linkWithCredential(credential);
+          userCredential = await currentUser!.linkWithCredential(credential);
         } on FirebaseAuthException catch (e) {
           if (e.code == 'credential-already-in-use') {
              // If account exists, we can't link.
@@ -62,14 +71,22 @@ class AuthService {
              // But usually "credential-already-in-use" means they have another account.
              // The prompt implies "anonymous login should turn into google login", which implies creating/linking.
              // If it exists, we just switch.
-             return await _auth.signInWithCredential(credential);
+             userCredential = await _auth.signInWithCredential(credential);
+          } else {
+            rethrow;
           }
-          rethrow;
         }
+      } else {
+        // Sign in to Firebase with the Google credential
+        userCredential = await _auth.signInWithCredential(credential);
       }
 
-      // Sign in to Firebase with the Google credential
-      return await _auth.signInWithCredential(credential);
+      // ✅ KRİTİK: Giriş başarılıysa RevenueCat'e Firebase UID'sini bildir
+      if (userCredential.user != null) {
+        await _revenueCatService.logIn(userCredential.user!.uid);
+      }
+
+      return userCredential;
     } catch (e) {
       print('Error signing in with Google: $e');
       rethrow;
@@ -79,6 +96,8 @@ class AuthService {
   // Sign in with Apple (or Link if anonymous)
   Future<UserCredential?> signInWithApple() async {
     try {
+      UserCredential userCredential;
+
       if (Platform.isAndroid) {
         // --- ANDROID İÇİN ÇÖZÜM (Firebase Provider Kullan) ---
         final provider = AppleAuthProvider();
@@ -87,16 +106,17 @@ class AuthService {
 
         if (currentUser != null && currentUser!.isAnonymous) {
            try {
-             return await currentUser!.linkWithProvider(provider);
+             userCredential = await currentUser!.linkWithProvider(provider);
            } on FirebaseAuthException catch (e) {
              if (e.code == 'credential-already-in-use') {
-               return await _auth.signInWithProvider(provider);
+               userCredential = await _auth.signInWithProvider(provider);
+             } else {
+               rethrow;
              }
-             rethrow;
            }
+        } else {
+           userCredential = await _auth.signInWithProvider(provider);
         }
-
-        return await _auth.signInWithProvider(provider);
       } else {
         // --- iOS İÇİN NATIVE YÖNTEM ---
         final appleCredential = await SignInWithApple.getAppleIDCredential(
@@ -113,35 +133,40 @@ class AuthService {
 
         if (currentUser != null && currentUser!.isAnonymous) {
           try {
-            final userCredential = await currentUser!.linkWithCredential(oauthCredential);
+            userCredential = await currentUser!.linkWithCredential(oauthCredential);
              // Update display name if linked
              if (appleCredential.givenName != null) {
                 final fullName = '${appleCredential.givenName} ${appleCredential.familyName}';
                 await userCredential.user?.updateDisplayName(fullName);
              }
-             return userCredential;
           } on FirebaseAuthException catch (e) {
              if (e.code == 'credential-already-in-use') {
-               return await _auth.signInWithCredential(oauthCredential);
+               userCredential = await _auth.signInWithCredential(oauthCredential);
+             } else {
+               rethrow;
              }
-             rethrow;
+          }
+        } else {
+          userCredential = await _auth.signInWithCredential(oauthCredential);
+
+          if (userCredential.additionalUserInfo?.isNewUser == true) {
+            final fullName = appleCredential.givenName != null && appleCredential.familyName != null
+                ? '${appleCredential.givenName} ${appleCredential.familyName}'
+                : null;
+
+            if (fullName != null) {
+              await userCredential.user?.updateDisplayName(fullName);
+            }
           }
         }
-
-        final userCredential = await _auth.signInWithCredential(oauthCredential);
-
-        if (userCredential.additionalUserInfo?.isNewUser == true) {
-          final fullName = appleCredential.givenName != null && appleCredential.familyName != null
-              ? '${appleCredential.givenName} ${appleCredential.familyName}'
-              : null;
-
-          if (fullName != null) {
-            await userCredential.user?.updateDisplayName(fullName);
-          }
-        }
-
-        return userCredential;
       }
+
+      // ✅ KRİTİK: Giriş başarılıysa RevenueCat'e Firebase UID'sini bildir
+      if (userCredential.user != null) {
+        await _revenueCatService.logIn(userCredential.user!.uid);
+      }
+
+      return userCredential;
     } catch (e) {
       print('Error signing in with Apple: $e');
       rethrow;
@@ -151,6 +176,9 @@ class AuthService {
   // Sign out
   Future<void> signOut() async {
     try {
+      // ✅ Çıkış yaparken RevenueCat ID'sini de sıfırla
+      await _revenueCatService.logOut();
+
       await Future.wait([
         _auth.signOut(),
         _googleSignIn.signOut(),
@@ -168,6 +196,9 @@ class AuthService {
       if (user == null) {
         throw Exception('No user is currently signed in');
       }
+
+      // ✅ Hesap silinmeden önce RC oturumunu kapat
+      await _revenueCatService.logOut();
 
       // Delete the user account
       await user.delete();
