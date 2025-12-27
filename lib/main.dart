@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
@@ -104,15 +105,29 @@ class _PaydayAppState extends ConsumerState<PaydayApp> {
       try {
         final int offsetHours = DateTime.now().timeZoneOffset.inHours;
 
-        // Firestore'a saat dilimini ve son görülmeyi yaz
-        await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+        // FCM token'ı al
+        final notificationService = NotificationService();
+        final fcmToken = await FirebaseMessaging.instance.getToken();
+
+        // Firestore'a saat dilimini, FCM token'ı ve son görülmeyi yaz
+        final updateData = {
           'utcOffset': offsetHours,
           'lastLoginAt': FieldValue.serverTimestamp(),
-        }, SetOptions(merge: true));
+        };
 
-        debugPrint("🌍 Başlangıç Kontrolü: Saat dilimi güncellendi (UTC $offsetHours)");
+        // FCM token varsa ekle
+        if (fcmToken != null) {
+          updateData['fcmToken'] = fcmToken;
+        }
+
+        await FirebaseFirestore.instance.collection('users').doc(user.uid).set(
+          updateData,
+          SetOptions(merge: true),
+        );
+
+        debugPrint("🌍 Başlangıç Kontrolü: Saat dilimi ve FCM token güncellendi (UTC $offsetHours)");
       } catch (e) {
-        debugPrint("❌ Başlangıç Kontrolü: Saat dilimi hatası: $e");
+        debugPrint("❌ Başlangıç Kontrolü: Güncelleme hatası: $e");
       }
     }
   }

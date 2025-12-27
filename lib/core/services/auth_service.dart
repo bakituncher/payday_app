@@ -6,6 +6,8 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:payday/core/services/revenue_cat_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -55,6 +57,29 @@ class AuthService {
     }
   }
 
+  // Save FCM token and user metadata to Firestore
+  Future<void> _saveUserMetadata(String userId) async {
+    try {
+      // Get FCM token
+      final fcmToken = await FirebaseMessaging.instance.getToken();
+
+      // Get timezone offset
+      final int offsetHours = DateTime.now().timeZoneOffset.inHours;
+
+      // Save to Firestore
+      await FirebaseFirestore.instance.collection('users').doc(userId).set({
+        'fcmToken': fcmToken,
+        'utcOffset': offsetHours,
+        'lastLoginAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      print('✅ User metadata saved: FCM Token and UTC Offset ($offsetHours)');
+    } catch (e) {
+      print('Error saving user metadata: $e');
+      // Don't rethrow - this shouldn't block the sign-in process
+    }
+  }
+
   // Sign in with Google
   Future<UserCredential?> signInWithGoogle() async {
     try {
@@ -83,6 +108,8 @@ class AuthService {
         await _revenueCatService.logIn(userCredential.user!.uid);
         // Exit guest mode if we were in it
         await exitGuestMode();
+        // ✅ SORUN ÇÖZÜMÜ: FCM token ve lastLogin bilgilerini hemen kaydet
+        await _saveUserMetadata(userCredential.user!.uid);
       }
 
       return userCredential;
@@ -136,6 +163,8 @@ class AuthService {
         await _revenueCatService.logIn(userCredential.user!.uid);
         // Exit guest mode if we were in it
         await exitGuestMode();
+        // ✅ SORUN ÇÖZÜMÜ: FCM token ve lastLogin bilgilerini hemen kaydet
+        await _saveUserMetadata(userCredential.user!.uid);
       }
 
       return userCredential;
