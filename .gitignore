@@ -6,6 +6,7 @@ lib/firebase_options.dart
 android/app/google-services.json
 ios/Runner/GoogleService-Info.plist
 macos/Runner/GoogleService-Info.plist
+firebase.json  # <--- YENİ EKLENDİ
 
 # Keystore ve İmza Dosyaları (Release alırken lazım olur, sakın yükleme)
 *.jks
