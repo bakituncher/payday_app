@@ -4,7 +4,6 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:payday/core/providers/auth_providers.dart';
 import 'package:payday/core/providers/repository_providers.dart';
 import 'package:payday/core/theme/app_theme.dart';
-import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -20,7 +19,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     setState(() => _isLoading = true);
     try {
       final authService = ref.read(authServiceProvider);
-      await authService.signInAnonymously();
+      await authService.enterGuestMode();
 
       if (mounted) {
         Navigator.of(context).pushReplacementNamed('/onboarding');

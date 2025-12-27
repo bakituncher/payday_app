@@ -1,41 +1,61 @@
 /// Authentication Service
-/// Handles Google and Apple Sign In
+/// Handles Google and Apple Sign In with Guest Mode (no Firebase auth)
 import 'dart:io'; // Platform kontrolü için
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
-import 'package:payday/core/services/revenue_cat_service.dart'; // ✅ Import Eklendi
+import 'package:payday/core/services/revenue_cat_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
-  final RevenueCatService _revenueCatService = RevenueCatService(); // ✅ Instance
+  final RevenueCatService _revenueCatService = RevenueCatService();
+
+  static const String _guestModeKey = 'is_guest_mode';
 
   // Get current user
   User? get currentUser => _auth.currentUser;
 
-  // Check if current user is anonymous
-  bool get isAnonymous => currentUser?.isAnonymous ?? false;
+  // Check if in guest mode (no Firebase auth)
+  Future<bool> get isGuestMode async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_guestModeKey) ?? false;
+  }
+
+  // Check if user is authenticated (not guest)
+  Future<bool> get isAuthenticated async {
+    return currentUser != null && !(await isGuestMode);
+  }
 
   // Auth state changes stream
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 
-  // Sign in Anonymously
-  Future<UserCredential> signInAnonymously() async {
+  // Enter Guest Mode (no Firebase auth)
+  Future<void> enterGuestMode() async {
     try {
-      final cred = await _auth.signInAnonymously();
-      // ✅ Anonim kullanıcı ID'si ile RevenueCat'e giriş yap
-      if (cred.user != null) {
-        await _revenueCatService.logIn(cred.user!.uid);
-      }
-      return cred;
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_guestModeKey, true);
+      print('✅ Entered guest mode');
     } catch (e) {
-      print('Error signing in anonymously: $e');
+      print('Error entering guest mode: $e');
       rethrow;
     }
   }
 
-  // Sign in with Google (or Link if anonymous)
+  // Exit Guest Mode
+  Future<void> exitGuestMode() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_guestModeKey, false);
+      print('✅ Exited guest mode');
+    } catch (e) {
+      print('Error exiting guest mode: $e');
+      rethrow;
+    }
+  }
+
+  // Sign in with Google
   Future<UserCredential?> signInWithGoogle() async {
     try {
       // Trigger the authentication flow
@@ -55,35 +75,14 @@ class AuthService {
         idToken: googleAuth.idToken,
       );
 
-      UserCredential userCredential;
-
-      // Check if we are anonymous and link instead
-      if (currentUser != null && currentUser!.isAnonymous) {
-        try {
-          userCredential = await currentUser!.linkWithCredential(credential);
-        } on FirebaseAuthException catch (e) {
-          if (e.code == 'credential-already-in-use') {
-             // If account exists, we can't link.
-             // Logic: Sign in with the existing account?
-             // Or throw error?
-             // For now, let's try to sign in normally, effectively switching users.
-             // Note: This will NOT migrate data if not handled before switching.
-             // But usually "credential-already-in-use" means they have another account.
-             // The prompt implies "anonymous login should turn into google login", which implies creating/linking.
-             // If it exists, we just switch.
-             userCredential = await _auth.signInWithCredential(credential);
-          } else {
-            rethrow;
-          }
-        }
-      } else {
-        // Sign in to Firebase with the Google credential
-        userCredential = await _auth.signInWithCredential(credential);
-      }
+      // Sign in to Firebase with the Google credential
+      UserCredential userCredential = await _auth.signInWithCredential(credential);
 
       // ✅ KRİTİK: Giriş başarılıysa RevenueCat'e Firebase UID'sini bildir
       if (userCredential.user != null) {
         await _revenueCatService.logIn(userCredential.user!.uid);
+        // Exit guest mode if we were in it
+        await exitGuestMode();
       }
 
       return userCredential;
@@ -93,7 +92,7 @@ class AuthService {
     }
   }
 
-  // Sign in with Apple (or Link if anonymous)
+  // Sign in with Apple
   Future<UserCredential?> signInWithApple() async {
     try {
       UserCredential userCredential;
@@ -104,19 +103,7 @@ class AuthService {
         provider.addScope('email');
         provider.addScope('name');
 
-        if (currentUser != null && currentUser!.isAnonymous) {
-           try {
-             userCredential = await currentUser!.linkWithProvider(provider);
-           } on FirebaseAuthException catch (e) {
-             if (e.code == 'credential-already-in-use') {
-               userCredential = await _auth.signInWithProvider(provider);
-             } else {
-               rethrow;
-             }
-           }
-        } else {
-           userCredential = await _auth.signInWithProvider(provider);
-        }
+        userCredential = await _auth.signInWithProvider(provider);
       } else {
         // --- iOS İÇİN NATIVE YÖNTEM ---
         final appleCredential = await SignInWithApple.getAppleIDCredential(
@@ -131,32 +118,15 @@ class AuthService {
           accessToken: appleCredential.authorizationCode,
         );
 
-        if (currentUser != null && currentUser!.isAnonymous) {
-          try {
-            userCredential = await currentUser!.linkWithCredential(oauthCredential);
-             // Update display name if linked
-             if (appleCredential.givenName != null) {
-                final fullName = '${appleCredential.givenName} ${appleCredential.familyName}';
-                await userCredential.user?.updateDisplayName(fullName);
-             }
-          } on FirebaseAuthException catch (e) {
-             if (e.code == 'credential-already-in-use') {
-               userCredential = await _auth.signInWithCredential(oauthCredential);
-             } else {
-               rethrow;
-             }
-          }
-        } else {
-          userCredential = await _auth.signInWithCredential(oauthCredential);
+        userCredential = await _auth.signInWithCredential(oauthCredential);
 
-          if (userCredential.additionalUserInfo?.isNewUser == true) {
-            final fullName = appleCredential.givenName != null && appleCredential.familyName != null
-                ? '${appleCredential.givenName} ${appleCredential.familyName}'
-                : null;
+        if (userCredential.additionalUserInfo?.isNewUser == true) {
+          final fullName = appleCredential.givenName != null && appleCredential.familyName != null
+              ? '${appleCredential.givenName} ${appleCredential.familyName}'
+              : null;
 
-            if (fullName != null) {
-              await userCredential.user?.updateDisplayName(fullName);
-            }
+          if (fullName != null) {
+            await userCredential.user?.updateDisplayName(fullName);
           }
         }
       }
@@ -164,6 +134,8 @@ class AuthService {
       // ✅ KRİTİK: Giriş başarılıysa RevenueCat'e Firebase UID'sini bildir
       if (userCredential.user != null) {
         await _revenueCatService.logIn(userCredential.user!.uid);
+        // Exit guest mode if we were in it
+        await exitGuestMode();
       }
 
       return userCredential;
@@ -184,8 +156,8 @@ class AuthService {
         _googleSignIn.signOut(),
       ]);
 
-      // ✅ Sign in anonymously after sign out
-      await signInAnonymously();
+      // ✅ Enter guest mode after sign out
+      await enterGuestMode();
     } catch (e) {
       print('Error signing out: $e');
       rethrow;
@@ -209,8 +181,8 @@ class AuthService {
       // Sign out from Google Sign In if needed
       await _googleSignIn.signOut();
 
-      // ✅ Sign in anonymously after account deletion
-      await signInAnonymously();
+      // ✅ Enter guest mode after account deletion
+      await enterGuestMode();
     } catch (e) {
       print('Error deleting account: $e');
       rethrow;

@@ -263,7 +263,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final currentUser = ref.watch(currentUserProvider).asData?.value;
-    final isFullyAuthenticated = ref.watch(isFullyAuthenticatedProvider);
+    final isFullyAuthenticatedAsync = ref.watch(isFullyAuthenticatedProvider);
+    final isFullyAuthenticated = isFullyAuthenticatedAsync.asData?.value ?? false;
 
     if (_formData == null) {
       return Scaffold(
