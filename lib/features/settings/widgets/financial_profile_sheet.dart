@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:currency_picker/currency_picker.dart';
 import 'package:payday/core/constants/app_constants.dart';
 import 'package:payday/core/services/date_cycle_service.dart';
 import 'package:payday/core/theme/app_theme.dart';
+import 'package:payday/core/utils/currency_formatter.dart';
 import 'package:payday/shared/widgets/payday_button.dart';
 import 'package:payday/features/settings/utils/date_picker_dialog.dart' as settings_utils;
 
@@ -46,8 +48,8 @@ class _FinancialProfileSheetState extends State<FinancialProfileSheet> {
   // This uses the repo standard list from AppConstants.
   late final List<String> _payCycles;
 
-  // Single Source of Truth: currencies are defined in AppConstants.
-  late final List<String> _currencies;
+  // Currency picker entegrasyonu
+  Currency? _selectedCurrencyData;
 
   bool _isDateAutoUpdated = false;
 
@@ -60,7 +62,13 @@ class _FinancialProfileSheetState extends State<FinancialProfileSheet> {
     _selectedDate = widget.initialNextPayday;
     _selectedCurrency = widget.initialCurrency;
     _payCycles = List<String>.from(AppConstants.payCycleOptions);
-    _currencies = List<String>.from(AppConstants.popularCurrencies);
+
+    // Currency picker'dan mevcut currency'yi yükle
+    final currencies = CurrencyService().getAll();
+    _selectedCurrencyData = currencies.firstWhere(
+      (c) => c.code == _selectedCurrency,
+      orElse: () => currencies.first,
+    );
   }
 
   @override
@@ -71,18 +79,7 @@ class _FinancialProfileSheetState extends State<FinancialProfileSheet> {
   }
 
   String _currencyPrefix(String c) {
-    switch (c) {
-      case 'USD':
-        return r'$ ';
-      case 'EUR':
-        return '€ ';
-      case 'TRY':
-        return '₺ ';
-      case 'GBP':
-        return '£ ';
-      default:
-        return '$c ';
-    }
+    return '${CurrencyFormatter.getSymbol(c)} ';
   }
 
   DateTime _normalizeDate(DateTime d) => DateTime(d.year, d.month, d.day);
@@ -255,15 +252,7 @@ class _FinancialProfileSheetState extends State<FinancialProfileSheet> {
             const SizedBox(height: 12),
 
             _label('Currency'),
-            _dropdown<String>(
-              value: _selectedCurrency,
-              items: _currencies,
-              onChanged: (v) {
-                if (v == null) return;
-                setState(() => _selectedCurrency = v);
-                HapticFeedback.lightImpact();
-              },
-            ),
+            _buildCurrencySelector(context),
             const SizedBox(height: 12),
 
             Row(
@@ -419,6 +408,122 @@ class _FinancialProfileSheetState extends State<FinancialProfileSheet> {
           onChanged: onChanged,
         ),
       ),
+    );
+  }
+
+  Widget _buildCurrencySelector(BuildContext context) {
+    final theme = Theme.of(context);
+    final currencySymbol = CurrencyFormatter.getSymbol(_selectedCurrency);
+    final flag = _selectedCurrencyData?.flag ?? '🌍';
+    final currencyName = _selectedCurrencyData?.name ?? _selectedCurrency;
+
+    return InkWell(
+      onTap: () => _showCurrencyPicker(context),
+      borderRadius: BorderRadius.circular(AppRadius.lg),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppColors.getCardBackground(context),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          border: Border.all(color: AppColors.getBorder(context)),
+        ),
+        child: Row(
+          children: [
+            Text(
+              flag,
+              style: const TextStyle(fontSize: 24),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    currencyName,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '$_selectedCurrency • $currencySymbol',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: AppColors.getTextSecondary(context),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.keyboard_arrow_down_rounded,
+              color: AppColors.getTextSecondary(context),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showCurrencyPicker(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    showCurrencyPicker(
+      context: context,
+      theme: CurrencyPickerThemeData(
+        backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
+        titleTextStyle: TextStyle(
+          color: isDark ? AppColors.darkTextPrimary : AppColors.darkCharcoal,
+          fontSize: 20,
+          fontWeight: FontWeight.w600,
+        ),
+        subtitleTextStyle: TextStyle(
+          color: isDark ? AppColors.darkTextSecondary : AppColors.mediumGray,
+          fontSize: 14,
+        ),
+        bottomSheetHeight: MediaQuery.of(context).size.height * 0.75,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(24),
+          ),
+        ),
+        inputDecoration: InputDecoration(
+          hintText: 'Search currency...',
+          hintStyle: TextStyle(
+            color: isDark ? AppColors.darkTextSecondary : AppColors.mediumGray,
+          ),
+          prefixIcon: const Icon(
+            Icons.search,
+            color: AppColors.primaryPink,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            borderSide: BorderSide(color: AppColors.getBorder(context)),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            borderSide: const BorderSide(color: AppColors.primaryPink, width: 2),
+          ),
+          filled: true,
+          fillColor: isDark ? AppColors.darkBackground : AppColors.lightGray,
+        ),
+        currencySignTextStyle: TextStyle(
+          color: isDark ? AppColors.darkTextPrimary : AppColors.darkCharcoal,
+          fontSize: 16,
+        ),
+      ),
+      favorite: AppConstants.popularCurrencies,
+      showFlag: true,
+      showCurrencyName: true,
+      showCurrencyCode: true,
+      onSelect: (Currency currency) {
+        HapticFeedback.mediumImpact();
+        setState(() {
+          _selectedCurrency = currency.code;
+          _selectedCurrencyData = currency;
+        });
+      },
     );
   }
 }
