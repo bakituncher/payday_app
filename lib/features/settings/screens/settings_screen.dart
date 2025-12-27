@@ -4,6 +4,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:payday/core/theme/app_theme.dart';
 import 'package:payday/core/providers/auth_providers.dart';
 import 'package:payday/shared/widgets/payday_button.dart';
@@ -19,14 +20,13 @@ import 'package:payday/features/settings/models/settings_form_data.dart';
 import 'package:payday/features/settings/widgets/section_title.dart';
 import 'package:payday/features/settings/widgets/account_section.dart';
 import 'package:payday/features/settings/widgets/premium_card.dart';
-import 'package:payday/features/settings/widgets/income_card.dart';
-import 'package:payday/features/settings/widgets/pay_cycle_card.dart';
-import 'package:payday/features/settings/widgets/payday_card.dart';
 import 'package:payday/features/settings/widgets/theme_card.dart';
-import 'package:payday/features/settings/widgets/currency_card.dart';
+
+// New sheet
+import 'package:payday/features/settings/widgets/financial_profile_sheet.dart';
 
 // Utils
-import 'package:payday/features/settings/utils/date_picker_dialog.dart' as settings_utils;
+// import 'package:payday/features/settings/utils/date_picker_dialog.dart' as settings_utils;
 
 // Screens
 import 'package:payday/features/settings/screens/app_info_screen.dart';
@@ -87,57 +87,43 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     super.dispose();
   }
 
-  Future<void> _selectPayday() async {
+  void _openFinancialProfileEditor({String? preselectedPayCycle}) {
     if (_formData == null) return;
 
-    final picked = await settings_utils.DatePickerDialog.show(
+    showModalBottomSheet(
       context: context,
-      initialDate: _formData!.nextPayday,
-    );
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => FinancialProfileSheet(
+        initialIncome: double.tryParse(_formData!.incomeController.text) ?? 0.0,
+        initialCurrentBalance: double.tryParse(_formData!.currentBalanceController.text) ?? 0.0,
+        initialPayCycle: preselectedPayCycle ?? _formData!.selectedPayCycle,
+        initialNextPayday: _formData!.nextPayday,
+        initialCurrency: _formData!.selectedCurrency,
+        onSave: (income, balance, cycle, date, currency) async {
+          try {
+            setState(() => _isLoading = true);
+            await _settingsController.updateFinancialProfile(
+              income: income,
+              currentBalance: balance,
+              payCycle: cycle,
+              nextPayday: date,
+              currency: currency,
+            );
+            await _loadCurrentSettings();
 
-    if (picked != null && mounted) {
-      setState(() {
-        _formData = _formData!.copyWith(nextPayday: picked);
-      });
-    }
-  }
-
-  void _handleCurrencyChanged(String newCurrency) {
-    if (_formData == null) return;
-    setState(() {
-      _formData = _formData!.copyWith(selectedCurrency: newCurrency);
-    });
-  }
-
-  void _handlePayCycleChanged(String newCycle, DateTime adjustedDate) {
-    if (_formData == null) return;
-
-    setState(() {
-      _formData = _formData!.copyWith(
-        selectedPayCycle: newCycle,
-        nextPayday: adjustedDate,
-      );
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.info_outline_rounded, color: Colors.white),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                'Pay cycle changed to "$newCycle". Next payday adjusted. Tap date to change.',
-              ),
-            ),
-          ],
-        ),
-        backgroundColor: AppColors.primaryPink,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        duration: const Duration(seconds: 4),
+            if (mounted) {
+              HapticFeedback.mediumImpact();
+              _showSuccessSnackBar('Financial profile updated successfully!');
+            }
+          } catch (e) {
+            if (mounted) {
+              _showErrorSnackBar('Error updating financial profile: $e');
+            }
+          } finally {
+            if (mounted) setState(() => _isLoading = false);
+          }
+        },
       ),
     );
   }
@@ -365,48 +351,23 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
             const SizedBox(height: AppSpacing.xl),
 
-            // Income
+            // Financial Profile (single source of truth for income/cycle/payday/currency)
             const SectionTitle(
-              title: 'Income',
-              icon: Icons.attach_money_rounded,
+              title: 'Financial Profile',
+              icon: Icons.account_balance_wallet_rounded,
             ),
             const SizedBox(height: AppSpacing.sm),
-            IncomeCard(
-              incomeController: _formData!.incomeController,
-              currentBalanceController: _formData!.currentBalanceController,
-              selectedCurrency: _formData!.selectedCurrency,
-            ),
-
-            const SizedBox(height: AppSpacing.lg),
-
-            // Pay Cycle
-            const SectionTitle(
-              title: 'Pay Cycle',
-              icon: Icons.calendar_today_rounded,
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            PayCycleCard(
-              selectedPayCycle: _formData!.selectedPayCycle,
-              currentNextPayday: _formData!.nextPayday,
-              onPayCycleChanged: _handlePayCycleChanged,
-            ),
-
-            const SizedBox(height: AppSpacing.lg),
-
-            // Next Payday
-            const SectionTitle(
-              title: 'Next Payday',
-              icon: Icons.event_rounded,
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            PaydayCard(
+            _FinancialSummaryCard(
+              incomeText: _formData!.incomeController.text,
+              payCycle: _formData!.selectedPayCycle,
               nextPayday: _formData!.nextPayday,
-              onTap: _selectPayday,
+              currency: _formData!.selectedCurrency,
+              onTap: _openFinancialProfileEditor,
             ),
 
-            const SizedBox(height: AppSpacing.lg),
+            const SizedBox(height: AppSpacing.xl),
 
-            // Theme
+            // Appearance
             const SectionTitle(
               title: 'Appearance',
               icon: Icons.palette_rounded,
@@ -414,18 +375,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             const SizedBox(height: AppSpacing.sm),
             const ThemeCard(),
 
-            const SizedBox(height: AppSpacing.lg),
-
-            // Currency
-            const SectionTitle(
-              title: 'Currency',
-              icon: Icons.currency_exchange_rounded,
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            CurrencyCard(
-              selectedCurrency: _formData!.selectedCurrency,
-              onCurrencyChanged: _handleCurrencyChanged,
-            ),
 
             const SizedBox(height: AppSpacing.xxl),
 
@@ -446,3 +395,148 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 }
 
+class _FinancialSummaryCard extends StatelessWidget {
+  final String incomeText;
+  final String payCycle;
+  final DateTime nextPayday;
+  final String currency;
+  final VoidCallback onTap;
+
+  const _FinancialSummaryCard({
+    required this.incomeText,
+    required this.payCycle,
+    required this.nextPayday,
+    required this.currency,
+    required this.onTap,
+  });
+
+  String _symbol(String c) {
+    switch (c) {
+      case 'USD':
+        return r'$';
+      case 'EUR':
+        return '€';
+      case 'TRY':
+        return '₺';
+      case 'GBP':
+        return '£';
+      default:
+        return c;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final symbol = _symbol(currency);
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppRadius.xl),
+      child: Container(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              AppColors.primaryPink,
+              AppColors.primaryPink.withOpacity(0.85),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primaryPink.withOpacity(0.25),
+              blurRadius: 18,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Current Cycle',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: Colors.white.withOpacity(0.8),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      payCycle,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
+                  ),
+                  child: const Icon(Icons.edit_rounded, color: Colors.white, size: 18),
+                ),
+              ],
+            ),
+            const SizedBox(height: 18),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _SummaryItem(
+                  label: 'Income',
+                  value: '$symbol$incomeText',
+                ),
+                Container(width: 1, height: 28, color: Colors.white.withOpacity(0.3)),
+                _SummaryItem(
+                  label: 'Next Payday',
+                  value: DateFormat('MMM dd').format(nextPayday),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SummaryItem extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _SummaryItem({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: Colors.white.withOpacity(0.8),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: theme.textTheme.titleMedium?.copyWith(
+            color: Colors.white,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
+    );
+  }
+}

@@ -80,6 +80,50 @@ class SettingsController {
     }
   }
 
+  /// Tüm finansal profili tek seferde günceller.
+  ///
+  /// Contract:
+  /// - income: seçili pay cycle başına gelir (UI metniyle uyumlu)
+  /// - payCycle: 'Weekly', 'Bi-Weekly', 'Semi-Monthly', 'Monthly'
+  /// - nextPayday: bir sonraki maaş günü (DateCycleService kuralları UI'da da kullanılabilir)
+  /// - currency: 'USD', 'EUR', 'TRY', ...
+  Future<bool> updateFinancialProfile({
+    required double income,
+    required String payCycle,
+    required DateTime nextPayday,
+    required String currency,
+    double? currentBalance,
+  }) async {
+    try {
+      if (income <= 0) {
+        throw Exception('Income must be greater than zero');
+      }
+
+      final settingsRepo = ref.read(userSettingsRepositoryProvider);
+      final currentSettings = await ref.read(userSettingsProvider.future);
+
+      if (currentSettings != null) {
+        final updatedSettings = currentSettings.copyWith(
+          incomeAmount: income,
+          payCycle: payCycle,
+          nextPayday: nextPayday,
+          currency: currency,
+          currentBalance: currentBalance ?? currentSettings.currentBalance,
+          updatedAt: DateTime.now(),
+        );
+
+        await settingsRepo.saveUserSettings(updatedSettings);
+        _invalidateProviders();
+        return true;
+      }
+
+      return false;
+    } catch (e) {
+      debugPrint('❌ Error updating financial profile: $e');
+      rethrow;
+    }
+  }
+
   /// Invalidate all dependent providers after settings change
   void _invalidateProviders() {
     ref.invalidate(userSettingsProvider);
@@ -98,4 +142,3 @@ class SettingsController {
     return await authService.isAppleSignInAvailable();
   }
 }
-
