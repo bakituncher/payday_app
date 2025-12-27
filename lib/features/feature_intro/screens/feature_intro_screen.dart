@@ -8,6 +8,7 @@ import 'package:payday/core/providers/auth_providers.dart';
 import 'package:payday/core/providers/repository_providers.dart';
 import 'package:payday/core/theme/app_theme.dart';
 import 'package:payday/features/feature_intro/models/feature_intro_page.dart';
+import 'package:payday/shared/widgets/payday_button.dart';
 
 class FeatureIntroScreen extends ConsumerStatefulWidget {
   const FeatureIntroScreen({super.key});
@@ -68,15 +69,12 @@ class _FeatureIntroScreenState extends ConsumerState<FeatureIntroScreen> {
       ];
 
   Future<void> _markSeenAndContinue() async {
-    await ref
-        .read(appLaunchFlagsRepositoryProvider)
-        .setFeatureIntroSeen(seen: true);
+    await ref.read(appLaunchFlagsRepositoryProvider).setFeatureIntroSeen(seen: true);
 
     if (!mounted) return;
 
     // Decide next screen based on current auth + onboarding completion.
     final user = ref.read(currentUserProvider).asData?.value;
-
     if (user == null) {
       Navigator.of(context).pushReplacementNamed('/login');
       return;
@@ -115,6 +113,7 @@ class _FeatureIntroScreenState extends ConsumerState<FeatureIntroScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final isLast = _index == _pages.length - 1;
 
     return Scaffold(
@@ -122,7 +121,7 @@ class _FeatureIntroScreenState extends ConsumerState<FeatureIntroScreen> {
       body: SafeArea(
         child: Stack(
           children: [
-            // Subtle premium gradient background
+            // Subtle premium gradient background - theme aware
             Positioned.fill(
               child: IgnorePointer(
                 child: DecoratedBox(
@@ -130,11 +129,17 @@ class _FeatureIntroScreenState extends ConsumerState<FeatureIntroScreen> {
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
-                      colors: [
-                        theme.colorScheme.primary.withOpacity(0.10),
-                        theme.colorScheme.secondary.withOpacity(0.08),
-                        Colors.transparent,
-                      ],
+                      colors: isDark
+                          ? [
+                              AppColors.primaryPink.withOpacity(0.18),
+                              AppColors.secondaryPurple.withOpacity(0.14),
+                              AppColors.darkBackground,
+                            ]
+                          : [
+                              AppColors.primaryPink.withOpacity(0.10),
+                              AppColors.secondaryPurple.withOpacity(0.08),
+                              AppColors.backgroundWhite,
+                            ],
                       stops: const [0.0, 0.55, 1.0],
                     ),
                   ),
@@ -156,7 +161,7 @@ class _FeatureIntroScreenState extends ConsumerState<FeatureIntroScreen> {
                           'Skip',
                           style: theme.textTheme.titleSmall?.copyWith(
                             fontWeight: FontWeight.w700,
-                            color: AppColors.mediumGray,
+                            color: AppColors.getTextSecondary(context),
                           ),
                         ),
                       ),
@@ -186,33 +191,17 @@ class _FeatureIntroScreenState extends ConsumerState<FeatureIntroScreen> {
                     children: [
                       _Dots(count: _pages.length, index: _index),
                       const SizedBox(height: 14),
-                      SizedBox(
+                      PaydayButton(
                         width: double.infinity,
-                        height: 56,
-                        child: ElevatedButton(
-                          onPressed: _next,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: theme.colorScheme.primary,
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                          ),
-                          child: Text(
-                            isLast ? 'Get started' : 'Continue',
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w800,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
+                        text: isLast ? 'Get started' : 'Continue',
+                        onPressed: _next,
                       ),
                       const SizedBox(height: 10),
                       Text(
                         'You’re in control — not your budget.',
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: AppColors.mediumGray,
+                          color: AppColors.getTextSecondary(context),
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ],
@@ -235,6 +224,10 @@ class _IntroCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    final Color surface = AppColors.getCardBackground(context).withOpacity(isDark ? 0.66 : 0.83);
+    final Color border = AppColors.getBorder(context).withOpacity(isDark ? 0.25 : 0.35);
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(24),
@@ -243,21 +236,12 @@ class _IntroCard extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(24),
-            color: theme.cardColor.withOpacity(0.75),
-            border: Border.all(
-              color: theme.dividerColor.withOpacity(0.12),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.06),
-                blurRadius: 28,
-                offset: const Offset(0, 12),
-              ),
-            ],
+            color: surface,
+            border: Border.all(color: border),
+            boxShadow: AppColors.getCardShadow(context),
           ),
           padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 10),
               Center(
@@ -269,39 +253,41 @@ class _IntroCard extends StatelessWidget {
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
-                      colors: [
-                        theme.colorScheme.primary.withOpacity(0.20),
-                        theme.colorScheme.secondary.withOpacity(0.16),
-                      ],
+                      colors: isDark
+                          ? [
+                              AppColors.primaryPink.withOpacity(0.28),
+                              AppColors.secondaryPurple.withOpacity(0.22),
+                            ]
+                          : [
+                              AppColors.primaryPink.withOpacity(0.18),
+                              AppColors.secondaryPurple.withOpacity(0.14),
+                            ],
                     ),
                   ),
                   child: Icon(
                     page.icon,
                     size: 40,
-                    color: theme.colorScheme.primary,
+                    color: AppColors.primaryPink,
                   ),
                 ),
               ),
               const SizedBox(height: 18),
-              Center(
-                child: Text(
-                  page.title,
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w900,
-                    height: 1.15,
-                  ),
+              Text(
+                page.title,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  height: 1.15,
+                  color: AppColors.getTextPrimary(context),
                 ),
               ),
               const SizedBox(height: 10),
-              Center(
-                child: Text(
-                  page.description,
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    color: AppColors.mediumGray,
-                    height: 1.5,
-                  ),
+              Text(
+                page.description,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  color: AppColors.getTextSecondary(context),
+                  height: 1.5,
                 ),
               ),
               const SizedBox(height: 18),
@@ -315,13 +301,13 @@ class _IntroCard extends StatelessWidget {
                         width: 22,
                         height: 22,
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.primary.withOpacity(0.10),
+                          color: AppColors.primaryPink.withOpacity(isDark ? 0.20 : 0.12),
                           borderRadius: BorderRadius.circular(7),
                         ),
                         child: Icon(
                           Icons.check_rounded,
                           size: 16,
-                          color: theme.colorScheme.primary,
+                          color: AppColors.primaryPink,
                         ),
                       ),
                       const SizedBox(width: 10),
@@ -331,6 +317,7 @@ class _IntroCard extends StatelessWidget {
                           style: theme.textTheme.bodyMedium?.copyWith(
                             fontWeight: FontWeight.w600,
                             height: 1.3,
+                            color: AppColors.getTextPrimary(context),
                           ),
                         ),
                       ),
@@ -339,15 +326,13 @@ class _IntroCard extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              Center(
-                child: Padding(
-                  padding: const EdgeInsets.only(bottom: 4),
-                  child: Text(
-                    'Made for real life, not spreadsheets.',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: AppColors.mediumGray,
-                      fontWeight: FontWeight.w600,
-                    ),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Text(
+                  'Made for real life, not spreadsheets.',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: AppColors.getTextSecondary(context),
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
@@ -368,6 +353,7 @@ class _Dots extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -381,8 +367,10 @@ class _Dots extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
             color: selected
-                ? theme.colorScheme.primary
-                : theme.dividerColor.withOpacity(0.35),
+                ? AppColors.primaryPink
+                : (isDark
+                    ? AppColors.darkTextSecondary.withOpacity(0.25)
+                    : AppColors.lightGray.withOpacity(0.9)),
           ),
         );
       }),

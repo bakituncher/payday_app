@@ -1,10 +1,12 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:payday/core/providers/auth_providers.dart';
 import 'package:payday/core/providers/repository_providers.dart';
 import 'package:payday/core/theme/app_theme.dart';
-import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+import 'package:payday/shared/widgets/payday_button.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -66,147 +68,208 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final authService = ref.read(authServiceProvider);
-    final isDarkMode = theme.brightness == Brightness.dark;
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
       backgroundColor: AppColors.getBackground(context),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Spacer(),
-
-              // --- Logo ---
-              Image.asset(
-                'assets/inapp.png',
-                height: 120,
-                fit: BoxFit.contain,
-              ),
-
-              const SizedBox(height: 48),
-
-              // --- Title & Subtitle ---
-              Text(
-                "Welcome to Payday",
-                textAlign: TextAlign.center,
-                style: theme.textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: isDarkMode ? Colors.white : AppColors.darkCharcoal,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                "Track expenses, manage subscriptions,\nand master your budget.",
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  color: AppColors.mediumGray,
-                  height: 1.5,
-                ),
-              ),
-
-              const Spacer(),
-
-              // --- Action Buttons ---
-              if (_isLoading)
-                const CircularProgressIndicator(color: AppColors.primaryPink)
-              else ...[
-                // Google Button
-                _LoginButton(
-                  text: "Continue with Google",
-                  iconWidget: SvgPicture.asset(
-                      'assets/google_logo.svg',
-                      height: 24,
-                      width: 24
-                  ),
-                  backgroundColor: Colors.white,
-                  textColor: Colors.black87,
-                  borderSide: BorderSide(color: Colors.grey.shade300),
-                  onPressed: () => _handleSocialLogin(() => authService.signInWithGoogle()),
-                ),
-
-                const SizedBox(height: 16),
-
-                // ✅ Apple Button (Platform kontrolü kaldırıldı, her yerde görünür)
-                _LoginButton(
-                  text: "Continue with Apple",
-                  iconWidget: Icon(Icons.apple, size: 28, color: isDarkMode ? Colors.black : Colors.white),
-                  backgroundColor: isDarkMode ? Colors.white : Colors.black,
-                  textColor: isDarkMode ? Colors.black : Colors.white,
-                  onPressed: () => _handleSocialLogin(() => authService.signInWithApple()),
-                ),
-
-                const SizedBox(height: 8),
-
-                // Guest Button
-                TextButton(
-                  onPressed: _handleGuestLogin,
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
-                  ),
-                  child: Text(
-                    "Continue as Guest",
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: AppColors.mediumGray,
-                      fontWeight: FontWeight.w600,
+        child: Stack(
+          children: [
+            // Theme-aware premium background (same vibe as FeatureIntro)
+            Positioned.fill(
+              child: IgnorePointer(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: isDark
+                          ? [
+                              AppColors.primaryPink.withOpacity(0.18),
+                              AppColors.secondaryPurple.withOpacity(0.14),
+                              AppColors.darkBackground,
+                            ]
+                          : [
+                              AppColors.primaryPink.withOpacity(0.10),
+                              AppColors.secondaryPurple.withOpacity(0.08),
+                              AppColors.backgroundWhite,
+                            ],
+                      stops: const [0.0, 0.6, 1.0],
                     ),
                   ),
                 ),
-              ],
-              const SizedBox(height: 20),
-            ],
-          ),
+              ),
+            ),
+
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+              child: Column(
+                children: [
+                  const Spacer(),
+
+                  // --- App Mark ---
+                  Image.asset(
+                    'assets/inapp.png',
+                    height: 110,
+                    fit: BoxFit.contain,
+                  ),
+
+                  const SizedBox(height: 18),
+
+                  Text(
+                    "Welcome to Payday",
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.getTextPrimary(context),
+                      letterSpacing: 0.2,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    "Track expenses, manage subscriptions,\nand master your budget.",
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: AppColors.getTextSecondary(context),
+                      height: 1.45,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+
+                  const SizedBox(height: 22),
+
+                  // --- Glass Card (actions) ---
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(22),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                      child: Container(
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: AppColors.getCardBackground(context).withOpacity(isDark ? 0.62 : 0.82),
+                          border: Border.all(
+                            color: AppColors.getBorder(context).withOpacity(isDark ? 0.22 : 0.30),
+                          ),
+                          boxShadow: AppColors.getCardShadow(context),
+                          borderRadius: BorderRadius.circular(22),
+                        ),
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
+                        child: Column(
+                          children: [
+                            if (_isLoading)
+                              const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 18),
+                                child: CircularProgressIndicator(color: AppColors.primaryPink),
+                              )
+                            else ...[
+                              // Google
+                              _OAuthButton(
+                                label: 'Continue with Google',
+                                icon: SvgPicture.asset('assets/google_logo.svg', height: 22, width: 22),
+                                onPressed: () => _handleSocialLogin(() => authService.signInWithGoogle()),
+                              ),
+                              const SizedBox(height: 12),
+
+                              // Apple
+                              _OAuthButton(
+                                label: 'Continue with Apple',
+                                icon: Icon(
+                                  Icons.apple,
+                                  size: 24,
+                                  color: AppColors.getTextPrimary(context),
+                                ),
+                                onPressed: () => _handleSocialLogin(() => authService.signInWithApple()),
+                              ),
+                              const SizedBox(height: 12),
+
+                              // Guest (primary CTA)
+                              PaydayButton(
+                                width: double.infinity,
+                                text: 'Continue as Guest',
+                                onPressed: _handleGuestLogin,
+                              ),
+                            ],
+
+                            const SizedBox(height: 12),
+
+                            Text(
+                              'Your data stays yours. No spam — just clarity.',
+                              textAlign: TextAlign.center,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: AppColors.getTextSecondary(context),
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const Spacer(),
+
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Text(
+                      'By continuing, you agree to a better money routine.',
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: AppColors.getTextSecondary(context),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-class _LoginButton extends StatelessWidget {
-  final String text;
-  final Widget iconWidget;
-  final Color backgroundColor;
-  final Color textColor;
-  final BorderSide borderSide;
+class _OAuthButton extends StatelessWidget {
+  final String label;
+  final Widget icon;
   final VoidCallback onPressed;
 
-  const _LoginButton({
-    required this.text,
-    required this.iconWidget,
-    required this.backgroundColor,
-    required this.textColor,
-    this.borderSide = BorderSide.none,
+  const _OAuthButton({
+    required this.label,
+    required this.icon,
     required this.onPressed,
   });
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return SizedBox(
       width: double.infinity,
-      height: 56,
+      height: 52,
       child: ElevatedButton(
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: backgroundColor,
-          foregroundColor: textColor,
+          backgroundColor: AppColors.getCardBackground(context).withOpacity(isDark ? 0.50 : 0.90),
+          foregroundColor: AppColors.getTextPrimary(context),
           elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-            side: borderSide,
+            borderRadius: BorderRadius.circular(14),
+            side: BorderSide(
+              color: AppColors.getBorder(context).withOpacity(isDark ? 0.22 : 0.32),
+            ),
           ),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            iconWidget,
-            const SizedBox(width: 12),
+            icon,
+            const SizedBox(width: 10),
             Text(
-              text,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: textColor,
+              label,
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: AppColors.getTextPrimary(context),
               ),
             ),
           ],
