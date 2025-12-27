@@ -29,11 +29,9 @@ import 'package:payday/core/services/period_balance_service.dart';
 
 final userSettingsRepositoryProvider = Provider<UserSettingsRepository>((ref) {
   final user = ref.watch(currentUserProvider).asData?.value;
-  // If user is authenticated and NOT anonymous, use Firebase.
-  // Otherwise use Local.
-  // Exception: If we just linked, isAnonymous is false.
-  // This means we immediately switch to Firebase.
-  if (user != null && !user.isAnonymous) {
+
+  // If user is authenticated (not null and not in guest mode), use Firebase
+  if (user != null) {
     return FirebaseUserSettingsRepository();
   }
   return LocalUserSettingsRepository();
@@ -41,7 +39,7 @@ final userSettingsRepositoryProvider = Provider<UserSettingsRepository>((ref) {
 
 final transactionRepositoryProvider = Provider<TransactionRepository>((ref) {
   final user = ref.watch(currentUserProvider).asData?.value;
-  if (user != null && !user.isAnonymous) {
+  if (user != null) {
     return FirebaseTransactionRepository();
   }
   return LocalTransactionRepository();
@@ -49,7 +47,7 @@ final transactionRepositoryProvider = Provider<TransactionRepository>((ref) {
 
 final savingsGoalRepositoryProvider = Provider<SavingsGoalRepository>((ref) {
   final user = ref.watch(currentUserProvider).asData?.value;
-  if (user != null && !user.isAnonymous) {
+  if (user != null) {
     return FirebaseSavingsGoalRepository();
   }
   return LocalSavingsGoalRepository();
@@ -57,7 +55,7 @@ final savingsGoalRepositoryProvider = Provider<SavingsGoalRepository>((ref) {
 
 final subscriptionRepositoryProvider = Provider<SubscriptionRepository>((ref) {
   final user = ref.watch(currentUserProvider).asData?.value;
-  if (user != null && !user.isAnonymous) {
+  if (user != null) {
     return FirebaseSubscriptionRepository();
   }
   return LocalSubscriptionRepository();
@@ -65,7 +63,7 @@ final subscriptionRepositoryProvider = Provider<SubscriptionRepository>((ref) {
 
 final monthlySummaryRepositoryProvider = Provider<MonthlySummaryRepository>((ref) {
   final user = ref.watch(currentUserProvider).asData?.value;
-  if (user != null && !user.isAnonymous) {
+  if (user != null) {
     return FirebaseMonthlySummaryRepository();
   }
   return LocalMonthlySummaryRepository();
@@ -79,9 +77,9 @@ final notificationServiceProvider = Provider<NotificationService>((ref) {
 /// Current User ID Provider
 final currentUserIdProvider = Provider<String>((ref) {
   final user = ref.watch(currentUserProvider).asData?.value;
-  // If user is logged in (including anonymous), use their UID.
-  // If no user, fallback to 'local_user' (shouldn't happen if we force anonymous auth)
-  return user?.uid ?? 'local_user';
+  // If user is logged in, use their UID.
+  // If no user (guest mode), use 'guest_user' as the local ID
+  return user?.uid ?? 'guest_user';
 });
 
 /// Transaction Manager Service Provider

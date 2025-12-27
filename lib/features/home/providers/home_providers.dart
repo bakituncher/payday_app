@@ -32,8 +32,8 @@ final userSettingsProvider = FutureProvider<UserSettings?>((ref) async {
   if (settings == null) {
     final user = ref.read(currentUserProvider).asData?.value;
 
-    // Kullanıcı Anonymous DEĞİLSE (yani Google/Apple ile girmişse)
-    if (user != null && !user.isAnonymous) {
+    // Kullanıcı var ise (yani Google/Apple ile girmişse)
+    if (user != null) {
       try {
         // Local repoyu manuel olarak çağır
         final localRepo = LocalUserSettingsRepository();

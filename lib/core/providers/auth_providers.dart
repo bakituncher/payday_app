@@ -39,14 +39,16 @@ final userPhotoUrlProvider = Provider<String?>((ref) {
   return userAsync.asData?.value?.photoURL;
 });
 
-// Anonymous state helper
-final isAnonymousUserProvider = Provider<bool>((ref) {
-  final user = ref.watch(currentUserProvider).asData?.value;
-  return user != null && user.isAnonymous;
+// Guest mode state helper
+final isGuestModeProvider = FutureProvider<bool>((ref) async {
+  final authService = ref.watch(authServiceProvider);
+  return await authService.isGuestMode;
 });
 
-// Fully authenticated (non-anonymous) helper
+// Fully authenticated (not guest) helper
+// Now uses currentUser stream for real-time updates
 final isFullyAuthenticatedProvider = Provider<bool>((ref) {
-  final user = ref.watch(currentUserProvider).asData?.value;
-  return user != null && !user.isAnonymous;
+  final userAsync = ref.watch(currentUserProvider);
+  // User is authenticated if currentUser exists (not null)
+  return userAsync.asData?.value != null;
 });

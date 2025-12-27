@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
@@ -104,15 +105,29 @@ class _PaydayAppState extends ConsumerState<PaydayApp> {
       try {
         final int offsetHours = DateTime.now().timeZoneOffset.inHours;
 
-        // Firestore'a saat dilimini ve son görülmeyi yaz
-        await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+        // FCM token'ı al
+        final notificationService = NotificationService();
+        final fcmToken = await FirebaseMessaging.instance.getToken();
+
+        // Firestore'a saat dilimini, FCM token'ı ve son görülmeyi yaz
+        final updateData = {
           'utcOffset': offsetHours,
           'lastLoginAt': FieldValue.serverTimestamp(),
-        }, SetOptions(merge: true));
+        };
 
-        debugPrint("🌍 Başlangıç Kontrolü: Saat dilimi güncellendi (UTC $offsetHours)");
+        // FCM token varsa ekle
+        if (fcmToken != null) {
+          updateData['fcmToken'] = fcmToken;
+        }
+
+        await FirebaseFirestore.instance.collection('users').doc(user.uid).set(
+          updateData,
+          SetOptions(merge: true),
+        );
+
+        debugPrint("🌍 Başlangıç Kontrolü: Saat dilimi ve FCM token güncellendi (UTC $offsetHours)");
       } catch (e) {
-        debugPrint("❌ Başlangıç Kontrolü: Saat dilimi hatası: $e");
+        debugPrint("❌ Başlangıç Kontrolü: Güncelleme hatası: $e");
       }
     }
   }
@@ -156,11 +171,18 @@ class _PaydayAppState extends ConsumerState<PaydayApp> {
     try {
       final user = await ref.read(currentUserProvider.future);
       final revenueCatService = RevenueCatService(); // Servisi al
+      final authService = ref.read(authServiceProvider);
 
       if (user == null) {
-        // ✅ DEĞİŞİKLİK: Otomatik anonim girişi kaldırdık.
-        // Kullanıcı Login ekranında "Misafir" derse o zaman anonim olacak.
-        debugPrint('No user signed in. Waiting for Login Screen interaction.');
+        // ✅ DEĞİŞİKLİK: Kullanıcı yoksa otomatik misafir moduna geç
+        final isGuest = await authService.isGuestMode;
+        if (!isGuest) {
+          // İlk kez açılıyorsa misafir moduna geç
+          await authService.enterGuestMode();
+          debugPrint('No user signed in. Entered guest mode automatically.');
+        } else {
+          debugPrint('Already in guest mode.');
+        }
       } else {
         // ✅ KRİTİK: Kullanıcı zaten giriş yapmışsa RevenueCat'i senkronize et.
         debugPrint('User signed in: ${user.uid}. Syncing with RevenueCat...');
@@ -257,15 +279,15 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     bool hasCompletedOnboarding = false;
 
     try {
-      // Eğer kullanıcı null ise bu check hata verebilir veya false dönebilir.
       // Null check ekliyoruz:
       final user = ref.read(currentUserProvider).asData?.value;
 
       if (user != null) {
+        // Authenticated user - check Firebase
         hasCompletedOnboarding = await repository.hasCompletedOnboarding();
         debugPrint("Splash: Has Completed Onboarding (Initial Check) -> $hasCompletedOnboarding");
 
-        if (!hasCompletedOnboarding && !user.isAnonymous) {
+        if (!hasCompletedOnboarding) {
           debugPrint("Splash: Authenticated user but no Firebase data found via Onboarding check. Checking Local...");
 
           final localRepo = LocalUserSettingsRepository();
@@ -293,8 +315,10 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
           }
         }
       } else {
-        // Kullanıcı yoksa onboarding tamamlanmamış sayılır
-        hasCompletedOnboarding = false;
+        // Guest user - check Local
+        final localRepo = LocalUserSettingsRepository();
+        hasCompletedOnboarding = await localRepo.hasCompletedOnboarding();
+        debugPrint("Splash: Guest mode - Local onboarding status: $hasCompletedOnboarding");
       }
 
     } catch (e) {
