@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:payday/core/theme/app_theme.dart';
 import 'package:payday/core/providers/auth_providers.dart';
+import 'package:payday/core/utils/currency_formatter.dart';
 import 'package:payday/shared/widgets/payday_button.dart';
 
 // Controllers
@@ -411,25 +412,10 @@ class _FinancialSummaryCard extends StatelessWidget {
     required this.onTap,
   });
 
-  String _symbol(String c) {
-    switch (c) {
-      case 'USD':
-        return r'$';
-      case 'EUR':
-        return '€';
-      case 'TRY':
-        return '₺';
-      case 'GBP':
-        return '£';
-      default:
-        return c;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final symbol = _symbol(currency);
+    final symbol = CurrencyFormatter.getSymbol(currency);
 
     return InkWell(
       onTap: onTap,
