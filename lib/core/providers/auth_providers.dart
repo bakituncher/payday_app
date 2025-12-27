@@ -46,7 +46,9 @@ final isGuestModeProvider = FutureProvider<bool>((ref) async {
 });
 
 // Fully authenticated (not guest) helper
-final isFullyAuthenticatedProvider = FutureProvider<bool>((ref) async {
-  final authService = ref.watch(authServiceProvider);
-  return await authService.isAuthenticated;
+// Now uses currentUser stream for real-time updates
+final isFullyAuthenticatedProvider = Provider<bool>((ref) {
+  final userAsync = ref.watch(currentUserProvider);
+  // User is authenticated if currentUser exists (not null)
+  return userAsync.asData?.value != null;
 });
