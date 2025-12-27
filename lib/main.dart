@@ -23,6 +23,7 @@ import 'package:payday/features/home/providers/home_providers.dart';
 
 // --- EKRAN IMPORTLARI ---
 import 'package:payday/features/home/screens/home_screen.dart';
+import 'package:payday/features/auth/screens/login_screen.dart'; // ✅ Yeni Login Ekranı
 import 'package:payday/features/onboarding/screens/onboarding_screen.dart';
 import 'package:payday/features/subscriptions/screens/subscriptions_screen.dart';
 import 'package:payday/features/insights/screens/monthly_summary_screen.dart';
@@ -93,7 +94,6 @@ class _PaydayAppState extends ConsumerState<PaydayApp> {
     _setupNotifications();
   }
 
-  /// ✅ YENİ EKLENEN FONKSİYON
   /// Uygulama her açıldığında kullanıcının güncel saat dilimini kaydeder.
   /// Cloud Function bu offset değerine göre bildirim gönderir.
   Future<void> _updateTimezone() async {
@@ -158,13 +158,11 @@ class _PaydayAppState extends ConsumerState<PaydayApp> {
       final revenueCatService = RevenueCatService(); // Servisi al
 
       if (user == null) {
-        debugPrint('No user signed in. Signing in anonymously...');
-        final authService = ref.read(authServiceProvider);
-        await authService.signInAnonymously();
-        // Anonim giriş AuthService içinde handle edildiği için burada tekrar çağırmaya gerek yok
+        // ✅ DEĞİŞİKLİK: Otomatik anonim girişi kaldırdık.
+        // Kullanıcı Login ekranında "Misafir" derse o zaman anonim olacak.
+        debugPrint('No user signed in. Waiting for Login Screen interaction.');
       } else {
         // ✅ KRİTİK: Kullanıcı zaten giriş yapmışsa RevenueCat'i senkronize et.
-        // Bu, uygulamanın her açılışında kimliğin doğrulanmasını sağlar.
         debugPrint('User signed in: ${user.uid}. Syncing with RevenueCat...');
         await revenueCatService.logIn(user.uid);
       }
@@ -199,6 +197,7 @@ class _PaydayAppState extends ConsumerState<PaydayApp> {
       // 🚀 BİLDİRİM ROTALARI GÜNCELLENDİ
       routes: {
         '/': (context) => const SplashScreen(),
+        '/login': (context) => const LoginScreen(), // ✅ Yeni Route
         '/onboarding': (context) => const OnboardingScreen(),
         '/home': (context) => const HomeScreen(),
         '/subscriptions': (context) => const SubscriptionsScreen(),
@@ -258,13 +257,15 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     bool hasCompletedOnboarding = false;
 
     try {
-      hasCompletedOnboarding = await repository.hasCompletedOnboarding();
-      debugPrint("Splash: Has Completed Onboarding (Initial Check) -> $hasCompletedOnboarding");
+      // Eğer kullanıcı null ise bu check hata verebilir veya false dönebilir.
+      // Null check ekliyoruz:
+      final user = ref.read(currentUserProvider).asData?.value;
 
-      if (!hasCompletedOnboarding) {
-        final user = ref.read(currentUserProvider).asData?.value;
+      if (user != null) {
+        hasCompletedOnboarding = await repository.hasCompletedOnboarding();
+        debugPrint("Splash: Has Completed Onboarding (Initial Check) -> $hasCompletedOnboarding");
 
-        if (user != null && !user.isAnonymous) {
+        if (!hasCompletedOnboarding && !user.isAnonymous) {
           debugPrint("Splash: Authenticated user but no Firebase data found via Onboarding check. Checking Local...");
 
           final localRepo = LocalUserSettingsRepository();
@@ -291,18 +292,24 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
             }
           }
         }
+      } else {
+        // Kullanıcı yoksa onboarding tamamlanmamış sayılır
+        hasCompletedOnboarding = false;
       }
+
     } catch (e) {
       debugPrint("Splash: Error checking status: $e");
     }
 
     if (!mounted) return;
 
-    // 4. Yönlendirme
+    // 4. Yönlendirme (GÜNCELLENDİ)
     if (hasCompletedOnboarding) {
+      // Kurulum tamam, ana ekrana git
       Navigator.of(context).pushReplacementNamed('/home');
     } else {
-      Navigator.of(context).pushReplacementNamed('/onboarding');
+      // Kurulum tamam değil veya kullanıcı yok -> Login Ekranına git
+      Navigator.of(context).pushReplacementNamed('/login');
     }
   }
 
