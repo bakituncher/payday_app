@@ -86,6 +86,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   // ✅ GÜNCELLENDİ: Klasik ama Temalı Takvim (Material Date Picker)
   Future<void> _selectDate(BuildContext context) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     final picked = await showDatePicker(
       context: context,
       initialDate: _nextPayday,
@@ -93,21 +95,25 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       lastDate: DateTime.now().add(const Duration(days: 365)),
       // Takvimi uygulamanın pembe temasına uyduruyoruz
       builder: (context, child) {
+        final base = Theme.of(context);
         return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: AppColors.primaryPink, // Header rengi
-              onPrimary: Colors.white, // Header yazı rengi
-              onSurface: AppColors.darkCharcoal, // Takvim günleri
-              surface: Colors.white, // Arka plan
+          data: base.copyWith(
+            colorScheme: (isDark ? const ColorScheme.dark() : const ColorScheme.light()).copyWith(
+              primary: AppColors.primaryPink,
+              onPrimary: Colors.white,
+              onSurface: AppColors.getTextPrimary(context),
+              surface: AppColors.getCardBackground(context),
             ),
             textButtonTheme: TextButtonThemeData(
               style: TextButton.styleFrom(
-                foregroundColor: AppColors.primaryPink, // OK/Cancel butonları
+                foregroundColor: AppColors.primaryPink,
                 textStyle: const TextStyle(fontWeight: FontWeight.bold),
               ),
             ),
-            dialogBackgroundColor: Colors.white,
+            dialogTheme: DialogThemeData(
+              backgroundColor: AppColors.getCardBackground(context),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            ),
             datePickerTheme: DatePickerThemeData(
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
               headerBackgroundColor: AppColors.primaryPink,
@@ -228,6 +234,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
@@ -242,11 +249,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           }
         },
         child: Scaffold(
-          backgroundColor: const Color(0xFFF8F9FC),
+          backgroundColor: AppColors.getBackground(context),
           resizeToAvoidBottomInset: true,
           body: Stack(
             children: [
-              // --- Dynamic Background ---
+              // --- Dynamic Background (theme aware) ---
               Positioned(
                 top: -100, right: -50,
                 child: AnimatedContainer(
@@ -256,8 +263,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     shape: BoxShape.circle,
                     gradient: LinearGradient(
                       colors: [
-                        _currentPage == 0 ? AppColors.primaryPink.withOpacity(0.2) : Colors.blue.withOpacity(0.1),
-                        AppColors.secondaryPurple.withOpacity(0.1)
+                        (_currentPage == 0
+                                ? AppColors.primaryPink
+                                : AppColors.secondaryBlue)
+                            .withOpacity(isDark ? 0.18 : 0.12),
+                        AppColors.secondaryPurple.withOpacity(isDark ? 0.14 : 0.10)
                       ],
                       begin: Alignment.topLeft, end: Alignment.bottomRight,
                     ),
@@ -273,8 +283,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     shape: BoxShape.circle,
                     gradient: LinearGradient(
                       colors: [
-                        _currentPage == 2 ? AppColors.secondaryPurple.withOpacity(0.2) : Colors.amber.withOpacity(0.1),
-                        Colors.white.withOpacity(0.1)
+                        (_currentPage == 2 ? AppColors.secondaryPurple : AppColors.warning)
+                            .withOpacity(isDark ? 0.16 : 0.10),
+                        (isDark ? AppColors.darkBackground : AppColors.backgroundWhite)
+                            .withOpacity(isDark ? 0.10 : 0.06)
                       ],
                     ),
                   ),
@@ -284,7 +296,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               // --- Glassmorphism ---
               BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 50, sigmaY: 50),
-                child: Container(color: Colors.white.withOpacity(0.4)),
+                child: Container(
+                  color: (isDark ? AppColors.darkBackground : AppColors.backgroundWhite)
+                      .withOpacity(isDark ? 0.35 : 0.40),
+                ),
               ),
 
               SafeArea(
@@ -300,15 +315,15 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                             duration: 300.ms,
                             child: IconButton(
                               icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
-                              color: AppColors.darkCharcoal,
+                              color: AppColors.getTextPrimary(context),
                               style: IconButton.styleFrom(
-                                backgroundColor: Colors.white,
-                                highlightColor: Colors.grey.withOpacity(0.1),
+                                backgroundColor: AppColors.getCardBackground(context).withOpacity(isDark ? 0.72 : 0.92),
+                                highlightColor: AppColors.getBorder(context).withOpacity(0.12),
                                 elevation: 0,
                                 padding: const EdgeInsets.all(12),
                                 shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    side: BorderSide(color: Colors.grey.withOpacity(0.1))
+                                  borderRadius: BorderRadius.circular(12),
+                                  side: BorderSide(color: AppColors.getBorder(context).withOpacity(isDark ? 0.20 : 0.26)),
                                 ),
                               ),
                               onPressed: _currentPage > 0 ? _previousPage : null,
@@ -320,15 +335,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.9),
+                              color: AppColors.getCardBackground(context).withOpacity(isDark ? 0.70 : 0.92),
                               borderRadius: BorderRadius.circular(30),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.05),
-                                  blurRadius: 15,
-                                  offset: const Offset(0, 5),
-                                ),
-                              ],
+                              border: Border.all(
+                                color: AppColors.getBorder(context).withOpacity(isDark ? 0.18 : 0.24),
+                              ),
+                              boxShadow: AppColors.getCardShadow(context),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
@@ -337,14 +349,16 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                                   "Step ${_currentPage + 1}",
                                   style: theme.textTheme.labelLarge?.copyWith(
                                     fontWeight: FontWeight.w800,
-                                    color: AppColors.darkCharcoal,
+                                    color: AppColors.getTextPrimary(context),
                                     letterSpacing: 0.5,
                                   ),
                                 ),
                                 const SizedBox(width: 12),
                                 Row(
                                   children: List.generate(3, (index) {
-                                    final activeColor = _currentPage == 2 ? AppColors.secondaryPurple : AppColors.primaryPink;
+                                    final activeColor = _currentPage == 2
+                                        ? AppColors.secondaryPurple
+                                        : AppColors.primaryPink;
                                     final isActive = index == _currentPage;
                                     final isPassed = index < _currentPage;
 
@@ -357,7 +371,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                                       decoration: BoxDecoration(
                                         color: isActive
                                             ? activeColor
-                                            : (isPassed ? activeColor.withOpacity(0.3) : Colors.grey[300]),
+                                            : (isPassed
+                                                ? activeColor.withOpacity(0.3)
+                                                : AppColors.getBorder(context).withOpacity(isDark ? 0.22 : 0.35)),
                                         borderRadius: BorderRadius.circular(4),
                                       ),
                                     );
@@ -425,104 +441,203 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   Widget _buildSetupPage(ThemeData theme) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const SizedBox(height: 24),
-          Text(
-            "Setup your\nPay Cycle",
-            style: theme.textTheme.displaySmall?.copyWith(
-              fontWeight: FontWeight.w800,
-              color: AppColors.darkCharcoal,
-              height: 1.1,
-              letterSpacing: -1,
-            ),
-          ).animate().fadeIn().slideX(),
-
-          const SizedBox(height: 8),
-          Text(
-            "We use this to calculate your safe-to-spend limit.",
-            style: theme.textTheme.bodyMedium?.copyWith(color: AppColors.mediumGray, fontSize: 16),
-          ).animate().fadeIn(delay: 100.ms),
-
-          const SizedBox(height: 32),
-
-          Text("HOW OFTEN?", style: theme.textTheme.labelSmall?.copyWith(fontWeight: FontWeight.bold, letterSpacing: 1.2, color: AppColors.mediumGray)),
-          const SizedBox(height: 16),
-
-          LayoutBuilder(
-              builder: (context, constraints) {
-                final width = (constraints.maxWidth - 12) / 2;
-                return Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  children: [
-                    _buildCycleCard(theme, AppConstants.payCycleWeekly, 'Weekly', '7d', width),
-                    _buildCycleCard(theme, AppConstants.payCycleBiWeekly, 'Bi-Weekly', '14d', width),
-                    _buildCycleCard(theme, AppConstants.payCycleSemiMonthly, 'Semi-Monthly', '15d', width),
-                    _buildCycleCard(theme, AppConstants.payCycleMonthly, 'Monthly', '30d', width),
-                  ],
-                );
-              }
-          ).animate().fadeIn(delay: 200.ms),
-
-          const SizedBox(height: 32),
-
-          Text("NEXT PAYDAY", style: theme.textTheme.labelSmall?.copyWith(fontWeight: FontWeight.bold, letterSpacing: 1.2, color: AppColors.mediumGray)),
-          const SizedBox(height: 16),
-
-          InkWell(
-            onTap: () => _selectDate(context),
-            borderRadius: BorderRadius.circular(20),
+          const SizedBox(height: 6),
+          Center(
             child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20),
+              width: 84,
+              height: 84,
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(color: AppColors.primaryPink.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, 10)),
-                  BoxShadow(color: Colors.black.withOpacity(0.01), blurRadius: 2, offset: const Offset(0, 1)),
-                ],
-                border: Border.all(color: AppColors.primaryPink.withOpacity(0.1)),
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppColors.primaryPink.withOpacity(isDark ? 0.26 : 0.16),
+                    AppColors.secondaryPurple.withOpacity(isDark ? 0.22 : 0.12),
+                  ],
+                ),
               ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                        color: AppColors.primaryPink.withOpacity(0.08),
-                        shape: BoxShape.circle
-                    ),
-                    child: const Icon(Icons.calendar_today_rounded, color: AppColors.primaryPink, size: 24),
+              child: const Icon(
+                Icons.calendar_month_rounded,
+                size: 40,
+                color: AppColors.primaryPink,
+              ),
+            ),
+          ).animate().fadeIn(duration: 250.ms).moveY(begin: 8, end: 0),
+
+          const SizedBox(height: 18),
+
+          Text(
+            "Let’s set up your pay cycle",
+            textAlign: TextAlign.center,
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.w900,
+              color: AppColors.getTextPrimary(context),
+              height: 1.1,
+            ),
+          ).animate().fadeIn(delay: 80.ms),
+
+          const SizedBox(height: 10),
+
+          Text(
+            "This helps Payday calculate your safe-to-spend limit and keep you on track until your next payday.",
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: AppColors.getTextSecondary(context),
+              height: 1.4,
+              fontWeight: FontWeight.w500,
+            ),
+          ).animate().fadeIn(delay: 140.ms),
+
+          const SizedBox(height: 18),
+
+          // Main glass card
+          ClipRRect(
+            borderRadius: BorderRadius.circular(24),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: AppColors.getCardBackground(context).withOpacity(isDark ? 0.60 : 0.86),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: AppColors.getBorder(context).withOpacity(isDark ? 0.18 : 0.28),
                   ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        FittedBox(
-                          fit: BoxFit.scaleDown,
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            DateFormat('MMMM d, yyyy').format(_nextPayday),
-                            style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700, color: AppColors.darkCharcoal),
+                  boxShadow: AppColors.getCardShadow(context),
+                ),
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Pay frequency",
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.getTextPrimary(context),
+                        letterSpacing: 0.2,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final width = (constraints.maxWidth - 12) / 2;
+                        return Wrap(
+                          spacing: 12,
+                          runSpacing: 12,
+                          children: [
+                            _buildCycleCard(theme, AppConstants.payCycleWeekly, 'Weekly', '7d', width),
+                            _buildCycleCard(theme, AppConstants.payCycleBiWeekly, 'Bi-Weekly', '14d', width),
+                            _buildCycleCard(theme, AppConstants.payCycleSemiMonthly, 'Semi-Monthly', '2x', width),
+                            _buildCycleCard(theme, AppConstants.payCycleMonthly, 'Monthly', '30d', width),
+                          ],
+                        );
+                      },
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    Text(
+                      "Next payday",
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.getTextPrimary(context),
+                        letterSpacing: 0.2,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+
+                    InkWell(
+                      onTap: () => _selectDate(context),
+                      borderRadius: BorderRadius.circular(18),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: AppColors.getCardBackground(context).withOpacity(isDark ? 0.52 : 0.92),
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(
+                            color: AppColors.getBorder(context).withOpacity(isDark ? 0.16 : 0.24),
                           ),
                         ),
-                        const SizedBox(height: 4),
-                        Text("Tap to change", style: theme.textTheme.bodySmall?.copyWith(color: AppColors.mediumGray)),
-                      ],
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 38,
+                              height: 38,
+                              decoration: BoxDecoration(
+                                color: AppColors.primaryPink.withOpacity(isDark ? 0.18 : 0.10),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(Icons.event_rounded, color: AppColors.primaryPink, size: 20),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    DateFormat('MMMM d, yyyy').format(_nextPayday),
+                                    style: theme.textTheme.titleMedium?.copyWith(
+                                      fontWeight: FontWeight.w800,
+                                      color: AppColors.getTextPrimary(context),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    "Tap to change",
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: AppColors.getTextSecondary(context),
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Icon(Icons.chevron_right_rounded, color: AppColors.getTextSecondary(context)),
+                          ],
+                        ),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: AppColors.mediumGray),
-                ],
+
+                    const SizedBox(height: 14),
+
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: 22,
+                          height: 22,
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryPink.withOpacity(isDark ? 0.18 : 0.10),
+                            borderRadius: BorderRadius.circular(7),
+                          ),
+                          child: const Icon(Icons.lock_rounded, size: 14, color: AppColors.primaryPink),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            "You can change this anytime in Settings.",
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: AppColors.getTextSecondary(context),
+                              height: 1.3,
+                            ),
+                          ),
+                        ),
+                      ],
+                    )
+                  ],
+                ),
               ),
             ),
-          ).animate().fadeIn(delay: 300.ms),
-          const SizedBox(height: 32),
+          ).animate().fadeIn(delay: 200.ms).moveY(begin: 10, end: 0),
         ],
       ),
     );
@@ -530,6 +645,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   Widget _buildCycleCard(ThemeData theme, String value, String title, String badge, double width) {
     final isSelected = _selectedPayCycle == value;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final Color selectedSurface = AppColors.getTextPrimary(context);
+    final Color unselectedSurface = AppColors.getCardBackground(context).withOpacity(isDark ? 0.62 : 0.92);
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -547,15 +667,15 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           height: 100,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: isSelected ? AppColors.darkCharcoal : Colors.white,
+            color: isSelected ? selectedSurface : unselectedSurface,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-                color: isSelected ? Colors.transparent : Colors.grey.withOpacity(0.15),
+                color: isSelected ? Colors.transparent : AppColors.getBorder(context).withOpacity(isDark ? 0.22 : 0.28),
                 width: 1.5
             ),
             boxShadow: isSelected
-                ? [BoxShadow(color: AppColors.darkCharcoal.withOpacity(0.3), blurRadius: 12, offset: const Offset(0, 6))]
-                : [BoxShadow(color: Colors.grey.withOpacity(0.05), blurRadius: 4, offset: const Offset(0, 2))],
+                ? [BoxShadow(color: selectedSurface.withOpacity(0.25), blurRadius: 12, offset: const Offset(0, 6))]
+                : AppColors.getCardShadow(context),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -567,7 +687,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: isSelected ? Colors.white.withOpacity(0.15) : AppColors.primaryPink.withOpacity(0.1),
+                      color: isSelected ? Colors.white.withOpacity(0.15) : AppColors.primaryPink.withOpacity(0.10),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -588,7 +708,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                     fontSize: 15,
-                    color: isSelected ? Colors.white : AppColors.darkCharcoal
+                    color: isSelected ? Colors.white : AppColors.getTextPrimary(context)
                 ),
               ),
             ],
@@ -610,6 +730,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }) {
     final isSymbolRight = CurrencyFormatter.isSymbolOnRight(_selectedCurrency);
     final symbol = CurrencyFormatter.getSymbol(_selectedCurrency);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -633,7 +754,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             children: [
               Container(
                 padding: EdgeInsets.all(iconPadding),
-                decoration: BoxDecoration(color: color.withOpacity(0.1), shape: BoxShape.circle),
+                decoration: BoxDecoration(color: color.withOpacity(0.12), shape: BoxShape.circle),
                 child: Text(icon, style: TextStyle(fontSize: iconSize)),
               ).animate().scale(duration: 600.ms, curve: Curves.elasticOut),
 
@@ -644,7 +765,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 textAlign: TextAlign.center,
                 style: theme.textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.w800,
-                  color: AppColors.darkCharcoal,
+                  color: AppColors.getTextPrimary(context),
                   fontSize: titleFontSize,
                 ),
               ).animate().fadeIn().slideY(begin: 0.3, end: 0),
@@ -656,7 +777,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   subtitle,
                   textAlign: TextAlign.center,
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: AppColors.mediumGray,
+                    color: AppColors.getTextSecondary(context),
                     fontSize: isSmallScreen ? 13 : null,
                   ),
                   maxLines: 2,
@@ -689,7 +810,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         ],
                         style: theme.textTheme.displayMedium?.copyWith(
                             fontWeight: FontWeight.w900,
-                            color: AppColors.darkCharcoal,
+                            color: AppColors.getTextPrimary(context),
                             fontSize: inputFontSize
                         ),
                         textAlign: TextAlign.center,
@@ -698,7 +819,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         cursorRadius: const Radius.circular(2),
                         decoration: InputDecoration(
                           hintText: '0',
-                          hintStyle: TextStyle(color: AppColors.lightGray.withOpacity(0.5)),
+                          hintStyle: TextStyle(color: AppColors.getBorder(context).withOpacity(isDark ? 0.45 : 0.55)),
                           border: InputBorder.none,
                           isDense: true,
                           contentPadding: const EdgeInsets.symmetric(horizontal: 4),
@@ -725,10 +846,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               Container(
                 padding: EdgeInsets.all(isSmallScreen ? 12 : 16),
                 decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.getCardBackground(context).withOpacity(isDark ? 0.60 : 0.92),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.grey.withOpacity(0.1)),
-                    boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))]
+                    border: Border.all(color: AppColors.getBorder(context).withOpacity(isDark ? 0.18 : 0.24)),
+                    boxShadow: AppColors.getCardShadow(context)
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -739,7 +860,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                       child: Text(
                         infoText,
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: AppColors.mediumGray,
+                          color: AppColors.getTextSecondary(context),
                           height: 1.3,
                           fontSize: isSmallScreen ? 13 : null,
                         ),
