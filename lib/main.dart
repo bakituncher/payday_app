@@ -20,6 +20,7 @@ import 'package:payday/features/premium/providers/premium_providers.dart';
 import 'package:payday/core/services/data_migration_service.dart';
 import 'package:payday/core/repositories/local/local_user_settings_repository.dart';
 import 'package:payday/features/home/providers/home_providers.dart';
+import 'package:payday/core/providers/app_launch_providers.dart';
 
 // --- EKRAN IMPORTLARI ---
 import 'package:payday/features/home/screens/home_screen.dart';
@@ -30,6 +31,7 @@ import 'package:payday/features/insights/screens/monthly_summary_screen.dart';
 // Bildirimlerden gelen rotalar için gerekli importlar:
 import 'package:payday/features/premium/screens/premium_paywall_screen.dart';
 import 'package:payday/features/transactions/screens/add_transaction_screen.dart';
+import 'package:payday/features/feature_intro/screens/feature_intro_screen.dart';
 
 // Navigasyon işlemleri için Global Key (RouterContext olmadan yönlendirme için)
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -197,6 +199,7 @@ class _PaydayAppState extends ConsumerState<PaydayApp> {
       // 🚀 BİLDİRİM ROTALARI GÜNCELLENDİ
       routes: {
         '/': (context) => const SplashScreen(),
+        '/feature-intro': (context) => const FeatureIntroScreen(),
         '/login': (context) => const LoginScreen(), // ✅ Yeni Route
         '/onboarding': (context) => const OnboardingScreen(),
         '/home': (context) => const HomeScreen(),
@@ -248,6 +251,19 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     ]);
 
     if (!mounted) return;
+
+    // ✅ 1.5 Feature Intro Gate (pazarlama onboarding)
+    // Kullanıcı giriş yapmamış olsa bile (veya onboarding tamam olmasa bile)
+    // bu ekranı bir kez gösteriyoruz.
+    try {
+      final hasSeenIntro = await ref.read(hasSeenFeatureIntroProvider.future);
+      if (!hasSeenIntro && mounted) {
+        Navigator.of(context).pushReplacementNamed('/feature-intro');
+        return;
+      }
+    } catch (_) {
+      // Prefs okunamazsa intro’yu bloklamayalım.
+    }
 
     // 2. Premium Kontrolü
     try { await refreshPremiumStatus(ref); } catch (_) {}
@@ -383,3 +399,4 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     );
   }
 }
+
