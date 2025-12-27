@@ -248,7 +248,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final currentUser = ref.watch(currentUserProvider).asData?.value;
+    final currentUserAsync = ref.watch(currentUserProvider);
+    final currentUser = currentUserAsync.asData?.value;
     final isFullyAuthenticated = ref.watch(isFullyAuthenticatedProvider);
 
     if (_formData == null) {

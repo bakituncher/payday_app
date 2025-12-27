@@ -22,7 +22,7 @@ class AuthController {
   Future<String?> signInWithGoogle() async {
     try {
       final authService = ref.read(authServiceProvider);
-      final wasAnonymous = authService.isAnonymous;
+      final wasGuest = await authService.isGuestMode;
       final sourceUserId = ref.read(currentUserIdProvider);
 
       // First, perform the sign-in to get the target user
@@ -32,8 +32,8 @@ class AuthController {
 
       final targetUserId = userCredential.user!.uid;
 
-      // ✅ Critical Fix: Only check conflict if user ID changed AND was anonymous
-      if (wasAnonymous && sourceUserId != targetUserId) {
+      // ✅ Critical Fix: Only check conflict if user ID changed AND was guest
+      if (wasGuest && sourceUserId != targetUserId) {
         final conflictResult = await _conflictService.checkForConflict(
           localUserId: sourceUserId,
           remoteUserId: targetUserId,
@@ -78,7 +78,7 @@ class AuthController {
   Future<String?> signInWithApple() async {
     try {
       final authService = ref.read(authServiceProvider);
-      final wasAnonymous = authService.isAnonymous;
+      final wasGuest = await authService.isGuestMode;
       final sourceUserId = ref.read(currentUserIdProvider);
 
       // First, perform the sign-in to get the target user
@@ -88,8 +88,8 @@ class AuthController {
 
       final targetUserId = userCredential.user!.uid;
 
-      // ✅ Critical Fix: Only check conflict if user ID changed AND was anonymous
-      if (wasAnonymous && sourceUserId != targetUserId) {
+      // ✅ Critical Fix: Only check conflict if user ID changed AND was guest
+      if (wasGuest && sourceUserId != targetUserId) {
         final conflictResult = await _conflictService.checkForConflict(
           localUserId: sourceUserId,
           remoteUserId: targetUserId,

@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:payday/core/theme/app_theme.dart';
 import 'package:payday/core/models/savings_goal.dart';
 import 'package:payday/core/providers/repository_providers.dart';
-import 'package:payday/core/providers/auth_providers.dart';
 import 'package:payday/features/home/providers/home_providers.dart';
 import 'package:payday/core/services/currency_service.dart';
 import 'package:uuid/uuid.dart';
@@ -80,16 +79,10 @@ class _AddSavingsGoalScreenState extends ConsumerState<AddSavingsGoalScreen> {
   Future<void> _saveGoal() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final authService = ref.read(authServiceProvider);
-    final userId = authService.currentUser?.uid;
+    // Get user ID from provider (works for both authenticated and guest users)
+    final userId = ref.read(currentUserIdProvider);
 
     print('💾 Saving goal - User ID: $userId');
-    print('💾 User is anonymous: ${authService.currentUser?.isAnonymous}');
-
-    if (userId == null) {
-      _showError('User not logged in');
-      return;
-    }
 
     setState(() {
       _isLoading = true;

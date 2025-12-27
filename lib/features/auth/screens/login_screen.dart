@@ -22,7 +22,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     setState(() => _isLoading = true);
     try {
       final authService = ref.read(authServiceProvider);
-      await authService.signInAnonymously();
+      await authService.enterGuestMode();
 
       if (mounted) {
         Navigator.of(context).pushReplacementNamed('/onboarding');
