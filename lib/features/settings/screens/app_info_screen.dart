@@ -211,7 +211,10 @@ class _AppInfoScreenState extends ConsumerState<AppInfoScreen> {
 
       if (mounted) {
         HapticFeedback.mediumImpact();
-        Navigator.of(context).popUntil((route) => route.isFirst);
+        Navigator.of(context).pushNamedAndRemoveUntil(
+          '/login',
+          (route) => false,
+        );
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Row(
