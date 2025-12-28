@@ -19,7 +19,7 @@ const List<Map<String, String>> incomeSources = [
   {'name': 'Gift', 'emoji': '💝', 'id': 'gift'},
   {'name': 'Freelance', 'emoji': '💻', 'id': 'freelance'},
   {'name': 'Side Hustle', 'emoji': '🚀', 'id': 'side_hustle'},
-  {'name': 'Sold Item', 'emoji': '🏷️', 'id': 'sold_item'},
+  {'name': 'Sold Item', 'emoji': '🏷', 'id': 'sold_item'},
   {'name': 'Refund', 'emoji': '💸', 'id': 'refund'},
   {'name': 'Investment', 'emoji': '📈', 'id': 'investment'},
   {'name': 'Other Income', 'emoji': '💰', 'id': 'other_income'},
@@ -467,5 +467,4 @@ class _AddFundsScreenState extends ConsumerState<AddFundsScreen> {
       if (mounted) setState(() => _isLoading = false);
     }
   }
-}
 }
