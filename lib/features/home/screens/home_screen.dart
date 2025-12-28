@@ -320,6 +320,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
                             const SizedBox(height: 12),
 
+                            // ✅ REKLAM ALANI (Quick Actions altına taşındı)
+                            const PaydayBannerAd()
+                                .animate()
+                                .fadeIn(duration: 600.ms, delay: 320.ms),
+
+                            const SizedBox(height: 12),
+
                             // ✅ My Savings (üst tarafa taşındı)
                             const SavingsCard()
                                 .animate()
@@ -344,11 +351,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 .slideY(begin: 0.1, end: 0),
 
                             const SizedBox(height: 12),
-
-                            // ✅ REKLAM ALANI
-                            const PaydayBannerAd()
-                                .animate()
-                                .fadeIn(duration: 600.ms, delay: 500.ms),
 
                             const SizedBox(height: 20),
                           ]),
