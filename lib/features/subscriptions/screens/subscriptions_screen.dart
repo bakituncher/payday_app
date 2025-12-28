@@ -50,204 +50,200 @@ class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
     return Scaffold(
       backgroundColor: AppColors.getBackground(context),
       extendBody: true,
-      body: Column(
+      body: Stack(
         children: [
-          Expanded(
-            child: Stack(
-              children: [
-                // Subtle background gradient
-                Positioned.fill(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          AppColors.primaryPink.withValues(alpha: isDark ? 0.02 : 0.03),
-                          AppColors.secondaryPurple.withValues(alpha: isDark ? 0.02 : 0.03),
-                        ],
-                      ),
+          // Subtle background gradient
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppColors.primaryPink
+                        .withValues(alpha: isDark ? 0.02 : 0.03),
+                    AppColors.secondaryPurple
+                        .withValues(alpha: isDark ? 0.02 : 0.03),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          // Main content
+          SafeArea(
+            child: CustomScrollView(
+              physics: const BouncingScrollPhysics(),
+              slivers: [
+                // Compact Modern App Bar
+                SliverAppBar(
+                  expandedHeight: 0,
+                  floating: true,
+                  pinned: true,
+                  backgroundColor:
+                      AppColors.getBackground(context).withValues(alpha: 0.8),
+                  elevation: 0,
+                  surfaceTintColor: Colors.transparent,
+                  flexibleSpace: ClipRect(
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                      child: Container(color: Colors.transparent),
                     ),
                   ),
-                ),
-                // Main content
-                SafeArea(
-                  child: CustomScrollView(
-                    physics: const BouncingScrollPhysics(),
-                    slivers: [
-                      // Compact Modern App Bar
-                      SliverAppBar(
-                        expandedHeight: 0,
-                        floating: true,
-                        pinned: true,
-                        backgroundColor: AppColors.getBackground(context).withValues(alpha: 0.8),
-                        elevation: 0,
-                        surfaceTintColor: Colors.transparent,
-                        flexibleSpace: ClipRect(
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                            child: Container(color: Colors.transparent),
-                          ),
-                        ),
-                        leadingWidth: 48,
-                        leading: Padding(
-                          padding: const EdgeInsets.only(left: 4),
-                          child: IconButton(
-                            icon: Icon(
-                              Icons.arrow_back_ios_new_rounded,
-                              size: 20,
-                              color: AppColors.getTextPrimary(context),
-                            ),
-                            onPressed: () {
-                              HapticFeedback.lightImpact();
-                              Navigator.of(context).pop();
-                            },
-                          ),
-                        ),
-                        titleSpacing: 8,
-                        title: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(6),
-                              decoration: BoxDecoration(
-                                gradient: AppColors.premiumGradient,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: const Icon(
-                                Icons.subscriptions_rounded,
-                                color: Colors.white,
-                                size: 16,
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Text(
-                              'Subscriptions',
-                              style: theme.textTheme.titleLarge?.copyWith(
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.getTextPrimary(context),
-                                letterSpacing: -0.3,
-                              ),
-                            ),
-                          ],
-                        ),
-                        actions: [
-                          IconButton(
-                            icon: Container(
-                              padding: const EdgeInsets.all(6),
-                              decoration: BoxDecoration(
-                                color: AppColors.primaryPink.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: const Icon(
-                                Icons.analytics_outlined,
-                                size: 18,
-                              ),
-                            ),
-                            onPressed: () {
-                              HapticFeedback.lightImpact();
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => const SubscriptionAnalysisScreen(),
-                                ),
-                              );
-                            },
-                            color: AppColors.primaryPink,
-                            tooltip: 'Analysis',
-                          ),
-                          const SizedBox(width: 8),
-                        ],
+                  leadingWidth: 48,
+                  leading: Padding(
+                    padding: const EdgeInsets.only(left: 4),
+                    child: IconButton(
+                      icon: Icon(
+                        Icons.arrow_back_ios_new_rounded,
+                        size: 20,
+                        color: AppColors.getTextPrimary(context),
                       ),
-
-                      // Compact Content
-                      SliverPadding(
-                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                        sliver: SliverList(
-                          delegate: SliverChildListDelegate([
-                            // Summary Card - More compact
-                            const SubscriptionSummaryCard()
-                                .animate()
-                                .fadeIn(duration: 300.ms)
-                                .slideY(begin: 0.1, end: 0),
-
-                            const SizedBox(height: 12),
-
-                            // Upcoming Bills - More compact
-                            const UpcomingBillsCard()
-                                .animate()
-                                .fadeIn(duration: 300.ms, delay: 50.ms)
-                                .slideY(begin: 0.1, end: 0),
-
-                            const SizedBox(height: 16),
-
-                            // Category Filter - Cleaner
-                            const CategoryFilterChips()
-                                .animate()
-                                .fadeIn(duration: 300.ms, delay: 100.ms),
-
-                            const SizedBox(height: 12),
-                          ]),
+                      onPressed: () {
+                        HapticFeedback.lightImpact();
+                        Navigator.of(context).pop();
+                      },
+                    ),
+                  ),
+                  titleSpacing: 8,
+                  title: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          gradient: AppColors.premiumGradient,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(
+                          Icons.subscriptions_rounded,
+                          color: Colors.white,
+                          size: 16,
                         ),
                       ),
-
-                      // Subscriptions List
-                      subscriptionsAsync.when(
-                        loading: () => SliverPadding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          sliver: SliverList(
-                            delegate: SliverChildBuilderDelegate(
-                              (context, index) => _buildShimmerCard(context),
-                              childCount: 3,
-                            ),
-                          ),
+                      const SizedBox(width: 10),
+                      Text(
+                        'Subscriptions',
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.getTextPrimary(context),
+                          letterSpacing: -0.3,
                         ),
-                        error: (error, stack) => SliverToBoxAdapter(
-                          child: _buildErrorState(context, error),
-                        ),
-                        data: (subscriptions) {
-                          if (subscriptions.isEmpty) {
-                            return SliverToBoxAdapter(
-                              child: _buildEmptyState(context),
-                            );
-                          }
-
-                          return SliverPadding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            sliver: SliverList(
-                              delegate: SliverChildBuilderDelegate(
-                                (context, index) {
-                                  final subscription = subscriptions[index];
-                                  return SubscriptionCard(
-                                    subscription: subscription,
-                                  ).animate().fadeIn(
-                                    duration: 250.ms,
-                                    delay: (150 + (index * 30)).ms,
-                                  ).slideX(begin: 0.05, end: 0);
-                                },
-                                childCount: subscriptions.length,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-
-                      // Bottom padding for FAB
-                      const SliverToBoxAdapter(
-                        child: SizedBox(height: 100),
                       ),
                     ],
                   ),
+                  actions: [
+                    IconButton(
+                      icon: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryPink.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(
+                          Icons.analytics_outlined,
+                          size: 18,
+                        ),
+                      ),
+                      onPressed: () {
+                        HapticFeedback.lightImpact();
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const SubscriptionAnalysisScreen(),
+                          ),
+                        );
+                      },
+                      color: AppColors.primaryPink,
+                      tooltip: 'Analysis',
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                ),
+
+                // Compact Content
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                  sliver: SliverList(
+                    delegate: SliverChildListDelegate([
+                      // Summary Card - More compact
+                      const SubscriptionSummaryCard()
+                          .animate()
+                          .fadeIn(duration: 300.ms)
+                          .slideY(begin: 0.1, end: 0),
+
+                      const SizedBox(height: 12),
+
+                      // Upcoming Bills - More compact
+                      const UpcomingBillsCard()
+                          .animate()
+                          .fadeIn(duration: 300.ms, delay: 50.ms)
+                          .slideY(begin: 0.1, end: 0),
+
+                      const SizedBox(height: 16),
+
+                      // Category Filter - Cleaner
+                      const CategoryFilterChips()
+                          .animate()
+                          .fadeIn(duration: 300.ms, delay: 100.ms),
+
+                      const SizedBox(height: 12),
+                    ]),
+                  ),
+                ),
+
+                // Subscriptions List
+                subscriptionsAsync.when(
+                  loading: () => SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    sliver: SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) => _buildShimmerCard(context),
+                        childCount: 3,
+                      ),
+                    ),
+                  ),
+                  error: (error, stack) => SliverToBoxAdapter(
+                    child: _buildErrorState(context, error),
+                  ),
+                  data: (subscriptions) {
+                    if (subscriptions.isEmpty) {
+                      return SliverToBoxAdapter(
+                        child: _buildEmptyState(context),
+                      );
+                    }
+
+                    return SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      sliver: SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) {
+                            final subscription = subscriptions[index];
+                            return SubscriptionCard(
+                              subscription: subscription,
+                            ).animate().fadeIn(
+                                  duration: 250.ms,
+                                  delay: (150 + (index * 30)).ms,
+                                ).slideX(begin: 0.05, end: 0);
+                          },
+                          childCount: subscriptions.length,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+
+                // Bottom padding for FAB
+                const SliverToBoxAdapter(
+                  child: SizedBox(height: 100),
                 ),
               ],
             ),
           ),
-
-          // Banner
-          SafeArea(
-            top: false,
-            child: PaydayBannerAd(adUnitId: AdService().subscriptionsBannerId),
-          ),
         ],
+      ),
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: PaydayBannerAd(adUnitId: AdService().subscriptionsBannerId),
       ),
 
       // Modern FAB

@@ -44,166 +44,162 @@ class _SavingsScreenState extends ConsumerState<SavingsScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.getBackground(context),
-      body: Column(
-        children: [
-          Expanded(
-            child: SafeArea(
-              child: CustomScrollView(
-                physics: const BouncingScrollPhysics(),
-                slivers: [
-                  // Premium App Bar
-                  SliverAppBar(
-                    expandedHeight: 0,
-                    floating: true,
-                    pinned: false,
-                    backgroundColor: AppColors.getBackground(context),
-                    elevation: 0,
-                    surfaceTintColor: Colors.transparent,
-                    leading: Container(
-                      margin: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: AppColors.getSubtle(context),
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                      ),
-                      child: IconButton(
-                        icon: const Icon(Icons.arrow_back_ios_new_rounded),
-                        onPressed: () {
-                          HapticFeedback.lightImpact();
-                          Navigator.pop(context);
-                        },
-                        color: AppColors.getTextPrimary(context),
-                      ),
-                    ),
-                    title: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            gradient: AppColors.successGradient,
-                            borderRadius: BorderRadius.circular(AppRadius.md),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.success.withValues(alpha: 0.3),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: const Icon(
-                            Icons.savings_rounded,
-                            color: Colors.white,
-                            size: 20,
-                          ),
-                        ),
-                        const SizedBox(width: AppSpacing.sm),
-                        Text(
-                          'My Savings',
-                          style: theme.textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.getTextPrimary(context),
-                            letterSpacing: -0.5,
-                          ),
+      body: SafeArea(
+        child: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            // Premium App Bar
+            SliverAppBar(
+              expandedHeight: 0,
+              floating: true,
+              pinned: false,
+              backgroundColor: AppColors.getBackground(context),
+              elevation: 0,
+              surfaceTintColor: Colors.transparent,
+              leading: Container(
+                margin: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.getSubtle(context),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                ),
+                child: IconButton(
+                  icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                  onPressed: () {
+                    HapticFeedback.lightImpact();
+                    Navigator.pop(context);
+                  },
+                  color: AppColors.getTextPrimary(context),
+                ),
+              ),
+              title: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      gradient: AppColors.successGradient,
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.success.withValues(alpha: 0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
                         ),
                       ],
                     ),
+                    child: const Icon(
+                      Icons.savings_rounded,
+                      color: Colors.white,
+                      size: 20,
+                    ),
                   ),
-
-                  // Content
-                  SliverPadding(
-                    padding: const EdgeInsets.all(AppSpacing.md),
-                    sliver: SliverList(
-                      delegate: SliverChildListDelegate([
-                        // Summary Card
-                        const SavingsSummaryCard()
-                            .animate()
-                            .fadeIn(duration: 400.ms)
-                            .slideY(begin: -0.1, end: 0),
-
-                        const SizedBox(height: AppSpacing.lg),
-
-                        // Section Header
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'My Goals',
-                              style: theme.textTheme.titleLarge?.copyWith(
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.getTextPrimary(context),
-                              ),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: AppSpacing.sm,
-                                vertical: AppSpacing.xs,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.primaryPink.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(AppRadius.full),
-                              ),
-                              child: Text(
-                                savingsGoalsAsync.when(
-                                  data: (goals) => '${goals.length} ${goals.length == 1 ? 'goal' : 'goals'}',
-                                  loading: () => '...',
-                                  error: (_, __) => '0',
-                                ),
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: AppColors.primaryPink,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          ],
-                        )
-                            .animate()
-                            .fadeIn(duration: 400.ms, delay: 100.ms)
-                            .slideX(begin: -0.1, end: 0),
-
-                        const SizedBox(height: AppSpacing.md),
-
-                        // Goals List
-                        savingsGoalsAsync.when(
-                          loading: () => _buildLoadingState(),
-                          error: (error, _) => _buildErrorState(context, error.toString()),
-                          data: (goals) {
-                            if (goals.isEmpty) {
-                              return _buildEmptyState(context);
-                            }
-
-                            return Column(
-                              children: goals.asMap().entries.map((entry) {
-                                final index = entry.key;
-                                final goal = entry.value;
-                                return Padding(
-                                  padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                                  child: SavingsGoalCard(goal: goal)
-                                      .animate()
-                                      .fadeIn(
-                                    duration: 400.ms,
-                                    delay: Duration(milliseconds: 200 + (index * 50)),
-                                  )
-                                      .slideX(begin: 0.1, end: 0),
-                                );
-                              }).toList(),
-                            );
-                          },
-                        ),
-
-                        const SizedBox(height: 100), // Space for FAB
-                      ]),
+                  const SizedBox(width: AppSpacing.sm),
+                  Text(
+                    'My Savings',
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.getTextPrimary(context),
+                      letterSpacing: -0.5,
                     ),
                   ),
                 ],
               ),
             ),
-          ),
 
-          // Banner
-          SafeArea(
-            top: false,
-            child: PaydayBannerAd(adUnitId: AdService().savingsBannerId),
-          ),
-        ],
+            // Content
+            SliverPadding(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              sliver: SliverList(
+                delegate: SliverChildListDelegate([
+                  // Summary Card
+                  const SavingsSummaryCard()
+                      .animate()
+                      .fadeIn(duration: 400.ms)
+                      .slideY(begin: -0.1, end: 0),
+
+                  const SizedBox(height: AppSpacing.lg),
+
+                  // Section Header
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'My Goals',
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.getTextPrimary(context),
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.sm,
+                          vertical: AppSpacing.xs,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryPink.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(AppRadius.full),
+                        ),
+                        child: Text(
+                          savingsGoalsAsync.when(
+                            data: (goals) =>
+                                '${goals.length} ${goals.length == 1 ? 'goal' : 'goals'}',
+                            loading: () => '...',
+                            error: (_, __) => '0',
+                          ),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: AppColors.primaryPink,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  )
+                      .animate()
+                      .fadeIn(duration: 400.ms, delay: 100.ms)
+                      .slideX(begin: -0.1, end: 0),
+
+                  const SizedBox(height: AppSpacing.md),
+
+                  // Goals List
+                  savingsGoalsAsync.when(
+                    loading: () => _buildLoadingState(),
+                    error: (error, _) =>
+                        _buildErrorState(context, error.toString()),
+                    data: (goals) {
+                      if (goals.isEmpty) {
+                        return _buildEmptyState(context);
+                      }
+
+                      return Column(
+                        children: goals.asMap().entries.map((entry) {
+                          final index = entry.key;
+                          final goal = entry.value;
+                          return Padding(
+                            padding:
+                                const EdgeInsets.only(bottom: AppSpacing.sm),
+                            child: SavingsGoalCard(goal: goal)
+                                .animate()
+                                .fadeIn(
+                                  duration: 400.ms,
+                                  delay: Duration(
+                                      milliseconds: 200 + (index * 50)),
+                                )
+                                .slideX(begin: 0.1, end: 0),
+                          );
+                        }).toList(),
+                      );
+                    },
+                  ),
+
+                  const SizedBox(height: 100), // Space for FAB
+                ]),
+              ),
+            ),
+          ],
+        ),
+      ),
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: PaydayBannerAd(adUnitId: AdService().savingsBannerId),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
