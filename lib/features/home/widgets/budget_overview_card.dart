@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -275,12 +276,19 @@ class _DailyChip extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 6),
-          Text(
-            value,
-            style: (compact ? theme.textTheme.labelMedium : theme.textTheme.labelLarge)?.copyWith(
-              fontWeight: FontWeight.w900,
-              color: AppColors.secondaryPurple,
-              letterSpacing: -0.2,
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerRight,
+              child: Text(
+                value,
+                style: (compact ? theme.textTheme.labelMedium : theme.textTheme.labelLarge)?.copyWith(
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.secondaryPurple,
+                  letterSpacing: -0.2,
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
+              ),
             ),
           ),
         ],
@@ -319,7 +327,6 @@ class _MetricPill extends StatelessWidget {
         border: Border.all(color: border, width: 1),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
             label,
@@ -330,15 +337,22 @@ class _MetricPill extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          Flexible(
-            child: Text(
-              value,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: (emphasize ? theme.textTheme.titleSmall : theme.textTheme.labelLarge)?.copyWith(
-                fontWeight: FontWeight.w900,
-                color: isSkeleton ? AppColors.getTextSecondary(context).withValues(alpha: 0.6) : tint,
-                letterSpacing: -0.2,
+          Expanded(
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerRight,
+                child: Text(
+                  value,
+                  maxLines: 1,
+                  style: (emphasize ? theme.textTheme.titleSmall : theme.textTheme.labelLarge)?.copyWith(
+                    fontWeight: FontWeight.w900,
+                    color: isSkeleton ? AppColors.getTextSecondary(context).withValues(alpha: 0.6) : tint,
+                    letterSpacing: -0.2,
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                  ),
+                ),
               ),
             ),
           ),
