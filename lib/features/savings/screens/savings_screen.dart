@@ -10,6 +10,7 @@ import 'package:payday/features/savings/screens/add_savings_goal_screen.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:payday/core/services/ad_service.dart';
 import 'package:payday/shared/widgets/payday_banner_ad.dart';
+import 'package:payday/features/premium/providers/premium_providers.dart';
 
 class SavingsScreen extends ConsumerStatefulWidget {
   const SavingsScreen({super.key});
@@ -25,9 +26,14 @@ class _SavingsScreenState extends ConsumerState<SavingsScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       if (_didShowInterstitial) return;
-      _didShowInterstitial = true;
-      AdService().showInterstitial(3);
+
+      // Premium kullanıcılar bu ekranda interstitial görmemeli.
+      if (!ref.read(isPremiumProvider)) {
+        _didShowInterstitial = true;
+        AdService().showInterstitial(3);
+      }
     });
   }
 
@@ -342,3 +348,4 @@ class _SavingsScreenState extends ConsumerState<SavingsScreen> {
         .scale(begin: const Offset(0.9, 0.9), end: const Offset(1, 1));
   }
 }
+
