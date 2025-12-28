@@ -84,7 +84,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     }
   }
 
-  // ✅ GÜNCELLENDİ: Klasik ama Temalı Takvim (Material Date Picker)
   Future<void> _selectDate(BuildContext context) async {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -93,7 +92,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       initialDate: _nextPayday,
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 365)),
-      // Takvimi uygulamanın pembe temasına uyduruyoruz
       builder: (context, child) {
         final base = Theme.of(context);
         return Theme(
@@ -253,7 +251,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           resizeToAvoidBottomInset: true,
           body: Stack(
             children: [
-              // --- Dynamic Background (theme aware) ---
+              // --- Dynamic Background ---
               Positioned(
                 top: -100, right: -50,
                 child: AnimatedContainer(
@@ -264,8 +262,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     gradient: LinearGradient(
                       colors: [
                         (_currentPage == 0
-                                ? AppColors.primaryPink
-                                : AppColors.secondaryBlue)
+                            ? AppColors.primaryPink
+                            : AppColors.secondaryBlue)
                             .withOpacity(isDark ? 0.18 : 0.12),
                         AppColors.secondaryPurple.withOpacity(isDark ? 0.14 : 0.10)
                       ],
@@ -305,7 +303,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               SafeArea(
                 child: Column(
                   children: [
-                    // --- Header (Back Btn & Pill Step Indicator) ---
+                    // --- Header ---
                     Padding(
                       padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
                       child: Row(
@@ -331,7 +329,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                           ),
                           const Spacer(),
 
-                          // Premium Pill Step Indicator
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                             decoration: BoxDecoration(
@@ -372,8 +369,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                                         color: isActive
                                             ? activeColor
                                             : (isPassed
-                                                ? activeColor.withOpacity(0.3)
-                                                : AppColors.getBorder(context).withOpacity(isDark ? 0.22 : 0.35)),
+                                            ? activeColor.withOpacity(0.3)
+                                            : AppColors.getBorder(context).withOpacity(isDark ? 0.22 : 0.35)),
                                         borderRadius: BorderRadius.circular(4),
                                       ),
                                     );
@@ -528,6 +525,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
                     LayoutBuilder(
                       builder: (context, constraints) {
+                        // Kart genişliği hesaplaması
                         final width = (constraints.maxWidth - 12) / 2;
                         return Wrap(
                           spacing: 12,
@@ -643,12 +641,32 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     );
   }
 
+  // ✅ DÜZELTİLDİ: Dark Mode ve Layout Overflow Sorunları Giderildi
   Widget _buildCycleCard(ThemeData theme, String value, String title, String badge, double width) {
     final isSelected = _selectedPayCycle == value;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final Color selectedSurface = AppColors.getTextPrimary(context);
-    final Color unselectedSurface = AppColors.getCardBackground(context).withOpacity(isDark ? 0.62 : 0.92);
+    // Renkleri sabitledik. Seçiliyken Pembe, Değilse Kart Rengi.
+    // Bu sayede Dark mode'da Seçiliyken "Beyaz Yazı / Pembe Arka Plan" görünür.
+    final Color backgroundColor = isSelected
+        ? AppColors.primaryPink
+        : AppColors.getCardBackground(context).withOpacity(isDark ? 0.50 : 0.92);
+
+    final Color textColor = isSelected
+        ? Colors.white
+        : AppColors.getTextPrimary(context);
+
+    final Color badgeBg = isSelected
+        ? Colors.white.withOpacity(0.25)
+        : AppColors.primaryPink.withOpacity(0.12);
+
+    final Color badgeText = isSelected
+        ? Colors.white
+        : AppColors.primaryPink;
+
+    final Color borderColor = isSelected
+        ? Colors.transparent
+        : AppColors.getBorder(context).withOpacity(isDark ? 0.15 : 0.24);
 
     return Material(
       color: Colors.transparent,
@@ -664,17 +682,19 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 250),
           width: width,
-          height: 100,
-          padding: const EdgeInsets.all(16),
+          // Sabit "height: 100" kaldırıldı, yerine AspectRatio ve constraints kullanıldı
+          // Bu, içeriğin taşmasını önler ve oranlı bir görünüm sağlar.
+          constraints: const BoxConstraints(minHeight: 100),
+          padding: const EdgeInsets.all(14), // Padding biraz azaltıldı (16->14)
           decoration: BoxDecoration(
-            color: isSelected ? selectedSurface : unselectedSurface,
+            color: backgroundColor,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-                color: isSelected ? Colors.transparent : AppColors.getBorder(context).withOpacity(isDark ? 0.22 : 0.28),
+                color: borderColor,
                 width: 1.5
             ),
             boxShadow: isSelected
-                ? [BoxShadow(color: selectedSurface.withOpacity(0.25), blurRadius: 12, offset: const Offset(0, 6))]
+                ? [BoxShadow(color: AppColors.primaryPink.withOpacity(0.4), blurRadius: 10, offset: const Offset(0, 4))]
                 : AppColors.getCardShadow(context),
           ),
           child: Column(
@@ -687,28 +707,34 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: isSelected ? Colors.white.withOpacity(0.15) : AppColors.primaryPink.withOpacity(0.10),
-                      borderRadius: BorderRadius.circular(12),
+                      color: badgeBg,
+                      borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
                       badge,
                       style: TextStyle(
                           fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: isSelected ? Colors.white : AppColors.primaryPink
+                          fontWeight: FontWeight.w800,
+                          color: badgeText
                       ),
                     ),
                   ),
                   if (isSelected)
-                    const Icon(Icons.check_circle, size: 18, color: AppColors.primaryPink).animate().scale(),
+                    const Icon(Icons.check_circle, size: 18, color: Colors.white).animate().scale(),
                 ],
               ),
-              Text(
-                title,
-                style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 15,
-                    color: isSelected ? Colors.white : AppColors.getTextPrimary(context)
+              const SizedBox(height: 12), // Spacer yerine sabit boşluk
+              FittedBox( // Metin çok uzunsa sığdırmak için küçültür
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  title,
+                  maxLines: 1,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
+                      color: textColor
+                  ),
                 ),
               ),
             ],
@@ -734,7 +760,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Ekran yüksekliğine göre dinamik spacing
         final availableHeight = constraints.maxHeight;
         final isSmallScreen = availableHeight < 600;
 
