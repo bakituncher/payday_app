@@ -9,6 +9,7 @@ import 'package:payday/features/home/providers/home_providers.dart';
 import 'package:payday/core/services/currency_service.dart';
 import 'package:uuid/uuid.dart';
 import 'package:payday/core/services/ad_service.dart';
+import 'package:payday/features/premium/providers/premium_providers.dart';
 
 class AddSavingsGoalScreen extends ConsumerStatefulWidget {
   const AddSavingsGoalScreen({super.key});
@@ -114,8 +115,10 @@ class _AddSavingsGoalScreenState extends ConsumerState<AddSavingsGoalScreen> {
       print('💾 Goal saved successfully');
 
       if (mounted) {
-        // 3️⃣ REKLAM GÖSTERİMİ (Yeni Hedef Ekleme)
-        AdService().showInterstitial(3);
+        // 3️⃣ REKLAM GÖSTERİMİ (Premium Değilse)
+        if (!ref.read(isPremiumProvider)) {
+          AdService().showInterstitial(3);
+        }
 
         HapticFeedback.mediumImpact();
         Navigator.pop(context);

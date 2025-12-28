@@ -15,6 +15,7 @@ import 'package:payday/features/subscriptions/screens/add_subscription_screen.da
 import 'package:payday/features/subscriptions/screens/subscription_analysis_screen.dart';
 import 'package:payday/core/services/ad_service.dart';
 import 'package:payday/shared/widgets/payday_banner_ad.dart';
+import 'package:payday/features/premium/providers/premium_providers.dart';
 
 class SubscriptionsScreen extends ConsumerStatefulWidget {
   const SubscriptionsScreen({super.key});
@@ -31,8 +32,12 @@ class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_didShowInterstitial) return;
-      _didShowInterstitial = true;
-      AdService().showInterstitial(2);
+
+      // Premium değilse göster
+      if (!ref.read(isPremiumProvider)) {
+        _didShowInterstitial = true;
+        AdService().showInterstitial(2);
+      }
     });
   }
 

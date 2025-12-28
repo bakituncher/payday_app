@@ -16,6 +16,7 @@ import 'package:intl/intl.dart';
 import 'dart:math' as math;
 import 'package:payday/core/services/ad_service.dart';
 import 'package:payday/shared/widgets/payday_banner_ad.dart';
+import 'package:payday/features/premium/providers/premium_providers.dart';
 
 // Period enum for selection
 enum InsightPeriod {
@@ -66,8 +67,12 @@ class _SpendingInsightsScreenState extends ConsumerState<SpendingInsightsScreen>
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_didShowInterstitial) return;
-      _didShowInterstitial = true;
-      AdService().showInterstitial(2);
+
+      // Premium değilse göster
+      if (!ref.read(isPremiumProvider)) {
+        _didShowInterstitial = true;
+        AdService().showInterstitial(2);
+      }
     });
   }
 

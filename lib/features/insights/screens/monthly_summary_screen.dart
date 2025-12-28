@@ -10,6 +10,7 @@ import 'package:payday/features/subscriptions/providers/subscription_providers.d
 import 'package:payday/core/utils/currency_formatter.dart';
 import 'package:intl/intl.dart';
 import 'package:payday/core/services/ad_service.dart';
+import 'package:payday/features/premium/providers/premium_providers.dart';
 
 class MonthlySummaryScreen extends ConsumerStatefulWidget {
   const MonthlySummaryScreen({super.key});
@@ -26,8 +27,12 @@ class _MonthlySummaryScreenState extends ConsumerState<MonthlySummaryScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_didShowInterstitial) return;
-      _didShowInterstitial = true;
-      AdService().showInterstitial(2);
+
+      // Premium değilse göster
+      if (!ref.read(isPremiumProvider)) {
+        _didShowInterstitial = true;
+        AdService().showInterstitial(2);
+      }
     });
   }
 

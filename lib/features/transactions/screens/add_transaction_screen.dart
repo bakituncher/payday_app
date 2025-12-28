@@ -13,6 +13,7 @@ import 'package:payday/shared/widgets/payday_button.dart';
 import 'package:uuid/uuid.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:payday/core/services/ad_service.dart';
+import 'package:payday/features/premium/providers/premium_providers.dart';
 
 class AddTransactionScreen extends ConsumerStatefulWidget {
   const AddTransactionScreen({super.key});
@@ -456,8 +457,10 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
       ref.invalidate(currentMonthlySummaryProvider); // Update monthly summary
 
       if (mounted) {
-        // 1️⃣ REKLAM GÖSTERİMİ (Harcama Ekleme)
-        AdService().showInterstitial(1);
+        // 1️⃣ REKLAM GÖSTERİMİ (Premium Değilse)
+        if (!ref.read(isPremiumProvider)) {
+          AdService().showInterstitial(1);
+        }
 
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
