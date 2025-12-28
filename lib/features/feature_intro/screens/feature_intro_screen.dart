@@ -22,58 +22,57 @@ class _FeatureIntroScreenState extends ConsumerState<FeatureIntroScreen> {
   int _index = 0;
 
   List<FeatureIntroPage> get _pages => [
-        const FeatureIntroPage(
-          icon: Icons.account_balance_wallet_rounded,
-          title: 'Know where your money is going',
-          description:
-              'Track expenses in seconds and see your spending clearly — without the clutter.',
-          bullets: [
-            'Quick add with smart categories',
-            'Clean monthly overview',
-            'Helpful insights that stay private on your device',
-          ],
-        ),
-        const FeatureIntroPage(
-          icon: Icons.calendar_month_rounded,
-          title: 'Built around your payday',
-          description:
-              'Set your pay cycle and we’ll organize your budget by the dates that matter to you.',
-          bullets: [
-            'Weekly, bi-weekly, monthly & semi-monthly cycles',
-            'Pay-cycle aware summaries',
-            'Stay on track until the next payday',
-          ],
-        ),
-        const FeatureIntroPage(
-          icon: Icons.subscriptions_rounded,
-          title: 'Subscriptions, under control',
-          description:
-              'Spot recurring costs and keep your subscriptions from quietly draining your balance.',
-          bullets: [
-            'See what’s recurring at a glance',
-            'Make better cancel/keep decisions',
-            'Plan ahead with confidence',
-          ],
-        ),
-        const FeatureIntroPage(
-          icon: Icons.auto_graph_rounded,
-          title: 'Smarter spending, effortless',
-          description:
-              'Payday turns your numbers into simple recommendations so you can make decisions faster.',
-          bullets: [
-            'Trends and highlights',
-            'Monthly summaries',
-            'A calmer, more intentional money routine',
-          ],
-        ),
-      ];
+    const FeatureIntroPage(
+      icon: Icons.pie_chart_outline_rounded,
+      title: 'Know where your\nmoney goes',
+      description:
+      'Track expenses in seconds and see your spending clearly — without the clutter.',
+      bullets: [
+        'Smart categorization',
+        'Clean monthly overview',
+        'Private & secure on your device',
+      ],
+    ),
+    const FeatureIntroPage(
+      icon: Icons.calendar_today_rounded,
+      title: 'Built around\nyour payday',
+      description:
+      'Set your pay cycle and we’ll organize your budget by the dates that actually matter.',
+      bullets: [
+        'Supports all pay cycles',
+        'Cycle-aware summaries',
+        'Pacing until next payday',
+      ],
+    ),
+    const FeatureIntroPage(
+      icon: Icons.notifications_active_outlined,
+      title: 'Subscriptions,\nunder control',
+      description:
+      'Spot recurring costs and keep unwanted subscriptions from draining your balance.',
+      bullets: [
+        'Recurring bill detection',
+        'Renewal reminders',
+        'Cancel/Keep decisions',
+      ],
+    ),
+    const FeatureIntroPage(
+      icon: Icons.insights_rounded,
+      title: 'Smarter spending,\neffortless',
+      description:
+      'Payday turns your numbers into simple insights so you can make decisions faster.',
+      bullets: [
+        'Spending trends',
+        'Financial health check',
+        'Intentional money routine',
+      ],
+    ),
+  ];
 
   Future<void> _markSeenAndContinue() async {
     await ref.read(appLaunchFlagsRepositoryProvider).setFeatureIntroSeen(seen: true);
 
     if (!mounted) return;
 
-    // Decide next screen based on current auth + onboarding completion.
     final user = ref.read(currentUserProvider).asData?.value;
     if (user == null) {
       Navigator.of(context).pushReplacementNamed('/login');
@@ -99,8 +98,8 @@ class _FeatureIntroScreenState extends ConsumerState<FeatureIntroScreen> {
     }
 
     _controller.nextPage(
-      duration: const Duration(milliseconds: 320),
-      curve: Curves.easeOutCubic,
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeOutQuart,
     );
   }
 
@@ -118,50 +117,39 @@ class _FeatureIntroScreenState extends ConsumerState<FeatureIntroScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.getBackground(context),
-      body: SafeArea(
-        child: Stack(
-          children: [
-            // Subtle premium gradient background - theme aware
-            Positioned.fill(
-              child: IgnorePointer(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: isDark
-                          ? [
-                              AppColors.primaryPink.withOpacity(0.18),
-                              AppColors.secondaryPurple.withOpacity(0.14),
-                              AppColors.darkBackground,
-                            ]
-                          : [
-                              AppColors.primaryPink.withOpacity(0.10),
-                              AppColors.secondaryPurple.withOpacity(0.08),
-                              AppColors.backgroundWhite,
-                            ],
-                      stops: const [0.0, 0.55, 1.0],
-                    ),
-                  ),
-                ),
-              ),
-            ),
+      extendBodyBehindAppBar: true,
+      body: Stack(
+        children: [
+          // --- Ambient Animated Background ---
+          const _AmbientBackground(),
 
-            Column(
+          // --- Main Content ---
+          SafeArea(
+            child: Column(
               children: [
-                // Top bar
+                // Top Bar (Skip) - Premium style
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                   child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      const Spacer(),
-                      TextButton(
-                        onPressed: _markSeenAndContinue,
-                        child: Text(
-                          'Skip',
-                          style: theme.textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.getTextSecondary(context),
+                      Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                          color: AppColors.getTextSecondary(context).withOpacity(0.1),
+                        ),
+                        child: TextButton(
+                          onPressed: _markSeenAndContinue,
+                          style: TextButton.styleFrom(
+                            foregroundColor: AppColors.getTextSecondary(context),
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                          ),
+                          child: Text(
+                            'Skip',
+                            style: theme.textTheme.labelLarge?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.3,
+                            ),
                           ),
                         ),
                       ),
@@ -169,85 +157,104 @@ class _FeatureIntroScreenState extends ConsumerState<FeatureIntroScreen> {
                   ),
                 ),
 
+                // Page View
                 Expanded(
                   child: PageView.builder(
                     controller: _controller,
                     itemCount: _pages.length,
                     onPageChanged: (i) => setState(() => _index = i),
                     itemBuilder: (context, i) {
-                      final p = _pages[i];
                       return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: _IntroCard(page: p),
-                      ).animate().fadeIn(duration: 250.ms).moveY(begin: 10, end: 0);
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        child: _IntroCard(
+                          page: _pages[i],
+                          isActive: i == _index,
+                        ),
+                      );
                     },
                   ),
                 ),
 
-                // Indicator + CTA
+                // Bottom Controls
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 18),
+                  padding: const EdgeInsets.fromLTRB(24, 20, 24, 36),
                   child: Column(
                     children: [
                       _Dots(count: _pages.length, index: _index),
-                      const SizedBox(height: 14),
+                      const SizedBox(height: 36),
                       PaydayButton(
                         width: double.infinity,
-                        text: isLast ? 'Get started' : 'Continue',
+                        text: isLast ? 'Get Started' : 'Continue',
                         onPressed: _next,
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        'You’re in control — not your budget.',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: AppColors.getTextSecondary(context),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
+                        backgroundColor: AppColors.primaryPink,
+                        size: PaydayButtonSize.large,
+                      )
+                          .animate(target: isLast ? 1 : 0)
+                          .shimmer(duration: 1.5.seconds, delay: 600.ms), // Subtle shimmer on last step
                     ],
                   ),
                 ),
               ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 }
 
+/// A visually rich card with glassmorphism and animations
 class _IntroCard extends StatelessWidget {
   final FeatureIntroPage page;
+  final bool isActive;
 
-  const _IntroCard({required this.page});
+  const _IntroCard({required this.page, required this.isActive});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    final Color surface = AppColors.getCardBackground(context).withOpacity(isDark ? 0.66 : 0.83);
-    final Color border = AppColors.getBorder(context).withOpacity(isDark ? 0.25 : 0.35);
+    // Glass styles
+    final cardColor = isDark
+        ? Colors.black.withOpacity(0.4)
+        : Colors.white.withOpacity(0.65);
+    final borderColor = isDark
+        ? Colors.white.withOpacity(0.1)
+        : Colors.white.withOpacity(0.6);
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24),
-            color: surface,
-            border: Border.all(color: border),
-            boxShadow: AppColors.getCardShadow(context),
-          ),
-          padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
-          child: Column(
-            children: [
-              const SizedBox(height: 10),
-              Center(
-                child: Container(
-                  width: 84,
-                  height: 84,
+    return Center(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(36),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 40),
+            decoration: BoxDecoration(
+              color: cardColor,
+              borderRadius: BorderRadius.circular(36),
+              border: Border.all(color: borderColor, width: 1.5),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(isDark ? 0.4 : 0.08),
+                  blurRadius: 40,
+                  offset: const Offset(0, 20),
+                  spreadRadius: -5,
+                ),
+                BoxShadow(
+                  color: AppColors.primaryPink.withOpacity(0.1),
+                  blurRadius: 30,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Icon Container - Premium Style
+                Container(
+                  width: 110,
+                  height: 110,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: LinearGradient(
@@ -255,88 +262,128 @@ class _IntroCard extends StatelessWidget {
                       end: Alignment.bottomRight,
                       colors: isDark
                           ? [
-                              AppColors.primaryPink.withOpacity(0.28),
-                              AppColors.secondaryPurple.withOpacity(0.22),
-                            ]
+                        AppColors.primaryPink.withOpacity(0.25),
+                        AppColors.secondaryPurple.withOpacity(0.15),
+                      ]
                           : [
-                              AppColors.primaryPink.withOpacity(0.18),
-                              AppColors.secondaryPurple.withOpacity(0.14),
-                            ],
+                        AppColors.primaryPink.withOpacity(0.15),
+                        AppColors.secondaryPurple.withOpacity(0.08),
+                      ],
                     ),
-                  ),
-                  child: Icon(
-                    page.icon,
-                    size: 40,
-                    color: AppColors.primaryPink,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 18),
-              Text(
-                page.title,
-                textAlign: TextAlign.center,
-                style: theme.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  height: 1.15,
-                  color: AppColors.getTextPrimary(context),
-                ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                page.description,
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  color: AppColors.getTextSecondary(context),
-                  height: 1.5,
-                ),
-              ),
-              const SizedBox(height: 18),
-              ...page.bullets.map(
-                (b) => Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        width: 22,
-                        height: 22,
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryPink.withOpacity(isDark ? 0.20 : 0.12),
-                          borderRadius: BorderRadius.circular(7),
-                        ),
-                        child: Icon(
-                          Icons.check_rounded,
-                          size: 16,
-                          color: AppColors.primaryPink,
-                        ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primaryPink.withOpacity(isDark ? 0.3 : 0.2),
+                        blurRadius: 30,
+                        offset: const Offset(0, 12),
+                        spreadRadius: -2,
                       ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          b,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            height: 1.3,
-                            color: AppColors.getTextPrimary(context),
-                          ),
-                        ),
+                      BoxShadow(
+                        color: AppColors.secondaryPurple.withOpacity(0.15),
+                        blurRadius: 20,
+                        offset: const Offset(0, 6),
                       ),
                     ],
                   ),
+                  child: Icon(
+                    page.icon,
+                    size: 52,
+                    color: AppColors.primaryPink,
+                  ),
+                ).animate(target: isActive ? 1 : 0).scale(
+                  duration: 500.ms,
+                  curve: Curves.easeOutBack,
+                  begin: const Offset(0.7, 0.7),
                 ),
-              ),
-              const Spacer(),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 4),
-                child: Text(
-                  'Made for real life, not spreadsheets.',
-                  style: theme.textTheme.bodySmall?.copyWith(
+
+                const SizedBox(height: 36),
+
+                // Title - Premium Typography
+                Text(
+                  page.title,
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    height: 1.15,
+                    letterSpacing: -0.5,
+                    color: AppColors.getTextPrimary(context),
+                  ),
+                ).animate().fadeIn(duration: 500.ms, curve: Curves.easeOut).moveY(begin: 20, end: 0),
+
+                const SizedBox(height: 20),
+
+                // Description - Clean and readable
+                Text(
+                  page.description,
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodyLarge?.copyWith(
                     color: AppColors.getTextSecondary(context),
-                    fontWeight: FontWeight.w600,
+                    height: 1.6,
+                    fontSize: 15,
+                    letterSpacing: 0.2,
+                  ),
+                ).animate().fadeIn(delay: 150.ms, duration: 500.ms),
+
+                const SizedBox(height: 40),
+
+                // Bullets - Aligned and Premium
+                Container(
+                  constraints: const BoxConstraints(maxWidth: 320),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: page.bullets.asMap().entries.map((entry) {
+                      final index = entry.key;
+                      final text = entry.value;
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Premium Check Icon with gradient background
+                            Container(
+                              width: 24,
+                              height: 24,
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    AppColors.secondaryPurple.withOpacity(0.2),
+                                    AppColors.primaryPink.withOpacity(0.1),
+                                  ],
+                                ),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.check_rounded,
+                                color: AppColors.secondaryPurple,
+                                size: 16,
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            // Text with flex to handle long content
+                            Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.only(top: 2),
+                                child: Text(
+                                  text,
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    fontWeight: FontWeight.w500,
+                                    color: AppColors.getTextPrimary(context),
+                                    height: 1.4,
+                                    letterSpacing: 0.2,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ).animate().fadeIn(
+                        delay: (200 + (index * 80)).ms,
+                        duration: 400.ms,
+                      ).moveX(begin: -20, end: 0);
+                    }).toList(),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -344,6 +391,107 @@ class _IntroCard extends StatelessWidget {
   }
 }
 
+/// Animated background blobs for a premium feel - Enhanced
+class _AmbientBackground extends StatelessWidget {
+  const _AmbientBackground();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Stack(
+      children: [
+        // Top Left Blob - Smooth animation
+        Positioned(
+          top: -120,
+          left: -120,
+          child: Container(
+            width: 450,
+            height: 450,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: RadialGradient(
+                colors: [
+                  AppColors.primaryPink.withOpacity(isDark ? 0.2 : 0.12),
+                  AppColors.primaryPink.withOpacity(isDark ? 0.05 : 0.03),
+                  Colors.transparent,
+                ],
+              ),
+            ),
+          ).animate(onPlay: (c) => c.repeat(reverse: true)).move(
+            begin: const Offset(0, 0),
+            end: const Offset(25, 25),
+            duration: 5.seconds,
+            curve: Curves.easeInOut,
+          ),
+        ),
+
+        // Center Right Blob - Gentle pulse
+        Positioned(
+          top: 180,
+          right: -180,
+          child: Container(
+            width: 400,
+            height: 400,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: RadialGradient(
+                colors: [
+                  AppColors.secondaryPurple.withOpacity(isDark ? 0.18 : 0.1),
+                  AppColors.secondaryPurple.withOpacity(isDark ? 0.06 : 0.03),
+                  Colors.transparent,
+                ],
+              ),
+            ),
+          ).animate(onPlay: (c) => c.repeat(reverse: true)).scale(
+            begin: const Offset(0.95, 0.95),
+            end: const Offset(1.05, 1.05),
+            duration: 6.seconds,
+            curve: Curves.easeInOut,
+          ),
+        ),
+
+        // Bottom Left Blob - Smooth float
+        Positioned(
+          bottom: -80,
+          left: -100,
+          child: Container(
+            width: 350,
+            height: 350,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: RadialGradient(
+                colors: [
+                  AppColors.primaryPink.withOpacity(isDark ? 0.15 : 0.08),
+                  AppColors.primaryPink.withOpacity(isDark ? 0.04 : 0.02),
+                  Colors.transparent,
+                ],
+              ),
+            ),
+          ).animate(onPlay: (c) => c.repeat(reverse: true)).move(
+            begin: const Offset(0, 0),
+            end: const Offset(-15, 30),
+            duration: 7.seconds,
+            curve: Curves.easeInOut,
+          ),
+        ),
+
+        // Global Blur - Softer and more premium
+        Positioned.fill(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 100, sigmaY: 100),
+            child: Container(
+              color: Colors.transparent,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Modern Page Indicator - Instagram-style
 class _Dots extends StatelessWidget {
   final int count;
   final int index;
@@ -352,25 +500,38 @@ class _Dots extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: List.generate(count, (i) {
         final selected = i == index;
         return AnimatedContainer(
-          duration: const Duration(milliseconds: 220),
+          duration: const Duration(milliseconds: 350),
+          curve: Curves.easeInOutCubic,
           margin: const EdgeInsets.symmetric(horizontal: 5),
-          width: selected ? 22 : 8,
+          width: selected ? 36 : 8,
           height: 8,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            color: selected
-                ? AppColors.primaryPink
-                : (isDark
-                    ? AppColors.darkTextSecondary.withOpacity(0.25)
-                    : AppColors.lightGray.withOpacity(0.9)),
+            borderRadius: BorderRadius.circular(4),
+            gradient: selected
+                ? LinearGradient(
+              colors: [
+                AppColors.primaryPink,
+                AppColors.secondaryPurple,
+              ],
+            )
+                : null,
+            color: !selected
+                ? AppColors.getTextSecondary(context).withOpacity(0.25)
+                : null,
+            boxShadow: selected
+                ? [
+              BoxShadow(
+                color: AppColors.primaryPink.withOpacity(0.4),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ]
+                : null,
           ),
         );
       }),
