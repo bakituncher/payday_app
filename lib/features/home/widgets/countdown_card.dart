@@ -19,19 +19,22 @@ class CountdownCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Container(
       decoration: BoxDecoration(
         gradient: AppColors.premiumGradient,
         borderRadius: BorderRadius.circular(AppRadius.xl),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primaryPink.withValues(alpha: 0.35),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-            spreadRadius: -5,
-          ),
-        ],
+        boxShadow: isDark
+            ? null
+            : [
+                BoxShadow(
+                  color: AppColors.primaryPink.withValues(alpha: 0.28),
+                  blurRadius: 18,
+                  offset: const Offset(0, 10),
+                  spreadRadius: -6,
+                ),
+              ],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(AppRadius.xl),
@@ -64,7 +67,7 @@ class CountdownCard extends StatelessWidget {
             ),
             // Main content - Kompakt
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             child: Column(
               children: [
                 // Header
@@ -77,7 +80,7 @@ class CountdownCard extends StatelessWidget {
                           padding: const EdgeInsets.all(4),
                           decoration: BoxDecoration(
                             color: Colors.white.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(5),
+                            borderRadius: BorderRadius.circular(6),
                           ),
                           child: const Icon(
                             Icons.access_time_rounded,
@@ -90,7 +93,7 @@ class CountdownCard extends StatelessWidget {
                           'Money Arrives In',
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: Colors.white.withValues(alpha: 0.9),
-                            fontWeight: FontWeight.w500,
+                            fontWeight: FontWeight.w600,
                             fontSize: 12,
                           ),
                         ),
@@ -103,7 +106,7 @@ class CountdownCard extends StatelessWidget {
                   ],
                 ),
 
-                const SizedBox(height: 10),
+                const SizedBox(height: 8),
 
                 // Countdown Timer - Daha küçük
                 CountdownTimer(
@@ -112,13 +115,13 @@ class CountdownCard extends StatelessWidget {
                   textStyle: theme.textTheme.headlineLarge?.copyWith(
                     fontWeight: FontWeight.w800,
                     color: Colors.white,
-                    fontSize: 30,
+                    fontSize: 28,
                     letterSpacing: -0.8,
                   ),
                   accentColor: Colors.white,
                 ),
 
-                const SizedBox(height: 10),
+                const SizedBox(height: 8),
 
                 // Payday Date Badge
                 _PaydayDateBadge(date: nextPayday),
@@ -148,7 +151,7 @@ class _AmountBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: 8,
-        vertical: 4,
+        vertical: 3,
       ),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -199,7 +202,7 @@ class _PaydayDateBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: 10,
-        vertical: 6,
+        vertical: 5,
       ),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.15),
@@ -241,4 +244,3 @@ class _PaydayDateBadge extends StatelessWidget {
     return '${weekdays[date.weekday - 1]}, ${months[date.month - 1]} ${date.day}';
   }
 }
-

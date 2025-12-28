@@ -19,6 +19,7 @@ class SavingsCard extends ConsumerWidget {
     final totalTarget = ref.watch(totalTargetProvider);
     final userSettingsAsync = ref.watch(userSettingsProvider);
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     final currency = userSettingsAsync.when(
       data: (settings) => settings?.currency ?? 'USD',
@@ -40,13 +41,15 @@ class SavingsCard extends ConsumerWidget {
         decoration: BoxDecoration(
           gradient: AppColors.successGradient,
           borderRadius: BorderRadius.circular(AppRadius.lg),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.success.withValues(alpha: 0.18),
-              blurRadius: 14,
-              offset: const Offset(0, 6),
-            ),
-          ],
+          boxShadow: isDark
+              ? null
+              : [
+                  BoxShadow(
+                    color: AppColors.success.withValues(alpha: 0.14),
+                    blurRadius: 16,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -57,11 +60,23 @@ class SavingsCard extends ConsumerWidget {
                 top: -40,
                 right: -40,
                 child: Container(
-                  width: 120,
-                  height: 120,
+                  width: 110,
+                  height: 110,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: Colors.white.withValues(alpha: 0.06),
+                  ),
+                ),
+              ),
+              Positioned(
+                bottom: -50,
+                left: -50,
+                child: Container(
+                  width: 140,
+                  height: 140,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withValues(alpha: 0.04),
                   ),
                 ),
               ),
@@ -72,19 +87,19 @@ class SavingsCard extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Header - daha kompakt
+                    // Header - daha kompakt, daha temiz
                     Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.all(7),
+                          padding: const EdgeInsets.all(6),
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.18),
-                            borderRadius: BorderRadius.circular(10),
+                            color: Colors.white.withValues(alpha: 0.16),
+                            borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Icon(
                             Icons.savings_rounded,
                             color: Colors.white,
-                            size: 16,
+                            size: 15,
                           ),
                         ),
                         const SizedBox(width: 10),
@@ -95,8 +110,9 @@ class SavingsCard extends ConsumerWidget {
                               Text(
                                 'My Savings',
                                 style: theme.textTheme.titleSmall?.copyWith(
-                                  color: Colors.white.withValues(alpha: 0.92),
-                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white.withValues(alpha: 0.94),
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: -0.2,
                                 ),
                               ),
                               Text(
@@ -106,29 +122,22 @@ class SavingsCard extends ConsumerWidget {
                                   error: (_, __) => '0 goals',
                                 ),
                                 style: theme.textTheme.labelSmall?.copyWith(
-                                  color: Colors.white.withValues(alpha: 0.72),
+                                  color: Colors.white.withValues(alpha: 0.78),
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.18),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.arrow_forward_ios_rounded,
-                            color: Colors.white,
-                            size: 12,
-                          ),
+                        Icon(
+                          Icons.chevron_right_rounded,
+                          color: Colors.white.withValues(alpha: 0.9),
+                          size: 20,
                         ),
                       ],
                     ),
 
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 8),
 
                     // Content - daha kısa
                     savingsGoalsAsync.when(
@@ -174,7 +183,7 @@ class SavingsCard extends ConsumerWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            // Büyük rakam ama taşmasın
+                            // Büyük rakam ama daha kompakt
                             FittedBox(
                               fit: BoxFit.scaleDown,
                               alignment: Alignment.centerLeft,
@@ -188,7 +197,7 @@ class SavingsCard extends ConsumerWidget {
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 4),
+                            const SizedBox(height: 2),
                             Text(
                               'Target $targetText',
                               style: theme.textTheme.labelMedium?.copyWith(
@@ -196,16 +205,16 @@ class SavingsCard extends ConsumerWidget {
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
-                            const SizedBox(height: 10),
+                            const SizedBox(height: 8),
 
                             // Progress bar - tek satır/kompakt
                             ClipRRect(
                               borderRadius: BorderRadius.circular(AppRadius.full),
                               child: LinearProgressIndicator(
                                 value: progressPercentage / 100,
-                                backgroundColor: Colors.white.withValues(alpha: 0.25),
+                                backgroundColor: Colors.white.withValues(alpha: 0.22),
                                 valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
-                                minHeight: 6,
+                                minHeight: 5,
                               ),
                             ),
                             const SizedBox(height: 6),
