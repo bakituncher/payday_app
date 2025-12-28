@@ -9,7 +9,6 @@ import 'package:payday/features/home/widgets/countdown_card.dart';
 import 'package:payday/features/home/widgets/budget_overview_card.dart';
 import 'package:payday/features/home/widgets/savings_card.dart';
 import 'package:payday/features/home/widgets/recent_transactions_card.dart';
-import 'package:payday/features/home/widgets/monthly_summary_card.dart';
 import 'package:payday/features/insights/screens/spending_insights_screen.dart';
 import 'package:payday/features/transactions/screens/add_transaction_screen.dart';
 import 'package:payday/features/transactions/screens/add_funds_screen.dart';
@@ -19,7 +18,6 @@ import 'package:payday/shared/widgets/payday_button.dart';
 import 'package:payday/shared/widgets/payday_banner_ad.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:payday/features/premium/providers/premium_providers.dart';
-import 'package:payday/core/providers/repository_providers.dart';
 import 'package:payday/core/services/ad_service.dart';
 
 // ✅ DEĞİŞTİ: ConsumerWidget -> ConsumerStatefulWidget
@@ -31,38 +29,27 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-  bool _showPayday = true;
   late final _timer = Stream.periodic(const Duration(seconds: 4), (count) => count % 2 == 0).asBroadcastStream();
 
   @override
   void initState() {
     super.initState();
-    // ✅ EKLENDİ: Ekran çizildikten hemen sonra Premium durumunu kontrol et
+    // ✅ Premium durumunu kontrol et
     WidgetsBinding.instance.addPostFrameCallback((_) {
       refreshPremiumStatus(ref);
-      // Process subscriptions on app start
-      final subscriptionProcessor = ref.read(subscriptionProcessorServiceProvider);
-      subscriptionProcessor.checkAndProcessDueSubscriptions(
-        ref.read(currentUserIdProvider),
-        processHistorical: true,
-      );
+      // 🔴 DÜZELTME: Subscription ve auto-transfer processing
+      // zaten userSettingsProvider içinde otomatik çalışıyor
+      // Burada tekrar çağırmaya gerek yok
     });
   }
 
   Future<void> _onRefresh() async {
-    // ✅ EKLENDİ: Kullanıcı sayfayı yenilerse premium durumunu tekrar kontrol et
+    // ✅ Premium durumunu kontrol et
     await refreshPremiumStatus(ref);
 
-    // Process subscriptions and payday logic on pull-to-refresh
-    try {
-      final subscriptionProcessor = ref.read(subscriptionProcessorServiceProvider);
-      await subscriptionProcessor.checkAndProcessDueSubscriptions(
-        ref.read(currentUserIdProvider),
-        processHistorical: true,
-      );
-    } catch (e) {
-      print('❌ Error processing subscriptions on refresh: $e');
-    }
+    // 🔴 DÜZELTME: Pull-to-refresh sadece verileri yeniler, işlem tetiklemez
+    // Auto-transfer ve subscription processing sadece payday geldiğinde
+    // userSettingsProvider içinde otomatik olarak çalışır
 
     // Refresh all data providers
     ref.invalidate(userSettingsProvider);

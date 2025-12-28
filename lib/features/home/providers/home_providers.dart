@@ -71,25 +71,51 @@ final userSettingsProvider = FutureProvider<UserSettings?>((ref) async {
 
     if (depositResult.depositMade) {
       print('💰 Payday deposit processed: ${depositResult.depositAmount}');
-    }
 
-    // Refresh settings after deposit (balance may have changed)
-    settings = await repository.getUserSettings(userId);
+      // 🔴 DÜZELTME: Auto-transfer ve subscription processing
+      // SADECE PAYDAY GELDİĞİNDE ÇALIŞMALI (depositMade == true)
+      // Her refresh'te değil!
 
-    if (settings != null) {
-      // Process auto-transfers to savings goals
-      try {
-        final autoTransferService = ref.read(autoTransferServiceProvider);
-        final result = await autoTransferService.processAutoTransfers(userId);
+      // Refresh settings after deposit (balance may have changed)
+      settings = await repository.getUserSettings(userId);
 
-        if (result.success && result.transferCount > 0) {
-          print('💰 Auto-transfers completed: ${result.transferCount} goals, Total: ${result.totalAmount}');
+      if (settings != null) {
+        // Process auto-transfers to savings goals
+        try {
+          final autoTransferService = ref.read(autoTransferServiceProvider);
+          final result = await autoTransferService.processAutoTransfers(userId);
+
+          if (result.success && result.transferCount > 0) {
+            print('💰 Auto-transfers completed: ${result.transferCount} goals, Total: ${result.totalAmount}');
+          }
+        } catch (e) {
+          print('❌ Error processing auto-transfers: $e');
         }
-      } catch (e) {
-        print('❌ Error processing auto-transfers: $e');
-      }
 
-      // Process subscription payments
+        // Process subscription payments
+        try {
+          final subscriptionProcessor = ref.read(subscriptionProcessorServiceProvider);
+          final result = await subscriptionProcessor.checkAndProcessDueSubscriptions(
+            userId,
+            processHistorical: true,
+          );
+
+          if (result.success && result.processedCount > 0) {
+            print('💳 Subscription payments processed: ${result.processedCount} subscriptions, Total: ${result.totalAmount}');
+          }
+        } catch (e) {
+          print('❌ Error processing subscriptions: $e');
+        }
+
+        // Refresh settings after payday operations (auto transfers/subscriptions may change balance)
+        final freshSettings = await repository.getUserSettings(userId);
+        if (freshSettings != null) {
+          settings = freshSettings;
+        }
+      }
+    } else {
+      // Payday gelmemişse sadece subscription'ları kontrol et (ödeme günü gelmiş olanlar için)
+      // Ama her refresh'te değil, günlük kontrolde
       try {
         final subscriptionProcessor = ref.read(subscriptionProcessorServiceProvider);
         final result = await subscriptionProcessor.checkAndProcessDueSubscriptions(
@@ -99,18 +125,14 @@ final userSettingsProvider = FutureProvider<UserSettings?>((ref) async {
 
         if (result.success && result.processedCount > 0) {
           print('💳 Subscription payments processed: ${result.processedCount} subscriptions, Total: ${result.totalAmount}');
+          // Balance değiştiyse refresh et
+          final freshSettings = await repository.getUserSettings(userId);
+          if (freshSettings != null) {
+            settings = freshSettings;
+          }
         }
       } catch (e) {
         print('❌ Error processing subscriptions: $e');
-      }
-
-      // Refresh settings after payday operations (auto transfers/subscriptions may change balance)
-      // Sadece değişiklik olduysa logla, gereksiz çağrıdan kaçınmak için
-      // (Burada repository zaten cacheliyor olabilir ama Firestore ise maliyet olabilir)
-      // Ancak Balance değiştiği için mecburuz.
-      final freshSettings = await repository.getUserSettings(userId);
-      if (freshSettings != null) {
-        settings = freshSettings;
       }
     }
   }
