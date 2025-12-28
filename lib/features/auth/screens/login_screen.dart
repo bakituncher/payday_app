@@ -182,10 +182,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               ),
                               const SizedBox(height: 12),
 
-                              // Guest (primary CTA)
-                              PaydayButton(
-                                width: double.infinity,
-                                text: 'Continue as Guest',
+                              // Guest (subtle CTA to match OAuth buttons)
+                              _OAuthButton(
+                                label: 'Continue as Guest',
+                                icon: Icon(
+                                  Icons.person_outline,
+                                  size: 24,
+                                  color: AppColors.getTextPrimary(context),
+                                ),
                                 onPressed: _handleGuestLogin,
                               ),
                             ],
