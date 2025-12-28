@@ -13,6 +13,7 @@ import 'package:payday/core/services/currency_service.dart';
 import 'package:payday/core/constants/app_constants.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:uuid/uuid.dart';
+import 'package:payday/core/services/ad_service.dart';
 
 class SavingsGoalDetailScreen extends ConsumerStatefulWidget {
   final SavingsGoal goal;
@@ -90,6 +91,9 @@ class _SavingsGoalDetailScreenState extends ConsumerState<SavingsGoalDetailScree
           });
 
           if (mounted) {
+            // 3️⃣ REKLAM GÖSTERİMİ (Hedefe Para Ekleme)
+            AdService().showInterstitial(3);
+
             HapticFeedback.mediumImpact();
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -746,3 +750,4 @@ class _WithdrawMoneyDialog extends ConsumerWidget {
     );
   }
 }
+

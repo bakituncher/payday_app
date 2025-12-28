@@ -12,6 +12,7 @@ import 'package:payday/features/insights/providers/monthly_summary_providers.dar
 import 'package:payday/shared/widgets/payday_button.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:payday/core/services/ad_service.dart';
 
 class TransactionDetailScreen extends ConsumerStatefulWidget {
   final Transaction transaction;
@@ -549,6 +550,9 @@ class _TransactionDetailScreenState extends ConsumerState<TransactionDetailScree
       ref.invalidate(currentMonthlySummaryProvider);
 
       if (mounted) {
+        // 4️⃣ REKLAM GÖSTERİMİ (İşlem Düzenleme)
+        AdService().showInterstitial(4);
+
         HapticFeedback.mediumImpact();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -656,6 +660,9 @@ class _TransactionDetailScreenState extends ConsumerState<TransactionDetailScree
       ref.invalidate(currentMonthlySummaryProvider);
 
       if (mounted) {
+        // 4️⃣ REKLAM GÖSTERİMİ (İşlem Silme - Detay Ekranı)
+        AdService().showInterstitial(4);
+
         HapticFeedback.mediumImpact();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

@@ -10,6 +10,7 @@ import 'package:payday/features/subscriptions/providers/subscription_providers.d
 import 'package:payday/core/providers/repository_providers.dart';
 import 'package:payday/core/providers/currency_providers.dart';
 import 'package:uuid/uuid.dart';
+import 'package:payday/core/services/ad_service.dart';
 
 class AddSubscriptionScreen extends ConsumerStatefulWidget {
   const AddSubscriptionScreen({super.key, this.existingSubscription});
@@ -97,6 +98,9 @@ class _AddSubscriptionScreenState extends ConsumerState<AddSubscriptionScreen> {
       }
 
       if (mounted) {
+        // 2️⃣ REKLAM GÖSTERİMİ (Abonelik Ekleme/Düzenleme)
+        AdService().showInterstitial(2);
+
         HapticFeedback.mediumImpact();
         final isEdit = base != null;
         ScaffoldMessenger.of(context).showSnackBar(
