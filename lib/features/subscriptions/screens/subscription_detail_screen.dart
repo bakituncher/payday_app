@@ -7,13 +7,14 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:payday/core/theme/app_theme.dart';
 import 'package:payday/core/models/subscription.dart';
 import 'package:payday/features/subscriptions/providers/subscription_providers.dart';
+import 'package:payday/core/providers/repository_providers.dart';
 import 'package:payday/core/providers/currency_providers.dart';
 import 'package:payday/core/utils/currency_formatter.dart';
 import 'package:intl/intl.dart';
 import 'package:payday/features/subscriptions/screens/add_subscription_screen.dart';
 import 'package:payday/shared/widgets/payday_button.dart';
 
-class SubscriptionDetailScreen extends ConsumerWidget {
+class SubscriptionDetailScreen extends ConsumerStatefulWidget {
   final Subscription subscription;
 
   const SubscriptionDetailScreen({
@@ -22,7 +23,32 @@ class SubscriptionDetailScreen extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SubscriptionDetailScreen> createState() => _SubscriptionDetailScreenState();
+}
+
+class _SubscriptionDetailScreenState extends ConsumerState<SubscriptionDetailScreen> {
+  late Subscription _currentSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentSubscription = widget.subscription;
+  }
+
+  Future<void> _refreshSubscription() async {
+    // Fetch updated subscription from provider
+    final repository = ref.read(subscriptionRepositoryProvider);
+    final updatedSub = await repository.getSubscription(_currentSubscription.id);
+    if (updatedSub != null && mounted) {
+      setState(() {
+        _currentSubscription = updatedSub;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final subscription = _currentSubscription;
     final theme = Theme.of(context);
     final currencyCode = ref.watch(currencyCodeProvider);
     final dateFormat = DateFormat('MMM d, yyyy');
@@ -361,28 +387,33 @@ class SubscriptionDetailScreen extends ConsumerWidget {
 
   void _handleMenuAction(BuildContext context, WidgetRef ref, String action) async {
     // userId'yi abonelik nesnesinden alıyoruz
-    final userId = subscription.userId;
+    final userId = _currentSubscription.userId;
 
     switch (action) {
       case 'edit':
-        Navigator.of(context).push(
+        final result = await Navigator.of(context).push<bool>(
           MaterialPageRoute(
             builder: (context) => AddSubscriptionScreen(
-              existingSubscription: subscription,
+              existingSubscription: _currentSubscription,
             ),
           ),
         );
+
+        // If edit was successful, refresh the subscription
+        if (result == true) {
+          await _refreshSubscription();
+        }
         break;
 
       case 'cancel':
         final confirmed = await _showConfirmDialog(
           context,
           title: 'Cancel Subscription?',
-          message: 'This will mark ${subscription.name} as cancelled. You can resume it later.',
+          message: 'This will mark ${_currentSubscription.name} as cancelled. You can resume it later.',
         );
         if (confirmed == true) {
           // userId parametresini ekledik
-          await ref.read(subscriptionNotifierProvider.notifier).cancelSubscription(subscription.id, userId);
+          await ref.read(subscriptionNotifierProvider.notifier).cancelSubscription(_currentSubscription.id, userId);
           if (context.mounted) {
             Navigator.of(context).pop();
           }
@@ -393,12 +424,12 @@ class SubscriptionDetailScreen extends ConsumerWidget {
         final confirmed = await _showConfirmDialog(
           context,
           title: 'Delete Subscription?',
-          message: 'This will permanently delete ${subscription.name}. This action cannot be undone.',
+          message: 'This will permanently delete ${_currentSubscription.name}. This action cannot be undone.',
           isDestructive: true,
         );
         if (confirmed == true) {
           // userId parametresini ekledik
-          await ref.read(subscriptionNotifierProvider.notifier).deleteSubscription(subscription.id, userId);
+          await ref.read(subscriptionNotifierProvider.notifier).deleteSubscription(_currentSubscription.id, userId);
           if (context.mounted) {
             Navigator.of(context).pop();
           }

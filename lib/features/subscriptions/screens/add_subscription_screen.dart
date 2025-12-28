@@ -120,7 +120,8 @@ class _AddSubscriptionScreenState extends ConsumerState<AddSubscriptionScreen> {
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
         );
-        Navigator.of(context).pop();
+        // Return true to indicate successful save
+        Navigator.of(context).pop(true);
       }
     } catch (e) {
       if (mounted) {
