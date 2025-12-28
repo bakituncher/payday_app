@@ -1,1 +1,42 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"payday-9d1d7","appId":"1:766465796018:android:afab5b2f6b13077d21e6ab","fileOutput":"android/app/google-services.json"}},"ios":{"default":{"projectId":"payday-9d1d7","appId":"1:766465796018:ios:a24afa1bd9009ac121e6ab","uploadDebugSymbols":true,"fileOutput":"ios/Runner/GoogleService-Info.plist"}},"dart":{"lib/firebase_options.dart":{"projectId":"payday-9d1d7","configurations":{"android":"1:766465796018:android:afab5b2f6b13077d21e6ab","ios":"1:766465796018:ios:a24afa1bd9009ac121e6ab"}}}}}}
+{
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.log.*"
+      ]
+    }
+  ],
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "payday-9d1d7",
+          "appId": "1:766465796018:android:afab5b2f6b13077d21e6ab",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "ios": {
+        "default": {
+          "projectId": "payday-9d1d7",
+          "appId": "1:766465796018:ios:a24afa1bd9009ac121e6ab",
+          "uploadDebugSymbols": true,
+          "fileOutput": "ios/Runner/GoogleService-Info.plist"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "payday-9d1d7",
+          "configurations": {
+            "android": "1:766465796018:android:afab5b2f6b13077d21e6ab",
+            "ios": "1:766465796018:ios:a24afa1bd9009ac121e6ab"
+          }
+        }
+      }
+    }
+  }
+}

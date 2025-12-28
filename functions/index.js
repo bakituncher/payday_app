@@ -71,8 +71,8 @@ async function checkMidnightPayday(db, messaging, now, currentUtcHour) {
 
         if (paydayNormalized.getTime() === userTodayNormalized.getTime()) {
             promises.push(sendNotification(messaging, fcmToken, {
-                title: "Maaş Günü! 💸",
-                body: "Saat 00:00! Yeni maaş dönemin başladı. Bütçeni planlamak için harika bir an!",
+                title: "Payday! 💸",
+                body: "It's 00:00! Your new pay period has started. Great time to plan your budget!",
                 route: "/home",
                 type: "payday"
             }));
@@ -152,8 +152,8 @@ async function checkMorningBrief(db, messaging, now, currentUtcHour) {
 
               if (daysDiff === reminderDays) {
                   promises.push(sendNotification(messaging, fcmToken, {
-                      title: "Ödemeniz Yaklaşıyor! 🔔",
-                      body: `${sub.name} ödemeniz ${daysDiff} gün içinde yapılacak.`,
+                      title: "Payment Upcoming! 🔔",
+                      body: `${sub.name} payment is due in ${daysDiff} days.`,
                       route: "/subscriptions",
                       itemId: sub.id || subDoc.id,
                       type: "bill"
@@ -171,15 +171,15 @@ async function checkMorningBrief(db, messaging, now, currentUtcHour) {
 
       if (rotationIndex === 0) {
           promises.push(sendNotification(messaging, fcmToken, {
-              title: "Harcama Ekle ☕️",
-              body: "Bugün yaptığın harcamaları girmeyi unutma!",
+              title: "Add Transaction ☕️",
+              body: "Don't forget to enter your expenses for today!",
               route: "/add-transaction",
               type: "engagement"
           }));
       } else {
            promises.push(sendNotification(messaging, fcmToken, {
-              title: "Bütçen Ne Durumda? 📊",
-              body: "Harcamalarını kontrol etmek için aylık özetine göz at.",
+              title: "How's Your Budget? 📊",
+              body: "Check your monthly summary to track your spending.",
               route: "/monthly-summary",
               type: "engagement"
           }));
@@ -225,8 +225,8 @@ async function checkEveningMarketing(db, messaging, now, currentUtcHour) {
       if (!fcmToken || userData.isPremium === true) continue;
 
       promises.push(sendNotification(messaging, fcmToken, {
-          title: "Reklamlardan Sıkıldın mı? 🌟",
-          body: "Premium'a geçerek reklamsız, sınırsız ve daha güçlü bir deneyim yaşa!",
+          title: "Tired of Ads? 🌟",
+          body: "Go Premium for an ad-free, unlimited, and powerful experience!",
           route: "/premium",
           type: "marketing"
       }));
