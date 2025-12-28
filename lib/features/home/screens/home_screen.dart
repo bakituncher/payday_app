@@ -6,8 +6,7 @@ import 'package:payday/core/theme/app_theme.dart';
 import 'package:payday/features/home/providers/home_providers.dart';
 import 'package:payday/features/insights/providers/monthly_summary_providers.dart';
 import 'package:payday/features/home/widgets/countdown_card.dart';
-import 'package:payday/features/home/widgets/daily_spend_card.dart';
-import 'package:payday/features/home/widgets/budget_progress_card.dart';
+import 'package:payday/features/home/widgets/budget_overview_card.dart';
 import 'package:payday/features/home/widgets/savings_card.dart';
 import 'package:payday/features/home/widgets/recent_transactions_card.dart';
 import 'package:payday/features/home/widgets/active_subscriptions_card.dart';
@@ -245,11 +244,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
                             const SizedBox(height: 12),
 
-                            // Daily Allowable Spend Card
-                            const DailySpendCard()
+                            // ✅ Daily Budget + Budget birleşik kart
+                            BudgetOverviewCard(
+                              currency: settings.currency,
+                              currentBalance: settings.currentBalance,
+                            )
                                 .animate()
                                 .fadeIn(duration: 500.ms, delay: 200.ms)
-                                .slideX(begin: -0.1, end: 0),
+                                .slideX(begin: -0.05, end: 0),
 
                             const SizedBox(height: 12),
 
@@ -278,17 +280,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 .animate()
                                 .fadeIn(duration: 500.ms, delay: 250.ms)
                                 .slideY(begin: 0.1, end: 0),
-
-                            const SizedBox(height: 12),
-
-                            // Budget Progress Card
-                            BudgetProgressCard(
-                              currency: settings.currency,
-                              currentBalance: settings.currentBalance,
-                            )
-                                .animate()
-                                .fadeIn(duration: 500.ms, delay: 300.ms)
-                                .slideX(begin: 0.1, end: 0),
 
                             const SizedBox(height: 12),
 
@@ -331,7 +322,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 .animate()
                                 .fadeIn(duration: 600.ms, delay: 500.ms),
 
-                            const SizedBox(height: 90), // FAB için alan
+                            const SizedBox(height: 20),
                           ]),
                         ),
                       ),
@@ -343,21 +334,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           },
         ),
       ),
-      floatingActionButton: userSettingsAsync.maybeWhen(
-        data: (settings) => settings != null
-            ? _PremiumFAB(
-          onPressed: () => _showAddTransactionSheet(context),
-        )
-            .animate()
-            .fadeIn(duration: 400.ms, delay: 500.ms)
-            .scale(
-          begin: const Offset(0.8, 0.8),
-          end: const Offset(1, 1),
-          curve: Curves.elasticOut,
-        )
-            : null,
-        orElse: () => null,
-      ),
+      // ✅ İSTEK: alttaki "Add Expense" FAB kaldırıldı
+      floatingActionButton: null,
     );
   }
 
@@ -408,32 +386,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 color: baseColor,
                 borderRadius: BorderRadius.circular(20),
               ),
-            ),
-            const SizedBox(height: 12),
-
-            // Buttons Skeleton
-            Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    height: 56,
-                    decoration: BoxDecoration(
-                      color: baseColor,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Container(
-                    height: 56,
-                    decoration: BoxDecoration(
-                      color: baseColor,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                ),
-              ],
             ),
             const SizedBox(height: 12),
 
@@ -710,82 +662,6 @@ class _QuickActionButton extends StatelessWidget {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _PremiumFAB extends StatefulWidget {
-  final VoidCallback onPressed;
-
-  const _PremiumFAB({required this.onPressed});
-
-  @override
-  State<_PremiumFAB> createState() => _PremiumFABState();
-}
-
-class _PremiumFABState extends State<_PremiumFAB> {
-  bool _isPressed = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _isPressed = true),
-      onTapUp: (_) => setState(() => _isPressed = false),
-      onTapCancel: () => setState(() => _isPressed = false),
-      onTap: widget.onPressed,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        transform: _isPressed
-            ? (Matrix4.identity()
-          ..setEntry(0, 0, 0.95)
-          ..setEntry(1, 1, 0.95)
-          ..setEntry(2, 2, 0.95))
-            : Matrix4.identity(),
-        child: Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 20,
-            vertical: 14,
-          ),
-          decoration: BoxDecoration(
-            gradient: AppColors.premiumGradient,
-            borderRadius: BorderRadius.circular(AppRadius.round),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.primaryPink.withValues(alpha: _isPressed ? 0.4 : 0.6),
-                blurRadius: _isPressed ? 12 : 20,
-                offset: Offset(0, _isPressed ? 3 : 6),
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.25),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: const Icon(
-                  Icons.add_rounded,
-                  color: Colors.white,
-                  size: 18,
-                ),
-              ),
-              const SizedBox(width: 10),
-              const Text(
-                'Add Expense',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 15,
-                  letterSpacing: -0.3,
-                ),
-              ),
-            ],
-          ),
         ),
       ),
     );
