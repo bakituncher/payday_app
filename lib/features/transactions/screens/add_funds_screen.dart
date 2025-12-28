@@ -10,6 +10,8 @@ import 'package:payday/features/insights/providers/monthly_summary_providers.dar
 import 'package:payday/shared/widgets/payday_button.dart';
 import 'package:uuid/uuid.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:payday/core/services/ad_service.dart';
+import 'package:payday/features/premium/providers/premium_providers.dart';
 
 /// Income source options
 const List<Map<String, String>> incomeSources = [
@@ -433,6 +435,12 @@ class _AddFundsScreenState extends ConsumerState<AddFundsScreen> {
       ref.invalidate(currentMonthlySummaryProvider);
 
       if (mounted) {
+        // 1️⃣ REKLAM GÖSTERİMİ (Premium Değilse)
+        if (!ref.read(isPremiumProvider)) {
+          AdService().showInterstitial(1);
+        }
+
+        HapticFeedback.heavyImpact();
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -459,4 +467,5 @@ class _AddFundsScreenState extends ConsumerState<AddFundsScreen> {
       if (mounted) setState(() => _isLoading = false);
     }
   }
+}
 }

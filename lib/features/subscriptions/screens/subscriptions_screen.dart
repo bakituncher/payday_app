@@ -13,12 +13,36 @@ import 'package:payday/features/subscriptions/widgets/upcoming_bills_card.dart';
 import 'package:payday/features/subscriptions/widgets/category_filter_chips.dart';
 import 'package:payday/features/subscriptions/screens/add_subscription_screen.dart';
 import 'package:payday/features/subscriptions/screens/subscription_analysis_screen.dart';
+import 'package:payday/core/services/ad_service.dart';
+import 'package:payday/shared/widgets/payday_banner_ad.dart';
+import 'package:payday/features/premium/providers/premium_providers.dart';
 
-class SubscriptionsScreen extends ConsumerWidget {
+class SubscriptionsScreen extends ConsumerStatefulWidget {
   const SubscriptionsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SubscriptionsScreen> createState() => _SubscriptionsScreenState();
+}
+
+class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
+  bool _didShowInterstitial = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_didShowInterstitial) return;
+
+      // Premium değilse göster
+      if (!ref.read(isPremiumProvider)) {
+        _didShowInterstitial = true;
+        AdService().showInterstitial(2);
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final subscriptionsAsync = ref.watch(filteredSubscriptionsProvider);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
@@ -36,13 +60,16 @@ class SubscriptionsScreen extends ConsumerWidget {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    AppColors.primaryPink.withValues(alpha: isDark ? 0.02 : 0.03),
-                    AppColors.secondaryPurple.withValues(alpha: isDark ? 0.02 : 0.03),
+                    AppColors.primaryPink
+                        .withValues(alpha: isDark ? 0.02 : 0.03),
+                    AppColors.secondaryPurple
+                        .withValues(alpha: isDark ? 0.02 : 0.03),
                   ],
                 ),
               ),
             ),
           ),
+
           // Main content
           SafeArea(
             child: CustomScrollView(
@@ -53,7 +80,8 @@ class SubscriptionsScreen extends ConsumerWidget {
                   expandedHeight: 0,
                   floating: true,
                   pinned: true,
-                  backgroundColor: AppColors.getBackground(context).withValues(alpha: 0.8),
+                  backgroundColor:
+                      AppColors.getBackground(context).withValues(alpha: 0.8),
                   elevation: 0,
                   surfaceTintColor: Colors.transparent,
                   flexibleSpace: ClipRect(
@@ -193,9 +221,9 @@ class SubscriptionsScreen extends ConsumerWidget {
                             return SubscriptionCard(
                               subscription: subscription,
                             ).animate().fadeIn(
-                              duration: 250.ms,
-                              delay: (150 + (index * 30)).ms,
-                            ).slideX(begin: 0.05, end: 0);
+                                  duration: 250.ms,
+                                  delay: (150 + (index * 30)).ms,
+                                ).slideX(begin: 0.05, end: 0);
                           },
                           childCount: subscriptions.length,
                         ),
@@ -213,6 +241,11 @@ class SubscriptionsScreen extends ConsumerWidget {
           ),
         ],
       ),
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: PaydayBannerAd(adUnitId: AdService().subscriptionsBannerId),
+      ),
+
       // Modern FAB
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {

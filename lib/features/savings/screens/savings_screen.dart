@@ -8,12 +8,37 @@ import 'package:payday/features/savings/widgets/savings_goal_card.dart';
 import 'package:payday/features/savings/widgets/savings_summary_card.dart';
 import 'package:payday/features/savings/screens/add_savings_goal_screen.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:payday/core/services/ad_service.dart';
+import 'package:payday/shared/widgets/payday_banner_ad.dart';
+import 'package:payday/features/premium/providers/premium_providers.dart';
 
-class SavingsScreen extends ConsumerWidget {
+class SavingsScreen extends ConsumerStatefulWidget {
   const SavingsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SavingsScreen> createState() => _SavingsScreenState();
+}
+
+class _SavingsScreenState extends ConsumerState<SavingsScreen> {
+  bool _didShowInterstitial = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (_didShowInterstitial) return;
+
+      // Premium kullanıcılar bu ekranda interstitial görmemeli.
+      if (!ref.read(isPremiumProvider)) {
+        _didShowInterstitial = true;
+        AdService().showInterstitial(3);
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final savingsGoalsAsync = ref.watch(savingsGoalsProvider);
     final theme = Theme.of(context);
 
@@ -115,7 +140,8 @@ class SavingsScreen extends ConsumerWidget {
                         ),
                         child: Text(
                           savingsGoalsAsync.when(
-                            data: (goals) => '${goals.length} ${goals.length == 1 ? 'goal' : 'goals'}',
+                            data: (goals) =>
+                                '${goals.length} ${goals.length == 1 ? 'goal' : 'goals'}',
                             loading: () => '...',
                             error: (_, __) => '0',
                           ),
@@ -136,7 +162,8 @@ class SavingsScreen extends ConsumerWidget {
                   // Goals List
                   savingsGoalsAsync.when(
                     loading: () => _buildLoadingState(),
-                    error: (error, _) => _buildErrorState(context, error.toString()),
+                    error: (error, _) =>
+                        _buildErrorState(context, error.toString()),
                     data: (goals) {
                       if (goals.isEmpty) {
                         return _buildEmptyState(context);
@@ -147,13 +174,15 @@ class SavingsScreen extends ConsumerWidget {
                           final index = entry.key;
                           final goal = entry.value;
                           return Padding(
-                            padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                            padding:
+                                const EdgeInsets.only(bottom: AppSpacing.sm),
                             child: SavingsGoalCard(goal: goal)
                                 .animate()
                                 .fadeIn(
-                              duration: 400.ms,
-                              delay: Duration(milliseconds: 200 + (index * 50)),
-                            )
+                                  duration: 400.ms,
+                                  delay: Duration(
+                                      milliseconds: 200 + (index * 50)),
+                                )
                                 .slideX(begin: 0.1, end: 0),
                           );
                         }).toList(),
@@ -167,6 +196,10 @@ class SavingsScreen extends ConsumerWidget {
             ),
           ],
         ),
+      ),
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: PaydayBannerAd(adUnitId: AdService().savingsBannerId),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
@@ -311,3 +344,4 @@ class SavingsScreen extends ConsumerWidget {
         .scale(begin: const Offset(0.9, 0.9), end: const Offset(1, 1));
   }
 }
+

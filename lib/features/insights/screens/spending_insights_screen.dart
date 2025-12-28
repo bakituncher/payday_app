@@ -14,6 +14,9 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
 import 'dart:math' as math;
+import 'package:payday/core/services/ad_service.dart';
+import 'package:payday/shared/widgets/payday_banner_ad.dart';
+import 'package:payday/features/premium/providers/premium_providers.dart';
 
 // Period enum for selection
 enum InsightPeriod {
@@ -55,11 +58,22 @@ class _SpendingInsightsScreenState extends ConsumerState<SpendingInsightsScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   int _touchedPieIndex = -1;
+  bool _didShowInterstitial = false;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_didShowInterstitial) return;
+
+      // Premium değilse göster
+      if (!ref.read(isPremiumProvider)) {
+        _didShowInterstitial = true;
+        AdService().showInterstitial(2);
+      }
+    });
   }
 
   @override
@@ -105,37 +119,48 @@ class _SpendingInsightsScreenState extends ConsumerState<SpendingInsightsScreen>
               ),
         ),
       ),
-      body: SafeArea(
-        child: settingsAsync.when(
-          loading: () => _buildLoadingState(context),
-          error: (error, _) => _buildErrorState(context, error),
-          data: (settings) {
-            if (settings == null) {
-              return _buildNoDataState(context);
-            }
+      body: Column(
+        children: [
+          Expanded(
+            child: SafeArea(
+              child: settingsAsync.when(
+                loading: () => _buildLoadingState(context),
+                error: (error, _) => _buildErrorState(context, error),
+                data: (settings) {
+                  if (settings == null) {
+                    return _buildNoDataState(context);
+                  }
 
-            return transactionsAsync.when(
-              loading: () => _buildLoadingState(context),
-              error: (error, _) => _buildErrorState(context, error),
-              data: (transactions) {
-                return subscriptionsAsync.when(
-                  loading: () => _buildLoadingState(context),
-                  error: (error, _) => _buildErrorState(context, error),
-                  data: (subscriptions) {
-                    return _buildContent(
-                      context,
-                      settings.currency,
-                      settings.payCycle,
-                      transactions,
-                      subscriptions,
-                      selectedPeriod,
-                    );
-                  },
-                );
-              },
-            );
-          },
-        ),
+                  return transactionsAsync.when(
+                    loading: () => _buildLoadingState(context),
+                    error: (error, _) => _buildErrorState(context, error),
+                    data: (transactions) {
+                      return subscriptionsAsync.when(
+                        loading: () => _buildLoadingState(context),
+                        error: (error, _) => _buildErrorState(context, error),
+                        data: (subscriptions) {
+                          return _buildContent(
+                            context,
+                            settings.currency,
+                            settings.payCycle,
+                            transactions,
+                            subscriptions,
+                            selectedPeriod,
+                          );
+                        },
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ),
+
+          SafeArea(
+            top: false,
+            child: PaydayBannerAd(adUnitId: AdService().insightsBannerId),
+          ),
+        ],
       ),
     );
   }

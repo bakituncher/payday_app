@@ -11,6 +11,8 @@ import 'package:payday/features/home/providers/home_providers.dart';
 import 'package:payday/features/insights/providers/monthly_summary_providers.dart';
 import 'package:payday/features/transactions/screens/transaction_detail_screen.dart';
 import 'package:intl/intl.dart';
+import 'package:payday/core/services/ad_service.dart';
+import 'package:payday/features/premium/providers/premium_providers.dart';
 
 class AllTransactionsScreen extends ConsumerStatefulWidget {
   final String currency;
@@ -428,6 +430,11 @@ class _AllTransactionsScreenState extends ConsumerState<AllTransactionsScreen> {
       ref.invalidate(currentMonthlySummaryProvider);
 
       if (mounted) {
+        // 4️⃣ REKLAM GÖSTERİMİ (Premium Değilse)
+        if (!ref.read(isPremiumProvider)) {
+          AdService().showInterstitial(4);
+        }
+
         HapticFeedback.mediumImpact();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

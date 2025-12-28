@@ -9,12 +9,35 @@ import 'package:payday/features/home/providers/home_providers.dart';
 import 'package:payday/features/subscriptions/providers/subscription_providers.dart';
 import 'package:payday/core/utils/currency_formatter.dart';
 import 'package:intl/intl.dart';
+import 'package:payday/core/services/ad_service.dart';
+import 'package:payday/features/premium/providers/premium_providers.dart';
 
-class MonthlySummaryScreen extends ConsumerWidget {
+class MonthlySummaryScreen extends ConsumerStatefulWidget {
   const MonthlySummaryScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MonthlySummaryScreen> createState() => _MonthlySummaryScreenState();
+}
+
+class _MonthlySummaryScreenState extends ConsumerState<MonthlySummaryScreen> {
+  bool _didShowInterstitial = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_didShowInterstitial) return;
+
+      // Premium değilse göster
+      if (!ref.read(isPremiumProvider)) {
+        _didShowInterstitial = true;
+        AdService().showInterstitial(2);
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final settingsAsync = ref.watch(userSettingsProvider);
     final transactionsAsync = ref.watch(currentCycleTransactionsProvider);
     final subscriptionsAsync = ref.watch(activeSubscriptionsProvider);
