@@ -11,6 +11,7 @@ import 'package:payday/features/home/widgets/savings_card.dart';
 import 'package:payday/features/home/widgets/recent_transactions_card.dart';
 import 'package:payday/features/home/widgets/active_subscriptions_card.dart';
 import 'package:payday/features/home/widgets/monthly_summary_card.dart';
+import 'package:payday/features/insights/screens/spending_insights_screen.dart';
 import 'package:payday/features/transactions/screens/add_transaction_screen.dart';
 import 'package:payday/features/transactions/screens/add_funds_screen.dart';
 import 'package:payday/features/settings/screens/settings_screen.dart';
@@ -203,6 +204,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         ),
                         actions: [
                           IconButton(
+                            icon: Icon(
+                              Icons.pie_chart_rounded,
+                              size: 22,
+                              color: AppColors.primaryPink,
+                            ),
+                            onPressed: () {
+                              HapticFeedback.lightImpact();
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => const SpendingInsightsScreen(),
+                                ),
+                              );
+                            },
+                            padding: const EdgeInsets.all(8),
+                            constraints: const BoxConstraints(),
+                            tooltip: 'Spending Insights',
+                          ),
+                          IconButton(
                             icon: const Icon(Icons.settings_outlined, size: 22),
                             onPressed: () {
                               HapticFeedback.lightImpact();
@@ -255,6 +274,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
                             const SizedBox(height: 12),
 
+                            // ✅ My Savings (üst tarafa taşındı)
+                            const SavingsCard()
+                                .animate()
+                                .fadeIn(duration: 500.ms, delay: 230.ms)
+                                .slideX(begin: -0.06, end: 0),
+
+                            const SizedBox(height: 12),
+
+                            // ✅ Spending Insights kartı ana ekrandan kaldırıldı (AppBar ikonundan erişiliyor)
+
                             // Quick Actions Row - Daha kompakt
                             Row(
                               children: [
@@ -283,14 +312,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
                             const SizedBox(height: 12),
 
-                            // Savings Card
-                            const SavingsCard()
-                                .animate()
-                                .fadeIn(duration: 500.ms, delay: 325.ms)
-                                .slideX(begin: -0.1, end: 0),
-
-                            const SizedBox(height: 12),
-
                             // Active Subscriptions Card
                             const ActiveSubscriptionsCard()
                                 .animate()
@@ -300,10 +321,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             const SizedBox(height: 12),
 
                             // Monthly Summary Card
-                            const MonthlySummaryCard()
-                                .animate()
-                                .fadeIn(duration: 500.ms, delay: 375.ms)
-                                .slideY(begin: 0.1, end: 0),
+                            // (taşındı: üstte Budget sonrası gösteriliyor)
 
                             const SizedBox(height: 12),
 
