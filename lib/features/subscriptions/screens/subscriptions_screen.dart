@@ -13,12 +13,31 @@ import 'package:payday/features/subscriptions/widgets/upcoming_bills_card.dart';
 import 'package:payday/features/subscriptions/widgets/category_filter_chips.dart';
 import 'package:payday/features/subscriptions/screens/add_subscription_screen.dart';
 import 'package:payday/features/subscriptions/screens/subscription_analysis_screen.dart';
+import 'package:payday/core/services/ad_service.dart';
+import 'package:payday/shared/widgets/payday_banner_ad.dart';
 
-class SubscriptionsScreen extends ConsumerWidget {
+class SubscriptionsScreen extends ConsumerStatefulWidget {
   const SubscriptionsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SubscriptionsScreen> createState() => _SubscriptionsScreenState();
+}
+
+class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
+  bool _didShowInterstitial = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_didShowInterstitial) return;
+      _didShowInterstitial = true;
+      AdService().showInterstitial(2);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final subscriptionsAsync = ref.watch(filteredSubscriptionsProvider);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
@@ -26,193 +45,206 @@ class SubscriptionsScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.getBackground(context),
       extendBody: true,
-      body: Stack(
+      body: Column(
         children: [
-          // Subtle background gradient
-          Positioned.fill(
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    AppColors.primaryPink.withValues(alpha: isDark ? 0.02 : 0.03),
-                    AppColors.secondaryPurple.withValues(alpha: isDark ? 0.02 : 0.03),
-                  ],
+          Expanded(
+            child: Stack(
+              children: [
+                // Subtle background gradient
+                Positioned.fill(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          AppColors.primaryPink.withValues(alpha: isDark ? 0.02 : 0.03),
+                          AppColors.secondaryPurple.withValues(alpha: isDark ? 0.02 : 0.03),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-            ),
-          ),
-          // Main content
-          SafeArea(
-            child: CustomScrollView(
-              physics: const BouncingScrollPhysics(),
-              slivers: [
-                // Compact Modern App Bar
-                SliverAppBar(
-                  expandedHeight: 0,
-                  floating: true,
-                  pinned: true,
-                  backgroundColor: AppColors.getBackground(context).withValues(alpha: 0.8),
-                  elevation: 0,
-                  surfaceTintColor: Colors.transparent,
-                  flexibleSpace: ClipRect(
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                      child: Container(color: Colors.transparent),
-                    ),
-                  ),
-                  leadingWidth: 48,
-                  leading: Padding(
-                    padding: const EdgeInsets.only(left: 4),
-                    child: IconButton(
-                      icon: Icon(
-                        Icons.arrow_back_ios_new_rounded,
-                        size: 20,
-                        color: AppColors.getTextPrimary(context),
+                // Main content
+                SafeArea(
+                  child: CustomScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    slivers: [
+                      // Compact Modern App Bar
+                      SliverAppBar(
+                        expandedHeight: 0,
+                        floating: true,
+                        pinned: true,
+                        backgroundColor: AppColors.getBackground(context).withValues(alpha: 0.8),
+                        elevation: 0,
+                        surfaceTintColor: Colors.transparent,
+                        flexibleSpace: ClipRect(
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                            child: Container(color: Colors.transparent),
+                          ),
+                        ),
+                        leadingWidth: 48,
+                        leading: Padding(
+                          padding: const EdgeInsets.only(left: 4),
+                          child: IconButton(
+                            icon: Icon(
+                              Icons.arrow_back_ios_new_rounded,
+                              size: 20,
+                              color: AppColors.getTextPrimary(context),
+                            ),
+                            onPressed: () {
+                              HapticFeedback.lightImpact();
+                              Navigator.of(context).pop();
+                            },
+                          ),
+                        ),
+                        titleSpacing: 8,
+                        title: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                gradient: AppColors.premiumGradient,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Icon(
+                                Icons.subscriptions_rounded,
+                                color: Colors.white,
+                                size: 16,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              'Subscriptions',
+                              style: theme.textTheme.titleLarge?.copyWith(
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.getTextPrimary(context),
+                                letterSpacing: -0.3,
+                              ),
+                            ),
+                          ],
+                        ),
+                        actions: [
+                          IconButton(
+                            icon: Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: AppColors.primaryPink.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Icon(
+                                Icons.analytics_outlined,
+                                size: 18,
+                              ),
+                            ),
+                            onPressed: () {
+                              HapticFeedback.lightImpact();
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => const SubscriptionAnalysisScreen(),
+                                ),
+                              );
+                            },
+                            color: AppColors.primaryPink,
+                            tooltip: 'Analysis',
+                          ),
+                          const SizedBox(width: 8),
+                        ],
                       ),
-                      onPressed: () {
-                        HapticFeedback.lightImpact();
-                        Navigator.of(context).pop();
-                      },
-                    ),
-                  ),
-                  titleSpacing: 8,
-                  title: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          gradient: AppColors.premiumGradient,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(
-                          Icons.subscriptions_rounded,
-                          color: Colors.white,
-                          size: 16,
+
+                      // Compact Content
+                      SliverPadding(
+                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                        sliver: SliverList(
+                          delegate: SliverChildListDelegate([
+                            // Summary Card - More compact
+                            const SubscriptionSummaryCard()
+                                .animate()
+                                .fadeIn(duration: 300.ms)
+                                .slideY(begin: 0.1, end: 0),
+
+                            const SizedBox(height: 12),
+
+                            // Upcoming Bills - More compact
+                            const UpcomingBillsCard()
+                                .animate()
+                                .fadeIn(duration: 300.ms, delay: 50.ms)
+                                .slideY(begin: 0.1, end: 0),
+
+                            const SizedBox(height: 16),
+
+                            // Category Filter - Cleaner
+                            const CategoryFilterChips()
+                                .animate()
+                                .fadeIn(duration: 300.ms, delay: 100.ms),
+
+                            const SizedBox(height: 12),
+                          ]),
                         ),
                       ),
-                      const SizedBox(width: 10),
-                      Text(
-                        'Subscriptions',
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.getTextPrimary(context),
-                          letterSpacing: -0.3,
+
+                      // Subscriptions List
+                      subscriptionsAsync.when(
+                        loading: () => SliverPadding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          sliver: SliverList(
+                            delegate: SliverChildBuilderDelegate(
+                              (context, index) => _buildShimmerCard(context),
+                              childCount: 3,
+                            ),
+                          ),
                         ),
+                        error: (error, stack) => SliverToBoxAdapter(
+                          child: _buildErrorState(context, error),
+                        ),
+                        data: (subscriptions) {
+                          if (subscriptions.isEmpty) {
+                            return SliverToBoxAdapter(
+                              child: _buildEmptyState(context),
+                            );
+                          }
+
+                          return SliverPadding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            sliver: SliverList(
+                              delegate: SliverChildBuilderDelegate(
+                                (context, index) {
+                                  final subscription = subscriptions[index];
+                                  return SubscriptionCard(
+                                    subscription: subscription,
+                                  ).animate().fadeIn(
+                                    duration: 250.ms,
+                                    delay: (150 + (index * 30)).ms,
+                                  ).slideX(begin: 0.05, end: 0);
+                                },
+                                childCount: subscriptions.length,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+
+                      // Bottom padding for FAB
+                      const SliverToBoxAdapter(
+                        child: SizedBox(height: 100),
                       ),
                     ],
                   ),
-                  actions: [
-                    IconButton(
-                      icon: Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryPink.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(
-                          Icons.analytics_outlined,
-                          size: 18,
-                        ),
-                      ),
-                      onPressed: () {
-                        HapticFeedback.lightImpact();
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => const SubscriptionAnalysisScreen(),
-                          ),
-                        );
-                      },
-                      color: AppColors.primaryPink,
-                      tooltip: 'Analysis',
-                    ),
-                    const SizedBox(width: 8),
-                  ],
-                ),
-
-                // Compact Content
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                  sliver: SliverList(
-                    delegate: SliverChildListDelegate([
-                      // Summary Card - More compact
-                      const SubscriptionSummaryCard()
-                          .animate()
-                          .fadeIn(duration: 300.ms)
-                          .slideY(begin: 0.1, end: 0),
-
-                      const SizedBox(height: 12),
-
-                      // Upcoming Bills - More compact
-                      const UpcomingBillsCard()
-                          .animate()
-                          .fadeIn(duration: 300.ms, delay: 50.ms)
-                          .slideY(begin: 0.1, end: 0),
-
-                      const SizedBox(height: 16),
-
-                      // Category Filter - Cleaner
-                      const CategoryFilterChips()
-                          .animate()
-                          .fadeIn(duration: 300.ms, delay: 100.ms),
-
-                      const SizedBox(height: 12),
-                    ]),
-                  ),
-                ),
-
-                // Subscriptions List
-                subscriptionsAsync.when(
-                  loading: () => SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    sliver: SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) => _buildShimmerCard(context),
-                        childCount: 3,
-                      ),
-                    ),
-                  ),
-                  error: (error, stack) => SliverToBoxAdapter(
-                    child: _buildErrorState(context, error),
-                  ),
-                  data: (subscriptions) {
-                    if (subscriptions.isEmpty) {
-                      return SliverToBoxAdapter(
-                        child: _buildEmptyState(context),
-                      );
-                    }
-
-                    return SliverPadding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      sliver: SliverList(
-                        delegate: SliverChildBuilderDelegate(
-                          (context, index) {
-                            final subscription = subscriptions[index];
-                            return SubscriptionCard(
-                              subscription: subscription,
-                            ).animate().fadeIn(
-                              duration: 250.ms,
-                              delay: (150 + (index * 30)).ms,
-                            ).slideX(begin: 0.05, end: 0);
-                          },
-                          childCount: subscriptions.length,
-                        ),
-                      ),
-                    );
-                  },
-                ),
-
-                // Bottom padding for FAB
-                const SliverToBoxAdapter(
-                  child: SizedBox(height: 100),
                 ),
               ],
             ),
           ),
+
+          // Banner
+          SafeArea(
+            top: false,
+            child: PaydayBannerAd(adUnitId: AdService().subscriptionsBannerId),
+          ),
         ],
       ),
+
       // Modern FAB
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {

@@ -20,6 +20,7 @@ import 'package:payday/shared/widgets/payday_banner_ad.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:payday/features/premium/providers/premium_providers.dart';
 import 'package:payday/core/providers/repository_providers.dart';
+import 'package:payday/core/services/ad_service.dart';
 
 // ✅ DEĞİŞTİ: ConsumerWidget -> ConsumerStatefulWidget
 class HomeScreen extends ConsumerStatefulWidget {
@@ -321,7 +322,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             const SizedBox(height: 12),
 
                             // ✅ REKLAM ALANI (Quick Actions altına taşındı)
-                            const PaydayBannerAd()
+                            PaydayBannerAd(adUnitId: AdService().bannerAdUnitId)
                                 .animate()
                                 .fadeIn(duration: 600.ms, delay: 320.ms),
 
