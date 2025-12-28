@@ -9,12 +9,12 @@ import 'package:payday/features/home/widgets/countdown_card.dart';
 import 'package:payday/features/home/widgets/budget_overview_card.dart';
 import 'package:payday/features/home/widgets/savings_card.dart';
 import 'package:payday/features/home/widgets/recent_transactions_card.dart';
-import 'package:payday/features/home/widgets/active_subscriptions_card.dart';
 import 'package:payday/features/home/widgets/monthly_summary_card.dart';
 import 'package:payday/features/insights/screens/spending_insights_screen.dart';
 import 'package:payday/features/transactions/screens/add_transaction_screen.dart';
 import 'package:payday/features/transactions/screens/add_funds_screen.dart';
 import 'package:payday/features/settings/screens/settings_screen.dart';
+import 'package:payday/features/subscriptions/screens/subscriptions_screen.dart';
 import 'package:payday/shared/widgets/payday_button.dart';
 import 'package:payday/shared/widgets/payday_banner_ad.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -222,6 +222,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             tooltip: 'Spending Insights',
                           ),
                           IconButton(
+                            icon: Icon(
+                              Icons.subscriptions_rounded,
+                              size: 22,
+                              color: AppColors.getTextPrimary(context),
+                            ),
+                            onPressed: () {
+                              HapticFeedback.lightImpact();
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => const SubscriptionsScreen(),
+                                ),
+                              );
+                            },
+                            padding: const EdgeInsets.all(8),
+                            constraints: const BoxConstraints(),
+                            tooltip: 'Subscriptions',
+                          ),
+                          IconButton(
                             icon: const Icon(Icons.settings_outlined, size: 22),
                             onPressed: () {
                               HapticFeedback.lightImpact();
@@ -308,14 +326,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             )
                                 .animate()
                                 .fadeIn(duration: 500.ms, delay: 250.ms)
-                                .slideY(begin: 0.1, end: 0),
-
-                            const SizedBox(height: 12),
-
-                            // Active Subscriptions Card
-                            const ActiveSubscriptionsCard()
-                                .animate()
-                                .fadeIn(duration: 500.ms, delay: 350.ms)
                                 .slideY(begin: 0.1, end: 0),
 
                             const SizedBox(height: 12),
