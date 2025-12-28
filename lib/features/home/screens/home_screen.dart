@@ -292,16 +292,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
                             const SizedBox(height: 12),
 
-                            // ✅ My Savings (üst tarafa taşındı)
-                            const SavingsCard()
-                                .animate()
-                                .fadeIn(duration: 500.ms, delay: 230.ms)
-                                .slideX(begin: -0.06, end: 0),
-
-                            const SizedBox(height: 12),
-
-                            // ✅ Spending Insights kartı ana ekrandan kaldırıldı (AppBar ikonundan erişiliyor)
-
                             // Quick Actions Row - Daha kompakt
                             Row(
                               children: [
@@ -329,6 +319,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 .slideY(begin: 0.1, end: 0),
 
                             const SizedBox(height: 12),
+
+                            // ✅ My Savings (üst tarafa taşındı)
+                            const SavingsCard()
+                                .animate()
+                                .fadeIn(duration: 500.ms, delay: 230.ms)
+                                .slideX(begin: -0.06, end: 0),
+
+                            const SizedBox(height: 12),
+
+                            // ✅ Spending Insights kartı ana ekrandan kaldırıldı (AppBar ikonundan erişiliyor)
 
                             // Monthly Summary Card
                             // (taşındı: üstte Budget sonrası gösteriliyor)
