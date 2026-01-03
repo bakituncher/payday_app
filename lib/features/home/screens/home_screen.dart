@@ -309,7 +309,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             const SizedBox(height: 12),
 
                             // ✅ REKLAM ALANI (Quick Actions altına taşındı)
-                            PaydayBannerAd(adUnitId: AdService().bannerAdUnitId)
+                            PaydayBannerAd(adUnitId: AdService().homeBannerId)
                                 .animate()
                                 .fadeIn(duration: 600.ms, delay: 320.ms),
 

@@ -16,6 +16,7 @@ class AdService {
   final int maxFailedLoadAttempts = 3;
 
   // --- Banner IDs ---
+  String get homeBannerId => _getAdId('ADMOB_BANNER_HOME_ID');
   String get insightsBannerId => _getAdId('ADMOB_BANNER_INSIGHTS_ID');
   String get subscriptionsBannerId => _getAdId('ADMOB_BANNER_SUBSCRIPTIONS_ID');
   String get savingsBannerId => _getAdId('ADMOB_BANNER_SAVINGS_ID');
